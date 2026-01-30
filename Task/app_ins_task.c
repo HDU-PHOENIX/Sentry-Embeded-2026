@@ -326,7 +326,7 @@ void isttask(void const * argument)
             
             // 数据读取与预处理
             for (int i = 0; i < 3; i++) {
-				filtered_accel[i] = bmi088_test->accel[i];
+                MovingAvgFilter_Process(accel_moving_filters[i], bmi088_test->accel[i], &filtered_accel[i]);
             }
         //    FusionAhrsFlags flags = FusionAhrsGetFlags(&fusion_ahrs);
         //     FusionAhrsInternalStates states = FusionAhrsGetInternalStates(&fusion_ahrs);
@@ -337,7 +337,7 @@ void isttask(void const * argument)
             raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro); // 动态偏置学习与减除
             
             for (int i = 0; i < 3; i++) {
-                filtered_gyro[i] = raw_gyro.array[i];
+                MovingAvgFilter_Process(gyro_moving_filters[i], raw_gyro.array[i], &filtered_gyro[i]);
             }
             
             // 姿态解算 - 使用EKF进行姿态融合更新

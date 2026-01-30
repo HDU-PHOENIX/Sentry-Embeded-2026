@@ -454,6 +454,9 @@ void StartChassisTask(void const * argument)
 		
     //测试代码
     Follow_Calculate(GimbalFollow_Instance);
+    #ifdef SHOOT_DEBUG
+    control_mode=SHOOT_MODE;
+    #endif SHOOT_DEBUG
     //测试代码结束
     switch (control_mode)
     {

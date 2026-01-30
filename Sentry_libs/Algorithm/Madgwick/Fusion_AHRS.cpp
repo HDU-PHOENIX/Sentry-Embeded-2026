@@ -37,7 +37,7 @@ MadgwickParam madgwickParam;
 /**
  * @brief Threshold for bias correction (radians/second)
  */
-#define THRESHOLD (0.07f)
+#define THRESHOLD (0.05f)
 
 /**
  * @brief Flag to enable gradient descent compensation
