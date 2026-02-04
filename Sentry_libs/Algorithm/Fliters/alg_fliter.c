@@ -297,6 +297,79 @@ void LowpassFilter_Process(LowpassFilter_t *filter, float32_t input, float32_t *
 }
 
 /**
+ * @brief 注册二阶巴特沃斯滤波器实例
+ * @param config 滤波器初始化配置
+ * @return 滤波器实例指针，失败返回NULL
+ */
+ButterworthFilter_t* ButterworthFilter_Register(FilterInitConfig_t *config) {
+    if (config == NULL || config->sample_freq <= 0 || config->cutoff_freq <= 0) {
+        return NULL;
+    }
+    
+    // 动态分配内存
+    ButterworthFilter_t *filter = (ButterworthFilter_t *)pvPortMalloc(sizeof(ButterworthFilter_t));
+    if (filter == NULL) {
+        return NULL;
+    }
+    
+    // 初始化滤波器状态
+    memset(filter, 0, sizeof(ButterworthFilter_t));
+    filter->sample_freq = config->sample_freq;
+    filter->cutoff_freq = config->cutoff_freq;
+    filter->initialized = 0;
+    
+    // 计算二阶巴特沃斯系数 (双线性变换法)
+    // K = tan(pi * fc / fs)
+    float32_t K = tanf(PI * config->cutoff_freq / config->sample_freq);
+    float32_t K2 = K * K;
+    float32_t sqrt2 = 1.41421356f;
+    float32_t norm = 1.0f / (1.0f + sqrt2 * K + K2);
+    
+    filter->b[0] = K2 * norm;
+    filter->b[1] = 2.0f * filter->b[0];
+    filter->b[2] = filter->b[0];
+    
+    filter->a[1] = 2.0f * (K2 - 1.0f) * norm;
+    filter->a[2] = (1.0f - sqrt2 * K + K2) * norm;
+    
+    return filter;
+}
+
+/**
+ * @brief 二阶巴特沃斯滤波器处理函数
+ * @param filter 滤波器实例
+ * @param input 输入数据
+ * @param output 输出数据指针
+ */
+void ButterworthFilter_Process(ButterworthFilter_t *filter, float32_t input, float32_t *output) {
+    if (filter == NULL || output == NULL) {
+        return;
+    }
+    
+    // 初始化处理
+    if (!filter->initialized) {
+        filter->x[0] = filter->x[1] = filter->x[2] = input;
+        filter->y[0] = filter->y[1] = filter->y[2] = input;
+        filter->initialized = 1;
+        *output = input;
+        return;
+    }
+    
+    // 差分方程：y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+    filter->x[0] = input;
+    filter->y[0] = filter->b[0] * filter->x[0] + filter->b[1] * filter->x[1] + filter->b[2] * filter->x[2] 
+                  - filter->a[1] * filter->y[1] - filter->a[2] * filter->y[2];
+    
+    *output = filter->y[0];
+    
+    // 更新历史记录
+    filter->x[2] = filter->x[1];
+    filter->x[1] = filter->x[0];
+    filter->y[2] = filter->y[1];
+    filter->y[1] = filter->y[0];
+}
+
+/**
  * @brief 释放滑动平均滤波器实例
  * @param filter 滤波器实例指针
  */
@@ -311,6 +384,16 @@ void MovingAvgFilter_Free(MovingAvgFilter_t *filter) {
  * @param filter 滤波器实例指针
  */
 void LowpassFilter_Free(LowpassFilter_t *filter) {
+    if (filter != NULL) {
+        vPortFree(filter);
+    }
+}
+
+/**
+ * @brief 释放巴特沃斯滤波器实例
+ * @param filter 滤波器实例指针
+ */
+void ButterworthFilter_Free(ButterworthFilter_t *filter) {
     if (filter != NULL) {
         vPortFree(filter);
     }

@@ -36,6 +36,17 @@ typedef struct {
     float32_t sample_freq;      // 采样频率
 } LowpassFilter_t;
 
+// 二阶巴特沃斯滤波器实例结构体
+typedef struct {
+    float32_t b[3];             // 分子系数
+    float32_t a[3];             // 分母系数
+    float32_t x[3];             // 输入历史
+    float32_t y[3];             // 输出历史
+    float32_t sample_freq;      // 采样频率
+    float32_t cutoff_freq;      // 截止频率
+    uint8_t initialized;        // 初始化标志
+} ButterworthFilter_t;
+
 // 滤波器初始化配置
 typedef struct {
     uint8_t filter_size;        // 滑动平均窗口大小
@@ -52,10 +63,15 @@ void Lowpass_fliter(float32_t *input, float32_t *output, fliter_config *fliter_c
 // 新的实例化滤波器函数
 MovingAvgFilter_t* MovingAvgFilter_Register(FilterInitConfig_t *config);
 LowpassFilter_t* LowpassFilter_Register(FilterInitConfig_t *config);
+ButterworthFilter_t* ButterworthFilter_Register(FilterInitConfig_t *config);
+
 void MovingAvgFilter_Process(MovingAvgFilter_t *filter, float32_t input, float32_t *output);
 void LowpassFilter_Process(LowpassFilter_t *filter, float32_t input, float32_t *output);
+void ButterworthFilter_Process(ButterworthFilter_t *filter, float32_t input, float32_t *output);
+
 void MovingAvgFilter_Free(MovingAvgFilter_t *filter);
 void LowpassFilter_Free(LowpassFilter_t *filter);
+void ButterworthFilter_Free(ButterworthFilter_t *filter);
 float32_t fhan(float32_t x1, float32_t x2, float32_t r, float32_t h0);
 float fhan_correct(float x1, float x2, float r, float h);
 

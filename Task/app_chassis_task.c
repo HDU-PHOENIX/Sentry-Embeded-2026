@@ -8,7 +8,7 @@
 #include "app_chassis_task.h"
 //宏定义
 #define DEBUG
-
+//#define SHOOT_DEBUG
 
 //实例声明
 ChassisInstance_s *Chassis;
@@ -49,7 +49,7 @@ uint16_t max_torque=5000;
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = 2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = -0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
@@ -231,16 +231,16 @@ static DjiMotorInitConfig_s Up_config = {
 };
 //拨弹盘配置
 static  DjiMotorInitConfig_s Trigger_Config = {
-    .id = 3,                      // 电机ID(1~4)
+    .id = 2,                      // 电机ID(1~4)
     .type = M2006,               // 电机类型
      .control_mode = DJI_VELOCITY,  // 电机控制模式
     //.control_mode = DJI_POSITION,
 		.topic_name = "Trigger",
     .can_config = {
-        .can_number = 2,
+        .can_number = 2,//记得改回来
 				.topic_name = "Trigger",              // can句柄
         .tx_id = 0x200,                     // 发送id 
-        .rx_id = 0x203,                     // 接收id
+        .rx_id = 0x202,                     // 接收id
 			  .can_module_callback=NULL,
     },
     .reduction_ratio = (36.0/19.0)*47.0,              // 减速比
@@ -378,16 +378,18 @@ void StartChassisTask(void const * argument)
   
 
 		 while (Quater.ins_ready!=1)
-    {
-        osDelay(10);
-    }
+   {
+       osDelay(10);
+   }
 		
 		//循环使能
+		#ifndef SHOOTER_DEBUG
 		while(Down_yaw->motor_state!=DM_ENABLE){
 			Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_ENABLE);
 			Motor_Dm_Transmit(Down_yaw);
 			osDelay(1);
 		}
+		#endif
 		Minipc_ConfigAimTx(MiniPC,&board_instance->received_up_yaw_pos,&board_instance->received_up_pitch_pos,
                         &enemy_color,&minipc_mode,
                         &rune_flag,&Down_yaw->message.out_position);//这里可能引入悬空指针，但是似乎没影响程序运行，后面再管。
@@ -456,7 +458,7 @@ void StartChassisTask(void const * argument)
     Follow_Calculate(GimbalFollow_Instance);
     #ifdef SHOOT_DEBUG
     control_mode=SHOOT_MODE;
-    #endif SHOOT_DEBUG
+    #endif 
     //测试代码结束
     switch (control_mode)
     {
@@ -584,7 +586,7 @@ void StartChassisTask(void const * argument)
 
         break;
 			case SHOOT_MODE:
-        target_tr=60.0f;
+        //target_tr=60.0f;
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 				Motor_Dm_Transmit(Down_yaw);
 		
@@ -629,7 +631,12 @@ void StartChassisTask(void const * argument)
         break;
       case UP_MODE:
       //小云台逻辑
+      if(Up_yaw!=NULL){
         Follow_Calculate(GimbalFollow_Instance);
+      }else{
+        control_mode=RC_MODE;
+        break;
+      }
         target_up_position-=(CH_Receive_s->dr16_handle.ch0) * 3.1415 / 360000.0f;
         target_up_pitch-=(CH_Receive_s->dr16_handle.ch1)*3.1415/ 360000.0f;
         

@@ -78,7 +78,7 @@ FusionAhrsSettings settings = {
     .convention = FusionConventionNwu,  // 坐标系：NWU（北西上）
     .gain = 0.5f,                      // 算法增益
     .gyroscopeRange = 0.0f,            // 禁用量程检测重置（避免34.9rad/s满量程时误重置）
-    .accelerationRejection = 7.0f,    // 加速度计拒绝阈值（度）
+    .accelerationRejection = 20.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
     .recoveryTriggerPeriod = 5000,        // 恢复触发周期
 };
 
@@ -343,13 +343,15 @@ void isttask(void const * argument)
             // 姿态解算 - 使用EKF进行姿态融合更新
             if (ins_initialized) {
                 // 使用EKF进行高精度姿态解算（融合陀螺仪和加速度计数据）
-                float compensated_accel[3];
-                compensate_centrifugal_accel(filtered_gyro, filtered_accel, dt, compensated_accel);
+                // 暂时屏蔽离心力补偿，因摩擦轮振动可能引入极大噪声
+                // float compensated_accel[3];
+                // compensate_centrifugal_accel(filtered_gyro, filtered_accel, dt, compensated_accel);
                 
                 // 使用 Fusion AHRS 更新姿态（已修改库底层支持弧度）
                 FusionVector fusion_gyro = {filtered_gyro[0], filtered_gyro[1], filtered_gyro[2]};
-                FusionVector fusion_accel = {compensated_accel[0]/9.80665f, compensated_accel[1]/9.80665f, compensated_accel[2]/9.80665f};
-                
+                // FusionVector fusion_accel = {compensated_accel[0]/9.80665f, compensated_accel[1]/9.80665f, compensated_accel[2]/9.80665f};
+                // 直接使用滤波后的加速度，不进行额外的 "Rejection" 和 "Centrifugal" 处理
+                FusionVector fusion_accel = {filtered_accel[0]/9.80665f, filtered_accel[1]/9.80665f, filtered_accel[2]/9.80665f};
                 FusionAhrsUpdateNoMagnetometer(&fusion_ahrs, fusion_gyro, fusion_accel, dt);
 
                 // 从 Fusion AHRS 获取四元数

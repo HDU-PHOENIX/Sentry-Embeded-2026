@@ -1,6 +1,7 @@
 /**
  * @file Fusion_AHRS.cpp
  * @author liuskywalkerjskd
+ * @editor CGH
  * @brief AHRS (Attitude and Heading Reference System) algorithm implementation based on accelerometer and gyroscope
  */
 
@@ -36,8 +37,9 @@ MadgwickParam madgwickParam;
 
 /**
  * @brief Threshold for bias correction (radians/second)
+ * @note Reduced (0.05f -> 0.005f) to prevent slow motion drift from being learned as bias
  */
-#define THRESHOLD (0.05f)
+#define THRESHOLD (0.005f)
 
 /**
  * @brief Flag to enable gradient descent compensation
@@ -268,8 +270,9 @@ void FusionAhrsUpdate(FusionAhrs *const ahrs, const FusionVector gyroscope,
     // Normalize quaternion
     ahrs->quaternion = FusionQuaternionNormalise(ahrs->quaternion);
 	
-    if (use_grad) {
+    if (use_grad && (ahrs->accelerometerIgnored == false)) {
         // Use gradient descent method for fusion (increases noise but accelerates convergence)
+        // Only run when accelerometer is trusted (not rejected)
         // Gradient descent algorithm to get raw q0-q3 values
         Madgwick_updateIMU(gyroscope.axis.x, gyroscope.axis.y, gyroscope.axis.z, 
                           accelerometer.axis.x, accelerometer.axis.y, accelerometer.axis.z);
