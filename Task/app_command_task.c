@@ -9,11 +9,28 @@
 Dr16Instance_s *dr16_instance;
 MiniPC_Instance *minipc_instance;
 Publisher *Command_publisher;
+RefereeInstance_s* ref_instance;
 
 //变量
 uint8_t mode=0,last_mode=0;
 uint8_t combined_state_global=0;
+struct RefreeData {
+    uint8_t color;
+    uint8_t robot_id;
+    uint16_t client_id;
+    bool data_ready;
+};
+
+
 //配置
+
+RefereeInitConfig_s referee_config = {
+    .topic_name = "referee",
+    .uart_handle = &huart10,
+    .mode = UART_IDLE_MODE,
+};
+
+
 /**
  * @brief 根据遥控器的拨杆位置确定控制模式
  * @param dr16 指向遥控器实例的指针
@@ -83,14 +100,23 @@ void StartCommandTask(void const * argument)
 {
   /* USER CODE BEGIN StartCommandTask */
 	dr16_instance = Dr16_Register(&huart3); // 注册遥控器实例
+
+  ref_instance = Referee_Register(&referee_config);
+  if (ref_instance == NULL)
+  {
+      Log_Error("Referee Register Failed!");
+  }
+
 	Command_publisher=Create_Publisher("dr16_topic",sizeof(Dr16Instance_s));
 	
-  
+  //如果代码不写死的话..
+  RefreeData.color=Referee_Get_Color(ref_instance);
   /* Infinite loop */
   for(;;)
   {
 		Publish_Message(Command_publisher, dr16_instance);
     mode=Mode_Change(dr16_instance);
+    
 		
     osDelay(2);
   }
