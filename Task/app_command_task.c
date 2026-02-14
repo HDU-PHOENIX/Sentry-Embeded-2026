@@ -14,13 +14,7 @@ RefereeInstance_s* ref_instance;
 //变量
 uint8_t mode=0,last_mode=0;
 uint8_t combined_state_global=0;
-struct RefreeData {
-    uint8_t color;
-    uint8_t robot_id;
-    uint16_t client_id;
-    bool data_ready;
-};
-
+RefereeData_t RefreeData;
 
 //配置
 

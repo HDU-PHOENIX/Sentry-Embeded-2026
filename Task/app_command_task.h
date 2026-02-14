@@ -21,4 +21,14 @@
 #define DISABLE_MODE 0
 
 
+
+typedef struct  {
+    uint8_t color;
+    uint8_t robot_id;
+    uint16_t client_id;
+    bool data_ready;
+}RefereeData_t;
+
+
+
 #endif // APP_COMMAND_TASK_H

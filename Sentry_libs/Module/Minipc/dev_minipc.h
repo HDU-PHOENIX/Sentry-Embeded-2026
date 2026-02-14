@@ -295,8 +295,8 @@ typedef struct {
 } launch_status_package;
 #endif
 typedef union {
-    Computer_Rx_Message_t norm_aim_pack;
-    exp_aim_package exp_aim_pack;            // 具有前馈的自瞄        // 自瞄
+    Computer_Rx_Message_t norm_aim_pack;       // 自瞄
+    exp_aim_package exp_aim_pack;            // 具有前馈的自瞄        
     #ifdef SENTRY_MODE
     Chassis_package ch_pack;                    // 底盘
 
@@ -346,6 +346,21 @@ typedef struct {
     uint16_t* red_5_robot_HP;
     uint16_t* red_7_robot_HP;
 } USB_RedHP_DataSource_t;
+typedef struct {
+    
+    uint16_t* blue_1_robot_HP;  // 2 - 3 蓝 1 英雄机器人血量
+    uint16_t* blue_2_robot_HP;  // 4 - 5 蓝 2 工程机器人血量
+    uint16_t* blue_3_robot_HP;  // 6 - 7 蓝 3 步兵机器人血量
+    uint16_t* blue_4_robot_HP;  // 8 - 9 蓝 4 步兵机器人血量
+    uint16_t* blue_5_robot_HP;  // 10 - 11 蓝 5 步兵机器人血量
+    uint16_t* blue_7_robot_HP;  // 12 - 13 蓝 7 哨兵机器人血量
+    
+}USB_BlueHP_DataSource_t;
+
+typedef struct{
+    uint16_t* outpost_HP;   // 2 - 3  己方前哨站血量
+    uint16_t* base_HP;      // 4 - 5  己方基地血量
+}USB_BuildingHP_DataSource_t;
 
 typedef struct {
     uint8_t* enemy_team_color;
@@ -353,6 +368,11 @@ typedef struct {
     uint16_t* stage_remain_time;
     uint16_t* remaining_gold_coin;
 } USB_GameInfo_DataSource_t;
+
+typedef struct{
+    uint16_t* current_HP;      //当前血量
+    uint16_t* projectile_17mm;          // 17mm剩余弹量
+}USB_DataSource_Sentry_Status_t;
 #endif
 // 统一的数据源联合体
 typedef union {
@@ -361,7 +381,10 @@ typedef union {
     #ifdef SENTRY_MODE
     USB_FriendPos1_DataSource_t friend_pos_1;
     USB_RedHP_DataSource_t red_hp;
+    USB_BlueHP_DataSource_t blue_hp;
+    USB_BuildingHP_DataSource_t building_hp;
     USB_GameInfo_DataSource_t game_info;
+    USB_DataSource_Sentry_Status_t sentry_status;
     #endif
 } USB_DataSource_Union_t;
 

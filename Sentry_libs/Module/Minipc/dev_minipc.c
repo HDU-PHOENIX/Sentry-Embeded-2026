@@ -324,7 +324,7 @@ void Minipc_ConfigExpAimTx(MiniPC_Instance* instance,uint8_t* mode,
  * @brief 配置友方位置1发送数据源 
  */
 void Minipc_ConfigFriendPos1Tx(MiniPC_Instance* instance, float* inf3_x, float* inf3_y, float* inf4_x, float* inf4_y, float* inf5_x, float* inf5_y) {
-    if (instance == NULL || instance->message_type != USB_MSG_FRIEND1_TX) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_FRIEND1_TX) {
 #ifdef DEBUG
         Log_Error("Error: Invalid instance for FRIEND1_TX");
 #endif
@@ -340,7 +340,94 @@ void Minipc_ConfigFriendPos1Tx(MiniPC_Instance* instance, float* inf3_x, float* 
     
     
 }
+
 #endif
+
+/**
+ * @brief 配置红方血量发送数据源
+ */
+void Minipc_ConfigRedHPTx(MiniPC_Instance* instance, uint16_t* red1_hp, uint16_t* red2_hp, uint16_t* red3_hp, uint16_t* red4_hp, uint16_t* red5_hp, uint16_t* red7_hp) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_RED_HP_TX) {
+#ifdef DEBUG
+        Log_Error("Error: Invalid instance for RED_HP_TX");
+#endif
+        return;
+    }
+    
+    instance->data_source.red_hp.red_1_robot_HP = red1_hp;
+    instance->data_source.red_hp.red_2_robot_HP = red2_hp;
+    instance->data_source.red_hp.red_3_robot_HP = red3_hp;
+    instance->data_source.red_hp.red_4_robot_HP = red4_hp;
+    instance->data_source.red_hp.red_5_robot_HP = red5_hp;
+    instance->data_source.red_hp.red_7_robot_HP = red7_hp;
+}
+
+/**
+ * @brief 配置蓝方血量发送数据源
+ */
+void Minipc_ConfigBlueHPTx(MiniPC_Instance* instance, uint16_t* blue1_hp, uint16_t* blue2_hp, uint16_t* blue3_hp, uint16_t* blue4_hp, uint16_t* blue5_hp, uint16_t* blue7_hp) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_BLUE_HP_TX) {
+#ifdef DEBUG
+        Log_Error("Error: Invalid instance for BLUE_HP_TX");
+#endif
+        return;
+    }
+    
+    instance->data_source.blue_hp.blue_1_robot_HP = blue1_hp;
+    instance->data_source.blue_hp.blue_2_robot_HP = blue2_hp;
+    instance->data_source.blue_hp.blue_3_robot_HP = blue3_hp;
+    instance->data_source.blue_hp.blue_4_robot_HP = blue4_hp;
+    instance->data_source.blue_hp.blue_5_robot_HP = blue5_hp;
+    instance->data_source.blue_hp.blue_7_robot_HP = blue7_hp;
+}
+
+/**
+ * @brief 配置建筑血量发送数据源
+ */
+void Minipc_ConfigBuildingHPTx(MiniPC_Instance* instance, uint16_t* outpost_hp, uint16_t* base_hp) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_BUILD_HP_TX) {
+#ifdef DEBUG
+        Log_Error("Error: Invalid instance for BUILD_HP_TX");
+#endif
+        return;
+    }
+    
+    instance->data_source.building_hp.outpost_HP = outpost_hp;
+    instance->data_source.building_hp.base_HP = base_hp;
+}
+
+/**
+ * @brief 配置比赛信息发送数据源
+ */
+void Minipc_ConfigGameInfoTx(MiniPC_Instance* instance, uint8_t* enemy_color, uint8_t* game_progress, uint16_t* remain_time, uint16_t* gold_coin) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_GAME_INFO_TX) {
+#ifdef DEBUG
+        Log_Error("Error: Invalid instance for GAME_INFO_TX");
+#endif
+        return;
+    }
+    
+    instance->data_source.game_info.enemy_team_color = enemy_color;
+    instance->data_source.game_info.game_progress = game_progress;
+    instance->data_source.game_info.stage_remain_time = remain_time;
+    instance->data_source.game_info.remaining_gold_coin = gold_coin;
+}
+
+/**
+ * @brief 配置哨兵状态发送数据源
+ */
+void Minipc_ConfigSentryStatusTx(MiniPC_Instance* instance, uint16_t* current_hp, uint16_t* projectile_17mm) {
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_LAUNCH_TX) {  // 假设哨兵状态用LAUNCH_TX或其他，需要确认
+#ifdef DEBUG
+        Log_Error("Error: Invalid instance for SENTRY_STATUS_TX");
+#endif
+        return;
+    }
+    
+    instance->data_source.sentry_status.current_HP = current_hp;
+    instance->data_source.sentry_status.projectile_17mm = projectile_17mm;
+}
+
 /**
  * @brief 更新单个实例的数据
  * @param instance 实例指针
@@ -411,6 +498,48 @@ void Minipc_UpdateInstanceData(MiniPC_Instance* instance) {
             if (src->infantry_4_y != NULL) msg->infantry_4_y = *(src->infantry_4_y);
             if (src->infantry_5_x != NULL) msg->infantry_5_x = *(src->infantry_5_x);
             if (src->infantry_5_y != NULL) msg->infantry_5_y = *(src->infantry_5_y);
+            break;
+        }
+        case USB_MSG_RED_HP_TX: {
+            red_hp_package* msg = &send_buffer->red_hp;
+            USB_RedHP_DataSource_t* src = &instance->data_source.red_hp;
+            
+            if (src->red_1_robot_HP != NULL) msg->red_1_robot_HP = *(src->red_1_robot_HP);
+            if (src->red_2_robot_HP != NULL) msg->red_2_robot_HP = *(src->red_2_robot_HP);
+            if (src->red_3_robot_HP != NULL) msg->red_3_robot_HP = *(src->red_3_robot_HP);
+            if (src->red_4_robot_HP != NULL) msg->red_4_robot_HP = *(src->red_4_robot_HP);
+            if (src->red_5_robot_HP != NULL) msg->red_5_robot_HP = *(src->red_5_robot_HP);
+            if (src->red_7_robot_HP != NULL) msg->red_7_robot_HP = *(src->red_7_robot_HP);
+            break;
+        }
+        case USB_MSG_BLUE_HP_TX: {
+            blue_hp_package* msg = &send_buffer->blue_hp;
+            USB_BlueHP_DataSource_t* src = &instance->data_source.blue_hp;
+            
+            if (src->blue_1_robot_HP != NULL) msg->blue_1_robot_HP = *(src->blue_1_robot_HP);
+            if (src->blue_2_robot_HP != NULL) msg->blue_2_robot_HP = *(src->blue_2_robot_HP);
+            if (src->blue_3_robot_HP != NULL) msg->blue_3_robot_HP = *(src->blue_3_robot_HP);
+            if (src->blue_4_robot_HP != NULL) msg->blue_4_robot_HP = *(src->blue_4_robot_HP);
+            if (src->blue_5_robot_HP != NULL) msg->blue_5_robot_HP = *(src->blue_5_robot_HP);
+            if (src->blue_7_robot_HP != NULL) msg->blue_7_robot_HP = *(src->blue_7_robot_HP);
+            break;
+        }
+        case USB_MSG_BUILD_HP_TX: {
+            building_hp_package* msg = &send_buffer->building_hp;
+            USB_BuildingHP_DataSource_t* src = &instance->data_source.building_hp;
+            
+            if (src->outpost_HP != NULL) msg->outpost_HP = *(src->outpost_HP);
+            if (src->base_HP != NULL) msg->base_HP = *(src->base_HP);
+            break;
+        }
+        case USB_MSG_GAME_INFO_TX: {
+            game_info_package* msg = &send_buffer->game_info;
+            USB_GameInfo_DataSource_t* src = &instance->data_source.game_info;
+            
+            if (src->enemy_team_color != NULL) msg->enemy_team_color = *(src->enemy_team_color);
+            if (src->game_progress != NULL) msg->game_progress = *(src->game_progress);
+            if (src->stage_remain_time != NULL) msg->stage_remain_time = *(src->stage_remain_time);
+            if (src->remaining_gold_coin != NULL) msg->remaining_gold_coin = *(src->remaining_gold_coin);
             break;
         }
         #endif
