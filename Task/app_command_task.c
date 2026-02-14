@@ -8,6 +8,8 @@
 
 Dr16Instance_s *dr16_instance;
 MiniPC_Instance *minipc_instance;
+MiniPC_Instance *minipc_blue_hp_instance;
+MiniPC_Instance *minipc_sentry_status_instance;
 Publisher *Command_publisher;
 RefereeInstance_s* ref_instance;
 
