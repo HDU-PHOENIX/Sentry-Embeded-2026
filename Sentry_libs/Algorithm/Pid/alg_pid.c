@@ -148,3 +148,21 @@ bool Pid_Enable(PidInstance_s *pid){
     pid->is_enabled = true;
     return true;
 }
+
+bool Pid_Clear(PidInstance_s *pid)
+{
+    if (pid == NULL)
+        return false;
+    pid->p_out = 0.0f;
+    pid->i_out = 0.0f;
+    pid->d_out = 0.0f;
+    pid->f_out = 0.0f;
+    pid->output = 0.0f;
+    pid->err[0] = 0.0f;
+    pid->err[1] = 0.0f;
+    pid->target[0] = 0.0f;
+    pid->target[1] = 0.0f;
+    pid->now[0] = 0.0f;
+    pid->now[1] = 0.0f;
+    return true;
+}

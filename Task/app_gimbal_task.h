@@ -42,6 +42,14 @@
 #define SHOOT_MODE 5//用于控制发射机构
 #define SCROP_MODE 6 //用于小陀螺
 #define DISABLE_MODE 0
+#define TEST_MODE 9
+
+enum {
+    IMU_MODE=0,//使用IMU值进行控制
+    ENCODER_MODE=1//使用编码器值进行控制
+};
+
+
 
 // 函数声明
 void StartGimbalTask(void const * argument);

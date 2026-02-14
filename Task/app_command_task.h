@@ -22,7 +22,7 @@
 #define SHOOT_MODE 5//用于控制发射机构
 #define SCROP_MODE 6 //用于小陀螺
 #define DISABLE_MODE 0
-
+#define TEST_MODE 9//测试用模式，使其可以脱离遥控器/其他外部控制信号来进行调试
 
 extern board_instance_t *board_instance;
 

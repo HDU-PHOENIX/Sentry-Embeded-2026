@@ -33,17 +33,17 @@ extern uint8_t mode;
 uint8_t ControlMode= RC_MODE;
 uint8_t gimbal_ready_flag;
 
-float encoder_target=3.0f;
 float target_position=0.3,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0;
 float target_up_speed=0.0;//yaw目标速度（用于IMU下）
 float target_up_position=0.0;
 float target_pitch_position=0.0;
 float temp_position=0.0;
 float output=0;
-float YawOffset=0.0f;
 extern quaternions_struct_t Quater;
 extern uint8_t ready_flag;
 #endif
+uint8_t gimbal_mode=IMU_MODE;//云台控制模式
+
 ////////////////////////////电机配置/////////////////////////////////////////
 
 
@@ -314,74 +314,6 @@ float GenerateReversingRamp(float min_pos, float max_pos, int steps, uint32_t in
 
 
 
-float Forbidden_Zone(float start, float end, float current, float target, float circle_range) {
-    float erro = target - current;
-    float half_circle = circle_range / 2.0f;
-
-    // 1. 寻找最短路径 (处理 [-PI, PI] 过界问题)
-    if (erro > half_circle) {
-        erro -= circle_range; // 正向移动距离太长，反向走更近
-    } else if (erro < -half_circle) {
-        erro += circle_range; // 反向移动距离太长，正向走更近
-    }
-
-    float final_target_on_shortest_path = current + erro;
-    // 将最终目标归一化到 [-PI, PI] 范围内，以便于比较
-    if (final_target_on_shortest_path > half_circle) final_target_on_shortest_path -= circle_range;
-    if (final_target_on_shortest_path < -half_circle) final_target_on_shortest_path += circle_range;
-
-    uint8_t crosses_forbidden_zone = 0;
-
-    // 2. 检查最短路径是否穿越禁区
-    if (start < end) {
-        // 禁区是 [start, end]，不跨越 PI/-PI 边界
-        if (erro > 0 && current < start && final_target_on_shortest_path > end) { // 正向穿越
-            crosses_forbidden_zone = 1;
-        } else if (erro < 0 && current > end && final_target_on_shortest_path < start) { // 反向穿越
-            crosses_forbidden_zone = 1;
-        }
-    } else { 
-        // 禁区跨越 PI/-PI 边界，为 [start, PI] U [-PI, end]
-        // 检查路径是否跨越了 PI/-PI 边界
-        if (erro > 0 && final_target_on_shortest_path < current) { // 正向移动，数值变小，说明从 PI 跨到 -PI
-            crosses_forbidden_zone = 1;
-        } else if (erro < 0 && final_target_on_shortest_path > current) { // 反向移动，数值变大，说明从 -PI 跨到 PI
-            crosses_forbidden_zone = 1;
-        }
-    }
-
-    // 3. 如果最短路径穿越禁区，则选择另一条路径（长路径）
-    if (crosses_forbidden_zone) {
-        if (erro > 0) {
-            erro -= circle_range;
-        } else {
-            erro += circle_range;
-        }
-    }
-
-    // 4. 如果目标点本身就在禁区内，则移动到最近的禁区边界
-    if (start < end) {
-        if (target > start && target < end) {
-            return (fabs(target - start) < fabs(target - end)) ? start : end;
-        }
-    } else {
-        if (target > start || target < end) {
-            // 计算到两个边界的最短距离
-            float dist_to_start = start - target;
-            if (dist_to_start > half_circle) dist_to_start -= circle_range;
-            if (dist_to_start < -half_circle) dist_to_start += circle_range;
-
-            float dist_to_end = end - target;
-            if (dist_to_end > half_circle) dist_to_end -= circle_range;
-            if (dist_to_end < -half_circle) dist_to_end += circle_range;
-
-            return (fabs(dist_to_start) < fabs(dist_to_end)) ? start : end;
-        }
-    }
-
-    return current + erro;
-}
-
 void StartGimbalTask(void const * argument)
 {
 	#ifdef DEBUG
@@ -437,7 +369,6 @@ void StartGimbalTask(void const * argument)
 		while(ready_flag!=1){
 			osDelay(1);
 		}
-    YawOffset=board_instance->received_current_down_yaw-Quater.yaw;
     
     Up_yaw->velocity_pid->kp=2300.0f;
 		Up_yaw->control_mode=DJI_VELOCITY;
@@ -448,6 +379,7 @@ void StartGimbalTask(void const * argument)
     gimbal_ready_flag=1;
 
     Log("Gimbal ready\r\n");
+    static uint8_t last_gimbal_mode = IMU_MODE;
   for(;;)
   {
 		#ifdef DEBUG
@@ -480,17 +412,43 @@ void StartGimbalTask(void const * argument)
         //   target_up_position=board_instance->received_target_up_yaw;
 		// 	    target_position=board_instance->received_target_up_pitch;
 				//同样有fallthough
+             if(board_instance->received_find_bool == 0){
+                // 在 -1.0 到 1.0 弧度之间往复扫描
+                // 参数：范围, 总步数, 步进间隔(ms), 到达端点停顿时间(ms)
+                gimbal_mode=ENCODER_MODE;//切换到相对坐标的，进行扫描
+                target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200);
+                // break; // 此处不应break，否则不执行下面的控制逻辑导致云台不动
+            } else {
+                gimbal_mode=IMU_MODE;
+                target_up_position=board_instance->received_target_up_yaw;
+                target_position=board_instance->received_target_up_pitch;
+            }
+            // fallthrough
 			case SHOOT_MODE:
-      case SCROP_MODE:
+            case SCROP_MODE:
 			case UP_MODE:
 				//这里有个fallthough
-			target_up_position=board_instance->received_target_up_yaw;
-			target_position=board_instance->received_target_up_pitch;
+            if (ControlMode != PC_MODE) {
+                gimbal_mode=IMU_MODE;
+                target_up_position=board_instance->received_target_up_yaw;
+                target_position=board_instance->received_target_up_pitch;
+            }
 			case RC_MODE:
+            if (ControlMode == RC_MODE) gimbal_mode = IMU_MODE;
 			if(last_ControlMode==DISABLE_MODE||pitch->motor_state==DM_DISABLE||Up_yaw->velocity_pid->is_enabled==0){
 				ControlMode=TRANS_MODE;
                 break;
 			}
+            
+            // 模式切换时清除PID中间值
+            if (gimbal_mode != last_gimbal_mode) {
+                Pid_Clear(Up_yaw->angle_pid);
+                Pid_Clear(Up_yaw->velocity_pid);
+                Pid_Clear(pitch->angle_pid);
+                Pid_Clear(pitch->velocity_pid);
+                last_gimbal_mode = gimbal_mode;
+            }
+
 			//Pitch轴
 			//限幅
 		    #ifdef DEBUG
@@ -514,9 +472,12 @@ void StartGimbalTask(void const * argument)
             
             #else 
             if(ready_flag==1){
-                target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
-            
-            pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.gryo_pitch,target_speed);//速度反向，IMU和编码器方向相反
+                if(gimbal_mode==IMU_MODE){
+                    target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
+                    pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.gryo_pitch,target_speed);//速度反向，IMU和编码器方向相反
+                }else{
+                    Motor_Dm_Control(pitch,target_position);
+                }
 			 
             }else{
                 pitch->angle_pid->i_out=0.0;
@@ -535,46 +496,16 @@ void StartGimbalTask(void const * argument)
 			 Motor_Dm_Transmit(pitch);
 			
 			//大疆
-			  //temp_position=Forbidden_Zone(2.97,-1.9,Up_yaw->message.out_position,target_up_position,2*PI);
-				
                 #ifndef IMU
                 temp_position=target_up_position;
                 Motor_Dji_Control(Up_yaw,temp_position);
                 #else
-                // 1. 计算目标相对于底盘前方的相对角度 (IMU值)
-                float relative_target_imu = -(target_up_position - (board_instance->received_current_down_yaw - YawOffset));
-                // 归一化到 [-PI, PI]
-                while (relative_target_imu > PI) relative_target_imu -= 2.0f * PI;
-                while (relative_target_imu < -PI) relative_target_imu += 2.0f * PI;
-
-                // 2. 映射到编码器空间：考虑方向取反和机械零点偏移
-                 encoder_target = YAW_ORIGIN - relative_target_imu;
-                // 归一化编码器目标值
-                while (encoder_target > PI) encoder_target -= 2.0f * PI;
-                while (encoder_target < -PI) encoder_target += 2.0f * PI;
-
-                // // 3. 使用 fhan 生成规划轨迹
-                // static float td_yaw_v = 0.0f;
-                // const float r = 50.0f; // 决定跟踪快慢和最大加速度
-                // const float h = 0.001f; // 采样周期 (1ms)
-                
-                // // 计算用于 fhan 的最短路径误差 (x1)
-                // float error = temp_position - encoder_target;
-                // while (error > PI) error -= 2.0f * PI;
-                // while (error < -PI) error += 2.0f * PI;
-
-                // float fh = fhan_correct(error, td_yaw_v, r, h);
-                // temp_position += h * td_yaw_v;
-                // td_yaw_v += h * fh;
-                
-                // 规划值归一化
-                while (temp_position > PI) temp_position -= 2.0f * PI;
-                while (temp_position < -PI) temp_position += 2.0f * PI;
-
-                target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
-								//target_up_speed = Pid_Calculate(Up_yaw->angle_pid, encoder_target, Up_yaw->message.out_position);
-								//target_up_speed = Pid_Calculate(Up_yaw->angle_pid, temp_position, Up_yaw->message.out_position);
-                Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.gryo_yaw);
+                if(gimbal_mode==IMU_MODE){
+                    target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
+                    Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.gryo_yaw);
+                }else{
+                    Motor_Dji_Control(Up_yaw,target_up_position);
+                }
                 #endif
 
 				Motor_Dji_Transmit(Up_yaw);
@@ -602,7 +533,18 @@ void StartGimbalTask(void const * argument)
                 Pid_Enable(pitch->velocity_pid);
                 
 				break;
-		
+            case TEST_MODE:
+                //仅测试上云台
+                #ifdef G_FEED_TEST
+                target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
+                Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
+                /////下面这行是测试重力补偿效果的//////
+			    //Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
+                //////////////////////////////////////////////////////
+                #endif
+                Motor_Dji_Control(Up_yaw,target_up_position);
+                Motor_Dji_Transmit(Up_yaw);
+                break;
             default:
                 Pid_Disable(Up_yaw->velocity_pid);
                 Pid_Disable(Up_yaw->angle_pid);

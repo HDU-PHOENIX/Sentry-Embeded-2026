@@ -119,6 +119,11 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
+          <Key>DLGUARM</Key>
+          <Name>?</Name>
+        </SetRegEntry>
+        <SetRegEntry>
+          <Number>0</Number>
           <Key>ARMRTXEVENTFLAGS</Key>
           <Name>-L70 -Z18 -C0 -M0 -T1</Name>
         </SetRegEntry>
@@ -361,6 +366,11 @@
           <count>23</count>
           <WinNumber>2</WinNumber>
           <ItemText>\\frame\../Task/app_command_task.c\board_instance-&gt;can_instance-&gt;cnt</ItemText>
+        </Ww>
+        <Ww>
+          <count>24</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>offline_time,0x0A</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>

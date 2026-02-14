@@ -82,4 +82,13 @@ bool Pid_Disable(PidInstance_s *pid);
  */
 bool Pid_Enable(PidInstance_s *pid);
 
+/**
+ * @file alg_pid.h
+ * @brief PID控制器清除中间值函数
+ * @param pid PidInstance_s指针，PID控制器实例
+ * @return 成功返回true，失败返回false
+ * @date 2026-02-14
+ */
+bool Pid_Clear(PidInstance_s *pid);
+
 #endif
