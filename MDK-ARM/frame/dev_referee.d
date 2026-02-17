@@ -1,4 +1,6 @@
-frame/bsp_uart.o: ..\Sentry_libs\Bsp\Uart\bsp_uart.c \
+frame/dev_referee.o: ..\Sentry_libs\Module\Referee\dev_referee.c \
+  ..\Sentry_libs\Module\Referee\dev_referee.h \
+  ..\Sentry_libs\Module\Referee\dev_referee_protocol.h \
   ..\Sentry_libs\Bsp\Uart\bsp_uart.h ..\Core\Inc\usart.h \
   ..\Core\Inc\main.h ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
@@ -31,6 +33,10 @@ frame/bsp_uart.o: ..\Sentry_libs\Bsp\Uart\bsp_uart.c \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
+  ..\Sentry_libs\Module\Daemon\dev_daemon.h \
+  ..\Sentry_libs\Algorithm\Crc\alg_crc.h \
+  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
+  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
   ..\..\Sentry-Embeded-2026\robot_config.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   ..\Core\Inc\FreeRTOSConfig.h \
@@ -38,4 +44,6 @@ frame/bsp_uart.o: ..\Sentry_libs\Bsp\Uart\bsp_uart.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\portable.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\deprecated_definitions.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F\portmacro.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h \
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\task.h \
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\list.h

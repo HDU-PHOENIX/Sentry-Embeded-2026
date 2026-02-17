@@ -70,7 +70,10 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
   ..\Sentry_libs\Bsp\DWT\bsp_dwt.h ..\Task\dev_board_communicate.h \
   ..\Task\dev_GimbalFollow.h ..\Task\app_command_task.h \
-  ..\Task\app_ins_task.h ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
+  ..\Sentry_libs\Module\Referee\dev_referee.h \
+  ..\Sentry_libs\Module\Referee\dev_referee_protocol.h \
+  ..\Sentry_libs\Module\Daemon\dev_daemon.h ..\Task\app_ins_task.h \
+  ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
   ..\Sentry_libs\Bsp\I2c\bsp_iic.h ..\Core\Inc\i2c.h \
   ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h ..\Core\Inc\gpio.h \
   ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \

@@ -22,7 +22,7 @@ RefereeData_t RefreeData;
 
 RefereeInitConfig_s referee_config = {
     .topic_name = "referee",
-    .uart_handle = &huart10,
+    .uart_handle = &huart1,
     .mode = UART_IDLE_MODE,
 };
 

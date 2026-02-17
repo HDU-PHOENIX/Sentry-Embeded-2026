@@ -60,5 +60,8 @@ frame/app_command_task.o: ..\Task\app_command_task.c \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
   ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
   ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
+  ..\Sentry_libs\Module\Referee\dev_referee.h \
+  ..\Sentry_libs\Module\Referee\dev_referee_protocol.h \
+  ..\Sentry_libs\Module\Daemon\dev_daemon.h \
   ..\Task\dev_board_communicate.h ..\Sentry_libs\Bsp\Can\bsp_can.h \
   ..\Core\Inc\can.h

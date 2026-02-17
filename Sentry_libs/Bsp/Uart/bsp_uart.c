@@ -8,12 +8,11 @@
  * @copyright  Copyright (c) 2025 HDU—PHOENIX
  * @todo
  *       1. 阻塞模式更好的实现方式
- *       2. 增加不定长接收功能
  */
 
 #include "bsp_uart.h"
 #include "usart.h"
-#include "FreeRTOS.h"
+#include "robot_config.h"
 #include <string.h>
 
 
@@ -34,16 +33,45 @@ static void Uart_RxCallback(UART_HandleTypeDef *huart) {
         if (uart_instance[i]->uart_handle == huart) { // 找到对应的UART实例
             if (uart_instance[i]->uart_module_callback != NULL) {
                 uart_instance[i]->uart_module_callback(uart_instance[i]); // 调用回调函数处理接收到的数据
-                uart_instance[i]->cnt++; // 通信计数+1
-                if(uart_instance[i]->cnt>=0xFFFF) uart_instance[i]->cnt=0; //防止溢出
+                uart_instance[i]->rx_cnt++; // 通信计数+1
+                if(uart_instance[i]->rx_cnt>=0xFFFF) uart_instance[i]->rx_cnt=0; //防止溢出
             }
-            //重新打开接收中断
-            if (uart_instance[i]->mode == UART_IT_MODE)
-                HAL_UART_Receive_IT(huart, uart_instance[i]->rx_buff, uart_instance[i]->rx_len);
-            else if (uart_instance[i]->mode == UART_DMA_MODE)
-                HAL_UART_Receive_DMA(huart, uart_instance[i]->rx_buff, uart_instance[i]->rx_len);
-
             break; // 找到后退出循环
+        }
+    }
+}
+
+static void Uart_RxIDLECallback(UART_HandleTypeDef *huart, uint16_t Size) {
+    if (huart == NULL) return;
+
+    for (uint8_t i = 0; i < id; i++) {
+        if (uart_instance[i]->uart_handle == huart) {
+            uart_instance[i]->rx_size = Size;
+
+            if (uart_instance[i]->mode == UART_IDLE_MODE &&
+                uart_instance[i]->uart_module_callback != NULL) {
+                uart_instance[i]->uart_module_callback(uart_instance[i]);
+
+                uart_instance[i]->rx_cnt++;
+                if (uart_instance[i]->rx_cnt >= 0xFFFF) {
+                    uart_instance[i]->rx_cnt = 0;
+                }
+                }
+            break;
+        }
+    }
+}
+
+static void Uart_TxCallback(UART_HandleTypeDef *huart) {
+    if(huart == NULL) {
+        return;
+    }
+    for(uint8_t i = 0; i < id; i++) {
+        if(uart_instance[i]->uart_handle == huart) {
+            if(uart_instance[i]->uart_module_tx_callback != NULL) {
+                uart_instance[i]->uart_module_tx_callback(uart_instance[i]);
+            }
+            break;
         }
     }
 }
@@ -65,7 +93,7 @@ UartInstance_s *Uart_Register(UartInitConfig_s *config) {
     }
 
     //开始分配空间 1用来区分实例和数组
-    UartInstance_s *uart_instance1 = (UartInstance_s *)pvPortMalloc(sizeof(UartInstance_s));
+    UartInstance_s *uart_instance1 = (UartInstance_s *)user_malloc(sizeof(UartInstance_s));
     memset(uart_instance1, 0, sizeof(UartInstance_s));//清空空间
 
     uart_instance1->uart_handle = config->uart_handle; // 设置串口句柄
@@ -73,9 +101,10 @@ UartInstance_s *Uart_Register(UartInitConfig_s *config) {
     uart_instance1->rx_len = config->rx_len; // 设置接收长度
     uart_instance1->id = config->id;
     uart_instance1->uart_module_callback = config->uart_module_callback; // 设置回调函数
+    uart_instance1->uart_module_tx_callback = config->uart_module_tx_callback; // 设置发送完成回调函数
 
     if (uart_instance1 == NULL || config->rx_len > UART_RX_BUFF_LEN) {
-        vPortFree(uart_instance1); // 分配失败，释放内存
+        user_free(uart_instance1); // 分配失败，释放内存
         return NULL;
     }
 
@@ -85,6 +114,11 @@ UartInstance_s *Uart_Register(UartInitConfig_s *config) {
         HAL_UART_Receive_IT(uart_instance1->uart_handle, uart_instance1->rx_buff, uart_instance1->rx_len); // 启用中断接收
     }else if (uart_instance1->mode == UART_DMA_MODE) {
         HAL_UART_Receive_DMA(uart_instance1->uart_handle, uart_instance1->rx_buff, uart_instance1->rx_len);
+    }else if (uart_instance1->mode == UART_IDLE_MODE) {
+        HAL_UARTEx_ReceiveToIdle_DMA(uart_instance1->uart_handle,
+                                     uart_instance1->rx_buff,
+                                     sizeof(uart_instance1->rx_buff));
+        __HAL_DMA_DISABLE_IT(uart_instance1->uart_handle->hdmarx, DMA_IT_HT); // 禁用半满中断
     }
 
     return uart_instance1;
@@ -95,7 +129,7 @@ bool Uart_Transmit(UartInstance_s *uart_instance, uint8_t *data) {
         return false; // 无效的参数
     }
     memset(&uart_instance->tx_buff,0,sizeof(uart_instance->tx_buff));
-    
+
     for (size_t i = 0; i < UART_RX_BUFF_LEN; ++i) {
         if (data[i] == '\n') {
             uart_instance->tx_len = i + 1;
@@ -111,12 +145,43 @@ bool Uart_Transmit(UartInstance_s *uart_instance, uint8_t *data) {
         HAL_UART_Transmit_IT(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
     } else if (uart_instance->mode == UART_DMA_MODE) {
         HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
+    } else if (uart_instance->mode == UART_IDLE_MODE) {
+        HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
     } else {
         return false; // 不支持的模式
     }
 
+    uart_instance->tx_cnt++; // 通信计数+1
+    if(uart_instance->tx_cnt>=0xFFFF) uart_instance->tx_cnt=0; //防止溢出
     return true; // 发送成功
 }
+
+bool Uart_Transmit_Len(UartInstance_s* uart_instance, uint8_t* data, uint16_t len){
+    if (uart_instance == NULL || data == NULL || len == 0 || len > 256) {
+        return false; // 无效的参数
+    }
+    memset(&uart_instance->tx_buff,0,sizeof(uart_instance->tx_buff));
+    uart_instance->tx_len = len;
+
+    memcpy(uart_instance->tx_buff, data, uart_instance->tx_len);
+
+    if (uart_instance->mode == UART_BLOCKING_MODE) {
+        HAL_UART_Transmit(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len, HAL_MAX_DELAY);
+    } else if (uart_instance->mode == UART_IT_MODE) {
+        HAL_UART_Transmit_IT(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
+    } else if (uart_instance->mode == UART_DMA_MODE) {
+        HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
+    } else if (uart_instance->mode == UART_IDLE_MODE) {
+        HAL_UART_Transmit_DMA(uart_instance->uart_handle, uart_instance->tx_buff, uart_instance->tx_len);
+    } else {
+        return false; // 不支持的模式
+    }
+
+    uart_instance->tx_cnt++; // 通信计数+1
+    if(uart_instance->tx_cnt>=0xFFFF) uart_instance->tx_cnt=0; //防止溢出
+    return true; // 发送成功
+}
+
 bool Uart_Blocking_Receive(UartInstance_s* uart_instance) {
     if (uart_instance->mode != UART_BLOCKING_MODE) {
         return false; // 如果不是阻塞模式，返回false
@@ -134,4 +199,12 @@ bool Uart_Blocking_Receive(UartInstance_s* uart_instance) {
 //将HAL库的接收回调重定向到库的接收回调函数
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     Uart_RxCallback(huart);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+    Uart_TxCallback(huart);
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+    Uart_RxIDLECallback(huart, Size);
 }

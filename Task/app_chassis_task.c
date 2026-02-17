@@ -476,6 +476,12 @@ void StartChassisTask(void const * argument)
         // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
         Chassis_Control(Chassis);
         //临时逻辑
+        target_position=MiniPC->message.ch_pack.yaw;
+        target_position=target_position>PI?target_position-2*PI:target_position;
+        target_position=target_position<-PI?target_position+2*PI:target_position;
+        target_position=target_position>PI+0.1f?PI:target_position;
+        target_position=target_position<-PI-0.1f?-PI:target_position;
+        
         Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 				Motor_Dm_Transmit(Down_yaw);
 				Pid_Disable(Trigger->velocity_pid);

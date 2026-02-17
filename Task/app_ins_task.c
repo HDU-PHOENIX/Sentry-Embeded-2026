@@ -230,17 +230,17 @@ void isttask(void const * argument)
     // 【新增】在上电初期强制等待温度达到 40 度
     // 只有在温度稳定后，陀螺仪零偏才不会剧烈漂移，AHRS 的高增益初始化才有意义
     float init_temp = 0.0f;
-    while (init_temp < 39.5f) {
-        if (BMI088_ReadTemperature(bmi088_test->spi_acc, &init_temp)) {
-            // 在等待过程中持续运行 PID 控温逻辑
-            float pid_output = Pid_Calculate(temp_pid, 40.0f, init_temp);
-            float duty_ratio = pid_output / 20.0f;
-            if (duty_ratio < 0.0f) duty_ratio = 0.0f;
-            if (duty_ratio > 1.0f) duty_ratio = 1.0f;
-            Pwm_SetDutyRatio(heater_pwm, duty_ratio);
-        }
-        osDelay(2); // 2ms 周期
-    }
+//    while (init_temp < 39.5f) {
+//        if (BMI088_ReadTemperature(bmi088_test->spi_acc, &init_temp)) {
+//            // 在等待过程中持续运行 PID 控温逻辑
+//            float pid_output = Pid_Calculate(temp_pid, 40.0f, init_temp);
+//            float duty_ratio = pid_output / 20.0f;
+//            if (duty_ratio < 0.0f) duty_ratio = 0.0f;
+//            if (duty_ratio > 1.0f) duty_ratio = 1.0f;
+//            Pwm_SetDutyRatio(heater_pwm, duty_ratio);
+//        }
+//        osDelay(2); // 2ms 周期
+//    }
 
     // 实例化滤波器配置
     FilterInitConfig_t filter_config = {
