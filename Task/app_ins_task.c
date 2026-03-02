@@ -366,7 +366,12 @@ void isttask(void const * argument)
             Quater.ins_ready = (!fusion_ahrs.initialising); // 误差小于1度
             // 构造 Fusion 向量并进行动态偏置补偿
             FusionVector raw_gyro = {bmi088_test->gyro[0], bmi088_test->gyro[1], bmi088_test->gyro[2]};
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+            FusionVector raw_accel = {bmi088_test->accel[0] / 9.80665f, bmi088_test->accel[1] / 9.80665f, bmi088_test->accel[2] / 9.80665f};
+            raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro, raw_accel); // 动态偏置学习与减除
+#else
             raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro); // 动态偏置学习与减除
+#endif
             
             for (int i = 0; i < 3; i++) {
                 NotchFilter_Process(gyro_notch_171_filters[i], raw_gyro.array[i], &notch_gyro_171[i]);

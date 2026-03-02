@@ -41,6 +41,11 @@ MadgwickParam madgwickParam;
  */
 #define THRESHOLD (0.005f)
 
+#define FUSION_OFFSET_STATIONARY_ALPHA (0.02f)
+#define FUSION_OFFSET_ACCEL_MAG_TOL (0.08f)
+#define FUSION_OFFSET_GYRO_DEV_THR (0.0035f)
+#define FUSION_OFFSET_ACCEL_DEV_THR (0.03f)
+
 /**
  * @brief Flag to enable gradient descent compensation
  */
@@ -534,6 +539,12 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
     offset->timeout = TIMEOUT * sampleRate;  // Calculate timeout count
     offset->timer = 0;                       // Reset timer
     offset->gyroscopeOffset = FUSION_VECTOR_ZERO; // Reset bias estimate
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+    offset->gyroMean = FUSION_VECTOR_ZERO;
+    offset->gyroAbsDev = FUSION_VECTOR_ZERO;
+    offset->accelMean = FUSION_VECTOR_ZERO;
+    offset->accelAbsDev = FUSION_VECTOR_ZERO;
+#endif
 }
 
 /**
@@ -542,10 +553,48 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
  * @param gyroscope Raw gyroscope data
  * @return Bias-corrected gyroscope data
  */
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope, FusionVector accelerometer) {
+#else
 FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope) {
+#endif
     // Subtract current bias estimate first
     gyroscope = FusionVectorSubtract(gyroscope, offset->gyroscopeOffset);
-    
+
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+    const float alpha = FUSION_OFFSET_STATIONARY_ALPHA;
+
+    const FusionVector gyroDelta = FusionVectorSubtract(gyroscope, offset->gyroMean);
+    offset->gyroMean = FusionVectorAdd(offset->gyroMean, FusionVectorMultiplyScalar(gyroDelta, alpha));
+    offset->gyroAbsDev.axis.x = (1.0f - alpha) * offset->gyroAbsDev.axis.x + alpha * fabsf(gyroDelta.axis.x);
+    offset->gyroAbsDev.axis.y = (1.0f - alpha) * offset->gyroAbsDev.axis.y + alpha * fabsf(gyroDelta.axis.y);
+    offset->gyroAbsDev.axis.z = (1.0f - alpha) * offset->gyroAbsDev.axis.z + alpha * fabsf(gyroDelta.axis.z);
+
+    const FusionVector accelDelta = FusionVectorSubtract(accelerometer, offset->accelMean);
+    offset->accelMean = FusionVectorAdd(offset->accelMean, FusionVectorMultiplyScalar(accelDelta, alpha));
+    offset->accelAbsDev.axis.x = (1.0f - alpha) * offset->accelAbsDev.axis.x + alpha * fabsf(accelDelta.axis.x);
+    offset->accelAbsDev.axis.y = (1.0f - alpha) * offset->accelAbsDev.axis.y + alpha * fabsf(accelDelta.axis.y);
+    offset->accelAbsDev.axis.z = (1.0f - alpha) * offset->accelAbsDev.axis.z + alpha * fabsf(accelDelta.axis.z);
+
+    const bool gyroBelowThreshold = (fabsf(gyroscope.axis.x) <= THRESHOLD) &&
+                                    (fabsf(gyroscope.axis.y) <= THRESHOLD) &&
+                                    (fabsf(gyroscope.axis.z) <= THRESHOLD);
+
+    const bool gyroStable = (offset->gyroAbsDev.axis.x <= FUSION_OFFSET_GYRO_DEV_THR) &&
+                            (offset->gyroAbsDev.axis.y <= FUSION_OFFSET_GYRO_DEV_THR) &&
+                            (offset->gyroAbsDev.axis.z <= FUSION_OFFSET_GYRO_DEV_THR);
+
+    const float accelMagnitude = FusionVectorMagnitude(accelerometer);
+    const bool accelNear1g = fabsf(accelMagnitude - 1.0f) <= FUSION_OFFSET_ACCEL_MAG_TOL;
+    const bool accelStable = (offset->accelAbsDev.axis.x <= FUSION_OFFSET_ACCEL_DEV_THR) &&
+                             (offset->accelAbsDev.axis.y <= FUSION_OFFSET_ACCEL_DEV_THR) &&
+                             (offset->accelAbsDev.axis.z <= FUSION_OFFSET_ACCEL_DEV_THR);
+
+    if (!(gyroBelowThreshold && gyroStable && accelNear1g && accelStable)) {
+        offset->timer = 0;
+        return gyroscope;
+    }
+#else
     // Reset timer if gyroscope data exceeds threshold
     if ((fabsf(gyroscope.axis.x) > THRESHOLD) || 
        (fabsf(gyroscope.axis.y) > THRESHOLD) || 
@@ -553,7 +602,8 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
         offset->timer = 0;
         return gyroscope;
     }
-    
+#endif
+
     // Return directly if timer hasn't timed out
     if (offset->timer < offset->timeout) {
         offset->timer++;

@@ -15,6 +15,10 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifndef FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+#define FUSION_OFFSET_STRICT_STATIONARY_DETECTION (0)
+#endif
+
 //------------------------------------------------------------------------------
 // Mathematical Library Definitions
 
@@ -546,6 +550,12 @@ typedef struct {
     unsigned int timeout;               // Timeout counter
     unsigned int timer;                 // Timer counter
     FusionVector gyroscopeOffset;       // Gyroscope bias estimate
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+    FusionVector gyroMean;              // Gyro mean for stationary detection
+    FusionVector gyroAbsDev;            // Gyro absolute deviation estimate
+    FusionVector accelMean;             // Acc mean for stationary detection
+    FusionVector accelAbsDev;           // Acc absolute deviation estimate
+#endif
 } FusionOffset;
 
 /**
@@ -561,7 +571,11 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
  * @param gyroscope Raw gyroscope data
  * @return Bias-corrected gyroscope data
  */
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope, FusionVector accelerometer);
+#else
 FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope);
+#endif
 
 //------------------------------------------------------------------------------
 // Gradient Descent Algorithm Parameters
