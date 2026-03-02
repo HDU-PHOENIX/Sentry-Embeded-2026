@@ -22,6 +22,10 @@ PidInstance_s *ins_pid;
 uint8_t test_data[5]={0,0,0,0,0};
 quaternions_struct_t Quater;//四元数
 Bmi088Instance_s *bmi088_test;
+float Acc_Raw[3];//用于FFT的原始加速度数据
+float Gyro_Raw[3];//用于FFT的原始陀螺仪数据
+float Acc_Filtered[3];//滤波后的加速度数据
+float Gyro_Filtered[3];//滤波后的陀螺仪数据
 float32_t Gyro_Offset[3] = {0};        // 陀螺仪零偏
   Bmi088InitConfig_s bmi088_config = {
     .spi_acc_config = {
@@ -252,13 +256,31 @@ void isttask(void const * argument)
     // 只为加速度计和陀螺仪的XYZ轴创建滑动平均滤波器实例
     MovingAvgFilter_t *accel_moving_filters[3];    // 加速度计滑动平均滤波器
     MovingAvgFilter_t *gyro_moving_filters[3];     // 陀螺仪滑动平均滤波器
+    NotchFilter_t *accel_notch_171_filters[3];     // 加速度计171Hz陷波
+    NotchFilter_t *accel_notch_367_filters[3];     // 加速度计367Hz陷波
+    NotchFilter_t *gyro_notch_171_filters[3];      // 陀螺仪171Hz陷波
 
     // 注册滑动平均滤波器实例
     for (int i = 0; i < 3; i++) {
         accel_moving_filters[i] = MovingAvgFilter_Register(&filter_config);
         gyro_moving_filters[i] = MovingAvgFilter_Register(&filter_config);
+
+        filter_config.notch_freq = 171.0f;
+        filter_config.notch_r = 0.985f;
+        accel_notch_171_filters[i] = NotchFilter_Register(&filter_config);
+
+        filter_config.notch_freq = 367.0f;
+        filter_config.notch_r = 0.97f;
+        accel_notch_367_filters[i] = NotchFilter_Register(&filter_config);
+
+        filter_config.notch_freq = 171.0f;
+        filter_config.notch_r = 0.99f;
+        gyro_notch_171_filters[i] = NotchFilter_Register(&filter_config);
+
         // 检查内存分配是否成功
-        if (accel_moving_filters[i] == NULL || gyro_moving_filters[i] == NULL) {
+        if (accel_moving_filters[i] == NULL || gyro_moving_filters[i] == NULL ||
+            accel_notch_171_filters[i] == NULL || accel_notch_367_filters[i] == NULL ||
+            gyro_notch_171_filters[i] == NULL) {
             Error_Handler();
         }
     }
@@ -266,6 +288,9 @@ void isttask(void const * argument)
     // 姿态解算相关变量
     float32_t filtered_accel[3] = {0};      // 滤波后的加速度数据
     float32_t filtered_gyro[3] = {0};       // 滤波后的陀螺仪数据
+    float32_t notch_accel_171[3] = {0};     // 171Hz陷波后的加速度数据
+    float32_t notch_accel_367[3] = {0};     // 367Hz陷波后的加速度数据
+    float32_t notch_gyro_171[3] = {0};      // 171Hz陷波后的陀螺仪数据
     
     float temperature = 0.0f;               // 温度数据
     float32_t current_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f}; // 当前四元数
@@ -323,11 +348,18 @@ void isttask(void const * argument)
                     Pwm_SetDutyRatio(heater_pwm, duty_ratio);
                 }
             }
-            
+            for(int i=0;i<3;i++){
+                Acc_Raw[i]=bmi088_test->accel[i];
+                Gyro_Raw[i]=bmi088_test->gyro[i];
+            }
             // 数据读取与预处理
             for (int i = 0; i < 3; i++) {
-                MovingAvgFilter_Process(accel_moving_filters[i], bmi088_test->accel[i], &filtered_accel[i]);
+                NotchFilter_Process(accel_notch_171_filters[i], bmi088_test->accel[i], &notch_accel_171[i]);
+                NotchFilter_Process(accel_notch_367_filters[i], notch_accel_171[i], &notch_accel_367[i]);
+                MovingAvgFilter_Process(accel_moving_filters[i], notch_accel_367[i], &filtered_accel[i]);
+                
             }
+
         //    FusionAhrsFlags flags = FusionAhrsGetFlags(&fusion_ahrs);
         //     FusionAhrsInternalStates states = FusionAhrsGetInternalStates(&fusion_ahrs);
 
@@ -337,7 +369,8 @@ void isttask(void const * argument)
             raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro); // 动态偏置学习与减除
             
             for (int i = 0; i < 3; i++) {
-                MovingAvgFilter_Process(gyro_moving_filters[i], raw_gyro.array[i], &filtered_gyro[i]);
+                NotchFilter_Process(gyro_notch_171_filters[i], raw_gyro.array[i], &notch_gyro_171[i]);
+                MovingAvgFilter_Process(gyro_moving_filters[i], notch_gyro_171[i], &filtered_gyro[i]);
             }
             
             // 姿态解算 - 使用EKF进行姿态融合更新

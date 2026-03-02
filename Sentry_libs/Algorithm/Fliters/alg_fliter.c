@@ -336,6 +336,46 @@ ButterworthFilter_t* ButterworthFilter_Register(FilterInitConfig_t *config) {
 }
 
 /**
+ * @brief 注册二阶陷波滤波器实例
+ * @param config 滤波器初始化配置
+ * @return 滤波器实例指针，失败返回NULL
+ */
+NotchFilter_t* NotchFilter_Register(FilterInitConfig_t *config) {
+    if (config == NULL || config->sample_freq <= 0.0f || config->notch_freq <= 0.0f) {
+        return NULL;
+    }
+
+    // 陷波中心频率必须小于奈奎斯特频率
+    if (config->notch_freq >= (config->sample_freq * 0.5f)) {
+        return NULL;
+    }
+
+    NotchFilter_t *filter = (NotchFilter_t *)pvPortMalloc(sizeof(NotchFilter_t));
+    if (filter == NULL) {
+        return NULL;
+    }
+
+    memset(filter, 0, sizeof(NotchFilter_t));
+    filter->sample_freq = config->sample_freq;
+    filter->notch_freq = config->notch_freq;
+
+    // 默认半径，越接近1陷波越窄
+    filter->r = (config->notch_r > 0.0f && config->notch_r < 1.0f) ? config->notch_r : 0.98f;
+
+    float32_t w0 = 2.0f * PI * filter->notch_freq / filter->sample_freq;
+    float32_t c = cosf(w0);
+
+    filter->b0 = 1.0f;
+    filter->b1 = -2.0f * c;
+    filter->b2 = 1.0f;
+    filter->a1 = -2.0f * filter->r * c;
+    filter->a2 = filter->r * filter->r;
+
+    filter->initialized = 1;
+    return filter;
+}
+
+/**
  * @brief 二阶巴特沃斯滤波器处理函数
  * @param filter 滤波器实例
  * @param input 输入数据
@@ -370,6 +410,31 @@ void ButterworthFilter_Process(ButterworthFilter_t *filter, float32_t input, flo
 }
 
 /**
+ * @brief 二阶陷波滤波器处理函数
+ * @param filter 滤波器实例
+ * @param input 输入数据
+ * @param output 输出数据指针
+ */
+void NotchFilter_Process(NotchFilter_t *filter, float32_t input, float32_t *output) {
+    if (filter == NULL || output == NULL) {
+        return;
+    }
+
+    float32_t y_out = filter->b0 * input
+                    + filter->b1 * filter->x1
+                    + filter->b2 * filter->x2
+                    - filter->a1 * filter->y1
+                    - filter->a2 * filter->y2;
+
+    filter->x2 = filter->x1;
+    filter->x1 = input;
+    filter->y2 = filter->y1;
+    filter->y1 = y_out;
+
+    *output = y_out;
+}
+
+/**
  * @brief 释放滑动平均滤波器实例
  * @param filter 滤波器实例指针
  */
@@ -394,6 +459,16 @@ void LowpassFilter_Free(LowpassFilter_t *filter) {
  * @param filter 滤波器实例指针
  */
 void ButterworthFilter_Free(ButterworthFilter_t *filter) {
+    if (filter != NULL) {
+        vPortFree(filter);
+    }
+}
+
+/**
+ * @brief 释放陷波滤波器实例
+ * @param filter 滤波器实例指针
+ */
+void NotchFilter_Free(NotchFilter_t *filter) {
     if (filter != NULL) {
         vPortFree(filter);
     }

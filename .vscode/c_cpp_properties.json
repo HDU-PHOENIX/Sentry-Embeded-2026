@@ -12,6 +12,21 @@
       "compilerArgs": [
         ""
       ]
+    },
+    {
+      "name": "windows-clang-x64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/Core/Inc",
+        "${workspaceFolder}/Drivers/**",
+        "${workspaceFolder}/Middlewares/**",
+        "${workspaceFolder}/Sentry_libs/**"
+      ],
+      "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+      "cStandard": "${default}",
+      "cppStandard": "${default}",
+      "intelliSenseMode": "clang-x64",
+      "compilerArgs": []
     }
   ],
   "version": 4
