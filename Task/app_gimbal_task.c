@@ -10,6 +10,7 @@
 
 
 #define YAW_ORIGIN -3.14f
+#define G_FEED_TEST
 //实例声明
 //此处做了修改，现在完全不关心下云台电机
 DmMotorInstance_s *pitch;
@@ -54,8 +55,11 @@ static DmMotorInitConfig_s pitch_config = {
     .can_config = {
         .can_number = 2,
 				.topic_name = "pitch",
+            #ifndef G_FEED_TEST
           .tx_id = 0x006,
-         //.tx_id = 0x106,
+          #else
+         .tx_id = 0x006,
+         #endif
          .rx_id = 0x016,
          
         .can_module_callback = NULL,
@@ -161,8 +165,9 @@ float G_feed(float position){
 	//[2.319374, -3.015623, 0.755581, -0.311670]
 	//[1.549729, -2.003787, 0.406681, -0.285731]
 	//[0.386597, -0.374320, -0.419100, 0.075079]（装了枪管的）
-    float torque = 0.386597*position*position*position +  (-0.374320*position*position) + -0.419100*position + ( 0.075079);
-    return torque; 
+   // float torque = 0.386597*position*position*position +  (-0.374320*position*position) + -0.419100*position + ( 0.075079);
+   float torque = (1.016980 * position * position * position) + (-1.500239 * position * position) + (-0.062756 * position) + (0.195295); 
+   return torque; 
 }
 ////////测试用代码///////////
 #ifdef DEBUG
@@ -358,6 +363,9 @@ void StartGimbalTask(void const * argument)
             gimbal_ready_flag=1;
             break;
         }
+        #ifdef G_FEED_TEST
+        gimbal_ready_flag=1;
+        #endif
         
         osDelay(1);
     }
@@ -385,7 +393,7 @@ void StartGimbalTask(void const * argument)
 		#ifdef DEBUG
         can_count=board_instance->can_instance->cnt;
 		test_speed=Up_yaw->message.out_velocity;
-		test_position=Up_yaw->message.out_position;
+		//test_position=Up_yaw->message.out_position;
         static uint8_t send_flag=0;
 		//target_speed=pitch->angle_pid->output;
 		 dt3 = Dwt_GetDeltaT(&dwt_cnt_last3);
@@ -410,11 +418,13 @@ void StartGimbalTask(void const * argument)
 		switch (ControlMode) {
 			case PC_MODE:
         //   target_up_position=board_instance->received_target_up_yaw;
+        //这个逻辑最好加个检查稳定性，比如延时多少，否则find_bool抖动会导致云台抖动
 		// 	    target_position=board_instance->received_target_up_pitch;
 				//同样有fallthough
              if(board_instance->received_find_bool == 0){
                 // 在 -1.0 到 1.0 弧度之间往复扫描
                 // 参数：范围, 总步数, 步进间隔(ms), 到达端点停顿时间(ms)
+                
                 gimbal_mode=ENCODER_MODE;//切换到相对坐标的，进行扫描
                 target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200);
                 // break; // 此处不应break，否则不执行下面的控制逻辑导致云台不动
@@ -536,10 +546,16 @@ void StartGimbalTask(void const * argument)
             case TEST_MODE:
                 //仅测试上云台
                 #ifdef G_FEED_TEST
+                 Pid_Disable(Up_yaw->velocity_pid);
+                Pid_Disable(Up_yaw->angle_pid);
                 target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
-                Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
+                //Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
+								
+								test_output=pitch->message.torque;
+                test_position=pitch->message.out_position;
                 /////下面这行是测试重力补偿效果的//////
-			    //Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
+			    Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
+                Motor_Dm_Transmit(pitch);
                 //////////////////////////////////////////////////////
                 #endif
                 Motor_Dji_Control(Up_yaw,target_up_position);

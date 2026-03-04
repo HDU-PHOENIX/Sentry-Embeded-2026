@@ -71,7 +71,7 @@ I (..\Sentry_libs\Bsp\Log\bsp_log.h)(0x68DF5596)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT.h)(0x6824B5D0)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h)(0x6824B5D0)
 I (..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h)(0x68F739BC)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Module\BMI088\dev_bmi088.h)(0x68850DCE)
 I (..\Sentry_libs\Bsp\SPI\bsp_spi.h)(0x6877671B)
 I (..\Sentry_libs\Algorithm\Fliters\alg_fliter.h)(0x68F63306)
@@ -2101,7 +2101,7 @@ I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h)(0x68B5418E)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\task.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\list.h)(0x68B540AA)
@@ -2154,7 +2154,7 @@ I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_uart.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h)(0x68B5418E)
 I (..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h)(0x68B5418E)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Bsp\Log\bsp_log.h)(0x68DF5596)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT.h)(0x6824B5D0)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h)(0x6824B5D0)
@@ -2259,7 +2259,7 @@ I (..\Middlewares\Third_Party\FreeRTOS\Source\include\deprecated_definitions.h)(
 I (..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F\portmacro.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h)(0x68B540AA)
 F (..\Sentry_libs\Module\Ist8310\dev_ist_8310.h)(0x68DF5596)()
-F (..\Task\app_gimbal_task.c)(0x698452E3)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Core/Inc -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Middlewares/ST/ARM/DSP/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Sentry_libs -I ../Sentry_libs/Algorithm -I ../Sentry_libs/Algorithm/Chassis_calc -I ../Sentry_libs/Algorithm/Crc -I ../Sentry_libs/Algorithm/Kalman -I ../Sentry_libs/Algorithm/Mahony -I ../Sentry_libs/Algorithm/Pid -I ../Sentry_libs/Bsp -I ../Sentry_libs/Bsp/Can -I ../Sentry_libs/Bsp/Exti -I ../Sentry_libs/Bsp/Fdcan -I ../Sentry_libs/Bsp/I2c -I ../Sentry_libs/Bsp/Log -I ../Sentry_libs/Bsp/SPI -I ../Sentry_libs/Bsp/Tim -I ../Sentry_libs/Bsp/Uart -I ../Sentry_libs/Module -I ../Sentry_libs/Module/BMI088 -I ../Sentry_libs/Module/Buzzer -I ../Sentry_libs/Module/Com_System -I ../Sentry_libs/Module/Com_System/assets -I ../Sentry_libs/Module/Dr16 -I ../Sentry_libs/Module/Ist8310 -I ../Sentry_libs/Module/LED -I ../Sentry_libs/Module/Minipc -I ../Sentry_libs/Module/Motor -I ../Sentry_libs/Module/Motor/Dji -I ../Sentry_libs/Module/Motor/Dm -I ../Sentry_libs/Module/Motor/Lk -I ../Sentry_libs/Module/Motor/Unitree -I ../Sentry_libs/Module/Servo -I ../Sentry_libs/pic -I ../Sentry_libs/temp_informality_InsTask -I ../Sentry_libs/temp_informality_InsTask/pic -I ../USB_DEVICE/App -I ../USB_DEVICE/Target -I ../../Sentry-Embeded-2026 -I ../Task -I ../Sentry_libs/Bsp/GPIO -I ../Sentry_libs/Bsp/DWT -I ../Sentry_libs/Algorithm/Fliters -I ../Sentry_libs/Bsp/PWM-I./RTE/_frame-IC:/Users/18380/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-D__UVISION_VERSION="540" -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o frame/app_gimbal_task.o -MMD)
+F (..\Task\app_gimbal_task.c)(0x69A6C937)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Core/Inc -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Middlewares/ST/ARM/DSP/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Sentry_libs -I ../Sentry_libs/Algorithm -I ../Sentry_libs/Algorithm/Chassis_calc -I ../Sentry_libs/Algorithm/Crc -I ../Sentry_libs/Algorithm/Kalman -I ../Sentry_libs/Algorithm/Mahony -I ../Sentry_libs/Algorithm/Pid -I ../Sentry_libs/Bsp -I ../Sentry_libs/Bsp/Can -I ../Sentry_libs/Bsp/Exti -I ../Sentry_libs/Bsp/Fdcan -I ../Sentry_libs/Bsp/I2c -I ../Sentry_libs/Bsp/Log -I ../Sentry_libs/Bsp/SPI -I ../Sentry_libs/Bsp/Tim -I ../Sentry_libs/Bsp/Uart -I ../Sentry_libs/Module -I ../Sentry_libs/Module/BMI088 -I ../Sentry_libs/Module/Buzzer -I ../Sentry_libs/Module/Com_System -I ../Sentry_libs/Module/Com_System/assets -I ../Sentry_libs/Module/Dr16 -I ../Sentry_libs/Module/Ist8310 -I ../Sentry_libs/Module/LED -I ../Sentry_libs/Module/Minipc -I ../Sentry_libs/Module/Motor -I ../Sentry_libs/Module/Motor/Dji -I ../Sentry_libs/Module/Motor/Dm -I ../Sentry_libs/Module/Motor/Lk -I ../Sentry_libs/Module/Motor/Unitree -I ../Sentry_libs/Module/Servo -I ../Sentry_libs/pic -I ../Sentry_libs/temp_informality_InsTask -I ../Sentry_libs/temp_informality_InsTask/pic -I ../USB_DEVICE/App -I ../USB_DEVICE/Target -I ../../Sentry-Embeded-2026 -I ../Task -I ../Sentry_libs/Bsp/GPIO -I ../Sentry_libs/Bsp/DWT -I ../Sentry_libs/Algorithm/Fliters -I ../Sentry_libs/Bsp/PWM-I./RTE/_frame-IC:/Users/18380/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-D__UVISION_VERSION="540" -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o frame/app_gimbal_task.o -MMD)
 I (..\Task\app_gimbal_task.h)(0x69844D4F)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h)(0x68B540AA)
 I (..\Core\Inc\FreeRTOSConfig.h)(0x68DF5B1A)
@@ -2321,7 +2321,7 @@ I (..\Sentry_libs\Bsp\Log\bsp_log.h)(0x68DF5596)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT.h)(0x6824B5D0)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h)(0x6824B5D0)
 I (..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h)(0x68F739BC)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Module\BMI088\dev_bmi088.h)(0x68850DCE)
 I (..\Sentry_libs\Bsp\SPI\bsp_spi.h)(0x6877671B)
 I (..\Core\Inc\spi.h)(0x68DF5B1A)
@@ -2417,7 +2417,7 @@ I (..\Sentry_libs\Algorithm\Fliters\alg_fliter.h)(0x68F63306)
 I (..\Sentry_libs\Bsp\Can\bsp_can.h)(0x68DBC0B6)
 I (..\Core\Inc\can.h)(0x68DF5B1A)
 I (..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h)(0x695DD4A4)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Module\Dr16\dev_dr16.h)(0x68DF9CFC)
 I (..\Sentry_libs\Bsp\Uart\bsp_uart.h)(0x690C5181)
 I (..\Core\Inc\usart.h)(0x68DF5B1A)
@@ -2521,7 +2521,7 @@ I (..\Middlewares\ST\ARM\DSP\Inc\arm_math.h)(0x68B50803)
 I (..\Drivers\CMSIS\Include\cmsis_compiler.h)(0x68B5418E)
 I (..\Sentry_libs\Bsp\DWT\bsp_dwt.h)(0x68EE2395)
 I (..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h)(0x68F739BC)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Module\BMI088\dev_bmi088.h)(0x68850DCE)
 I (..\Sentry_libs\Bsp\SPI\bsp_spi.h)(0x6877671B)
 I (..\Core\Inc\spi.h)(0x68DF5B1A)
@@ -2594,7 +2594,7 @@ I (..\Sentry_libs\Bsp\Log\bsp_log.h)(0x68DF5596)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT.h)(0x6824B5D0)
 I (..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h)(0x6824B5D0)
 I (..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h)(0x68F739BC)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\Sentry_libs\Module\BMI088\dev_bmi088.h)(0x68850DCE)
 I (..\Sentry_libs\Bsp\SPI\bsp_spi.h)(0x6877671B)
 I (..\Core\Inc\spi.h)(0x68DF5B1A)
@@ -2670,8 +2670,8 @@ I (..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h)(0x6824B5D0)
 I (..\Sentry_libs\Module\Com_System\Com_System.h)(0x68DF5596)
 I (..\Sentry_libs\Module\Com_System\Queue.h)(0x68DF5596)
 F (..\Task\dev_board_communicate.h)(0x697754BE)()
-F (..\Sentry_libs\Algorithm\Pid\alg_pid.c)(0x690C0E4E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Core/Inc -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Middlewares/ST/ARM/DSP/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Sentry_libs -I ../Sentry_libs/Algorithm -I ../Sentry_libs/Algorithm/Chassis_calc -I ../Sentry_libs/Algorithm/Crc -I ../Sentry_libs/Algorithm/Kalman -I ../Sentry_libs/Algorithm/Mahony -I ../Sentry_libs/Algorithm/Pid -I ../Sentry_libs/Bsp -I ../Sentry_libs/Bsp/Can -I ../Sentry_libs/Bsp/Exti -I ../Sentry_libs/Bsp/Fdcan -I ../Sentry_libs/Bsp/I2c -I ../Sentry_libs/Bsp/Log -I ../Sentry_libs/Bsp/SPI -I ../Sentry_libs/Bsp/Tim -I ../Sentry_libs/Bsp/Uart -I ../Sentry_libs/Module -I ../Sentry_libs/Module/BMI088 -I ../Sentry_libs/Module/Buzzer -I ../Sentry_libs/Module/Com_System -I ../Sentry_libs/Module/Com_System/assets -I ../Sentry_libs/Module/Dr16 -I ../Sentry_libs/Module/Ist8310 -I ../Sentry_libs/Module/LED -I ../Sentry_libs/Module/Minipc -I ../Sentry_libs/Module/Motor -I ../Sentry_libs/Module/Motor/Dji -I ../Sentry_libs/Module/Motor/Dm -I ../Sentry_libs/Module/Motor/Lk -I ../Sentry_libs/Module/Motor/Unitree -I ../Sentry_libs/Module/Servo -I ../Sentry_libs/pic -I ../Sentry_libs/temp_informality_InsTask -I ../Sentry_libs/temp_informality_InsTask/pic -I ../USB_DEVICE/App -I ../USB_DEVICE/Target -I ../../Sentry-Embeded-2026 -I ../Task -I ../Sentry_libs/Bsp/GPIO -I ../Sentry_libs/Bsp/DWT -I ../Sentry_libs/Algorithm/Fliters -I ../Sentry_libs/Bsp/PWM-I./RTE/_frame-IC:/Users/18380/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-D__UVISION_VERSION="540" -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o frame/alg_pid.o -MMD)
-I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)
+F (..\Sentry_libs\Algorithm\Pid\alg_pid.c)(0x6990165B)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Core/Inc -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Middlewares/ST/ARM/DSP/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Sentry_libs -I ../Sentry_libs/Algorithm -I ../Sentry_libs/Algorithm/Chassis_calc -I ../Sentry_libs/Algorithm/Crc -I ../Sentry_libs/Algorithm/Kalman -I ../Sentry_libs/Algorithm/Mahony -I ../Sentry_libs/Algorithm/Pid -I ../Sentry_libs/Bsp -I ../Sentry_libs/Bsp/Can -I ../Sentry_libs/Bsp/Exti -I ../Sentry_libs/Bsp/Fdcan -I ../Sentry_libs/Bsp/I2c -I ../Sentry_libs/Bsp/Log -I ../Sentry_libs/Bsp/SPI -I ../Sentry_libs/Bsp/Tim -I ../Sentry_libs/Bsp/Uart -I ../Sentry_libs/Module -I ../Sentry_libs/Module/BMI088 -I ../Sentry_libs/Module/Buzzer -I ../Sentry_libs/Module/Com_System -I ../Sentry_libs/Module/Com_System/assets -I ../Sentry_libs/Module/Dr16 -I ../Sentry_libs/Module/Ist8310 -I ../Sentry_libs/Module/LED -I ../Sentry_libs/Module/Minipc -I ../Sentry_libs/Module/Motor -I ../Sentry_libs/Module/Motor/Dji -I ../Sentry_libs/Module/Motor/Dm -I ../Sentry_libs/Module/Motor/Lk -I ../Sentry_libs/Module/Motor/Unitree -I ../Sentry_libs/Module/Servo -I ../Sentry_libs/pic -I ../Sentry_libs/temp_informality_InsTask -I ../Sentry_libs/temp_informality_InsTask/pic -I ../USB_DEVICE/App -I ../USB_DEVICE/Target -I ../../Sentry-Embeded-2026 -I ../Task -I ../Sentry_libs/Bsp/GPIO -I ../Sentry_libs/Bsp/DWT -I ../Sentry_libs/Algorithm/Fliters -I ../Sentry_libs/Bsp/PWM-I./RTE/_frame-IC:/Users/18380/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-D__UVISION_VERSION="540" -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o frame/alg_pid.o -MMD)
+I (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)
 I (..\..\Sentry-Embeded-2026\robot_config.h)(0x6975886D)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h)(0x68B540AA)
 I (..\Core\Inc\FreeRTOSConfig.h)(0x68DF5B1A)
@@ -2680,7 +2680,7 @@ I (..\Middlewares\Third_Party\FreeRTOS\Source\include\portable.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\deprecated_definitions.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F\portmacro.h)(0x68B540AA)
 I (..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h)(0x68B540AA)
-F (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x690C0E4E)()
+F (..\Sentry_libs\Algorithm\Pid\alg_pid.h)(0x69901656)()
 F (..\Sentry_libs\Algorithm\Fliters\alg_fliter.c)(0x68F63306)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../Core/Inc -I ../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/STM32F4xx_HAL_Driver/Inc -I ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I ../Middlewares/ST/ARM/DSP/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I ../Middlewares/Third_Party/FreeRTOS/Source/include -I ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F -I ../Sentry_libs -I ../Sentry_libs/Algorithm -I ../Sentry_libs/Algorithm/Chassis_calc -I ../Sentry_libs/Algorithm/Crc -I ../Sentry_libs/Algorithm/Kalman -I ../Sentry_libs/Algorithm/Mahony -I ../Sentry_libs/Algorithm/Pid -I ../Sentry_libs/Bsp -I ../Sentry_libs/Bsp/Can -I ../Sentry_libs/Bsp/Exti -I ../Sentry_libs/Bsp/Fdcan -I ../Sentry_libs/Bsp/I2c -I ../Sentry_libs/Bsp/Log -I ../Sentry_libs/Bsp/SPI -I ../Sentry_libs/Bsp/Tim -I ../Sentry_libs/Bsp/Uart -I ../Sentry_libs/Module -I ../Sentry_libs/Module/BMI088 -I ../Sentry_libs/Module/Buzzer -I ../Sentry_libs/Module/Com_System -I ../Sentry_libs/Module/Com_System/assets -I ../Sentry_libs/Module/Dr16 -I ../Sentry_libs/Module/Ist8310 -I ../Sentry_libs/Module/LED -I ../Sentry_libs/Module/Minipc -I ../Sentry_libs/Module/Motor -I ../Sentry_libs/Module/Motor/Dji -I ../Sentry_libs/Module/Motor/Dm -I ../Sentry_libs/Module/Motor/Lk -I ../Sentry_libs/Module/Motor/Unitree -I ../Sentry_libs/Module/Servo -I ../Sentry_libs/pic -I ../Sentry_libs/temp_informality_InsTask -I ../Sentry_libs/temp_informality_InsTask/pic -I ../USB_DEVICE/App -I ../USB_DEVICE/Target -I ../../Sentry-Embeded-2026 -I ../Task -I ../Sentry_libs/Bsp/GPIO -I ../Sentry_libs/Bsp/DWT -I ../Sentry_libs/Algorithm/Fliters -I ../Sentry_libs/Bsp/PWM-I./RTE/_frame-IC:/Users/18380/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-D__UVISION_VERSION="540" -DSTM32F407xx -D_RTE_ -DUSE_HAL_DRIVER -DSTM32F407xx-o frame/alg_fliter.o -MMD)
 I (..\Sentry_libs\Algorithm\Fliters\alg_fliter.h)(0x68F63306)
 I (..\Middlewares\ST\ARM\DSP\Inc\arm_math.h)(0x68B50803)
