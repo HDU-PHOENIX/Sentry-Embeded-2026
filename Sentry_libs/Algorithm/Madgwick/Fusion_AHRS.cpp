@@ -33,13 +33,13 @@ MadgwickParam madgwickParam;
 /**
  * @brief Timeout duration for bias correction (seconds)
  */
-#define TIMEOUT (5)
+#define TIMEOUT (FUSION_OFFSET_TIMEOUT_S)
 
 /**
  * @brief Threshold for bias correction (radians/second)
- * @note Reduced (0.05f -> 0.005f) to prevent slow motion drift from being learned as bias
+ * @note Tunable by compile-time macro for balancing anti-false-learning and convergence speed
  */
-#define THRESHOLD (0.005f)
+#define THRESHOLD (FUSION_OFFSET_THRESHOLD_RAD_S)
 
 #define FUSION_OFFSET_STATIONARY_ALPHA (0.02f)
 #define FUSION_OFFSET_ACCEL_MAG_TOL (0.08f)
@@ -49,7 +49,7 @@ MadgwickParam madgwickParam;
 /**
  * @brief Flag to enable gradient descent compensation
  */
-#define GRAD_DEC 1
+#define GRAD_DEC 0
 
 //------------------------------------------------------------------------------
 // Static Function Declarations
@@ -591,7 +591,15 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
                              (offset->accelAbsDev.axis.z <= FUSION_OFFSET_ACCEL_DEV_THR);
 
     if (!(gyroBelowThreshold && gyroStable && accelNear1g && accelStable)) {
+#if FUSION_OFFSET_TIMER_DECAY_ON_MOTION
+        if (offset->timer > FUSION_OFFSET_TIMER_MOTION_PENALTY) {
+            offset->timer -= FUSION_OFFSET_TIMER_MOTION_PENALTY;
+        } else {
+            offset->timer = 0;
+        }
+#else
         offset->timer = 0;
+#endif
         return gyroscope;
     }
 #else
@@ -599,14 +607,27 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
     if ((fabsf(gyroscope.axis.x) > THRESHOLD) || 
        (fabsf(gyroscope.axis.y) > THRESHOLD) || 
        (fabsf(gyroscope.axis.z) > THRESHOLD)) {
+#if FUSION_OFFSET_TIMER_DECAY_ON_MOTION
+        if (offset->timer > FUSION_OFFSET_TIMER_MOTION_PENALTY) {
+            offset->timer -= FUSION_OFFSET_TIMER_MOTION_PENALTY;
+        } else {
+            offset->timer = 0;
+        }
+#else
         offset->timer = 0;
+#endif
         return gyroscope;
     }
 #endif
 
     // Return directly if timer hasn't timed out
     if (offset->timer < offset->timeout) {
-        offset->timer++;
+        const unsigned int timerRemain = offset->timeout - offset->timer;
+        if (timerRemain > FUSION_OFFSET_TIMER_INCREMENT) {
+            offset->timer += FUSION_OFFSET_TIMER_INCREMENT;
+        } else {
+            offset->timer = offset->timeout;
+        }
         return gyroscope;
     }
     

@@ -578,7 +578,8 @@ void StartChassisTask(void const * argument)
 				
     case DISABLE_MODE:
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
-				Motor_Dm_Transmit(Down_yaw);
+
+		Motor_Dm_Transmit(Down_yaw);
 				Pid_Disable(Trigger->velocity_pid);
 				Chassis_Change_Mode(Chassis,CHASSIS_NORMAL);
         Chassis_Disable(Chassis);
