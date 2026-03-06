@@ -41,7 +41,7 @@ float target_pitch_position=0.0;
 float temp_position=0.0;
 float output=0;
 extern quaternions_struct_t Quater;
-extern uint8_t ready_flag;
+
 #endif
 uint8_t gimbal_mode=IMU_MODE;//云台控制模式
 
@@ -347,7 +347,7 @@ void StartGimbalTask(void const * argument)
         osDelay(1);
     }
     Log_Information("pitch motor enable success\r\n");
-    while(ready_flag==0){
+    while(Quater.ins_ready==0){
         //视情况要不要启用编码器控制
         // Motor_Dm_Control(pitch,target_position);
         // output=pitch->output+G_feed(pitch->message.out_position);
@@ -371,10 +371,10 @@ void StartGimbalTask(void const * argument)
     }
     //零点刚刚初始化的时候做个差，得出上下云台零点之间的偏移
 		osDelay(2);
-		if(ready_flag!=1){
+		if(Quater.ins_ready!=1){
 			Log("Erro!Offset may not correct.");
 		}
-		while(ready_flag!=1){
+		while(Quater.ins_ready!=1){
 			osDelay(1);
 		}
     
@@ -481,10 +481,10 @@ void StartGimbalTask(void const * argument)
 			  Motor_Dm_Control(pitch,target_position);
             
             #else 
-            if(ready_flag==1){
+            if(Quater.ins_ready==1){
                 if(gimbal_mode==IMU_MODE){
                     target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
-                    pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.gryo_pitch,target_speed);//速度反向，IMU和编码器方向相反
+                    pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);//速度反向，IMU和编码器方向相反
                 }else{
                     Motor_Dm_Control(pitch,target_position);
                 }
@@ -512,7 +512,7 @@ void StartGimbalTask(void const * argument)
                 #else
                 if(gimbal_mode==IMU_MODE){
                     target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
-                    Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.gryo_yaw);
+                    Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.Gyro[2]);
                 }else{
                     Motor_Dji_Control(Up_yaw,target_up_position);
                 }

@@ -54,16 +54,16 @@ frame/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Sentry_libs\Bsp\I2c\bsp_iic.h ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h \
   ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
-  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h ..\Sentry_libs\Bsp\Log\bsp_log.h \
-  ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
-  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
-  ..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h \
+  ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \
+  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
+  ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
   ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
-  ..\Sentry_libs\Bsp\SPI\bsp_spi.h \
-  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
-  ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Task\app_command_task.h \
-  ..\Task\app_shooter_task.h ..\Sentry_libs\Bsp\Can\bsp_can.h \
+  ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Sentry_libs\Bsp\PWM\bsp_pwm.h \
+  ..\Task\app_command_task.h ..\Task\app_shooter_task.h \
+  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
+  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
+  ..\Sentry_libs\Bsp\Can\bsp_can.h \
   ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h \
   ..\Sentry_libs\Module\Dr16\dev_dr16.h \
   ..\Sentry_libs\Bsp\Uart\bsp_uart.h \
@@ -75,5 +75,5 @@ frame/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
-  ..\Task\dev_board_communicate.h \
+  ..\Task\dev_board_communicate.h ..\Sentry_libs\Bsp\DWT\bsp_dwt.h \
   ..\Sentry_libs\Module\Motor\Dm\dev_motor_dm.h

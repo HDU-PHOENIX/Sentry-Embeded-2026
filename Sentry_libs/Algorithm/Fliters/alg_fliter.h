@@ -3,6 +3,11 @@
 #include "arm_math.h" // ARM CMSIS数学库
 #include "FreeRTOS.h"
 
+
+#define pi 3.1415926f
+#define RAD2DEG 180.0f / pi
+#define DEG2RAD pi / 180.0f
+
 //定义回调函数类型
 typedef struct {
     float32_t *pData;      // 数据指针
@@ -31,11 +36,36 @@ typedef struct {
     float32_t sample_freq;      // 采样频率
 } LowpassFilter_t;
 
+// 二阶巴特沃斯滤波器实例结构体
+typedef struct {
+    float32_t b[3];             // 分子系数
+    float32_t a[3];             // 分母系数
+    float32_t x[3];             // 输入历史
+    float32_t y[3];             // 输出历史
+    float32_t sample_freq;      // 采样频率
+    float32_t cutoff_freq;      // 截止频率
+    uint8_t initialized;        // 初始化标志
+} ButterworthFilter_t;
+
+// 二阶陷波滤波器实例结构体
+typedef struct {
+    float32_t b0, b1, b2;       // 分子系数
+    float32_t a1, a2;           // 分母系数(a0=1)
+    float32_t x1, x2;           // 输入历史
+    float32_t y1, y2;           // 输出历史
+    float32_t sample_freq;      // 采样频率
+    float32_t notch_freq;       // 陷波中心频率
+    float32_t r;                // 极点半径(0~1)
+    uint8_t initialized;        // 初始化标志
+} NotchFilter_t;
+
 // 滤波器初始化配置
 typedef struct {
     uint8_t filter_size;        // 滑动平均窗口大小
     float32_t cutoff_freq;      // 低通滤波截止频率
     float32_t sample_freq;      // 采样频率
+    float32_t notch_freq;       // 陷波中心频率
+    float32_t notch_r;          // 陷波极点半径(推荐0.9~0.999)
 } FilterInitConfig_t;
 
 typedef void (*FilterCallback)(float32_t input, fliter_config *config, float32_t *output);
@@ -47,15 +77,26 @@ void Lowpass_fliter(float32_t *input, float32_t *output, fliter_config *fliter_c
 // 新的实例化滤波器函数
 MovingAvgFilter_t* MovingAvgFilter_Register(FilterInitConfig_t *config);
 LowpassFilter_t* LowpassFilter_Register(FilterInitConfig_t *config);
+ButterworthFilter_t* ButterworthFilter_Register(FilterInitConfig_t *config);
+NotchFilter_t* NotchFilter_Register(FilterInitConfig_t *config);
+
 void MovingAvgFilter_Process(MovingAvgFilter_t *filter, float32_t input, float32_t *output);
 void LowpassFilter_Process(LowpassFilter_t *filter, float32_t input, float32_t *output);
+void ButterworthFilter_Process(ButterworthFilter_t *filter, float32_t input, float32_t *output);
+void NotchFilter_Process(NotchFilter_t *filter, float32_t input, float32_t *output);
+
 void MovingAvgFilter_Free(MovingAvgFilter_t *filter);
 void LowpassFilter_Free(LowpassFilter_t *filter);
+void ButterworthFilter_Free(ButterworthFilter_t *filter);
+void NotchFilter_Free(NotchFilter_t *filter);
 float32_t fhan(float32_t x1, float32_t x2, float32_t r, float32_t h0);
 float fhan_correct(float x1, float x2, float r, float h);
-//其他数学库函数
-float float_constrain(float Value, float minValue, float maxValue);
 
 
-int float_rounding(float raw);
+
+
+float invSqrt(float x);
+int sgn(int x);
+int fsgn(float x);
+float sgn_like(float x, float d);
 #endif

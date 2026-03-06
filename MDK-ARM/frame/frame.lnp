@@ -84,6 +84,8 @@
 "frame\kalman.o"
 "frame\kalman_filter.o"
 "frame\mahonyahrs.o"
+"frame\fusion_ahrs.o"
+"frame\madgwickahrs.o"
 "..\Middlewares\ST\ARM\DSP\Lib\arm_cortexM4lf_math.lib"
 --strict --scatter "frame\frame.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

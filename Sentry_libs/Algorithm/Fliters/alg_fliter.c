@@ -27,27 +27,31 @@ float a;
 //}
 
 
-// 限幅函数
-float float_constrain(float Value, float minValue, float maxValue)
-{
-    if (Value < minValue)
-        return minValue;
-    else if (Value > maxValue)
-        return maxValue;
-    else
-        return Value;
+// 最速控制综合函数 fhan()
+float fhan(float x1, float x2, float r, float h0) {
+     d = r * h0 * h0;
+     a0 = h0 * x2;
+     y = x1 + a0;
+     a1 = sqrtf(d * (d + 8 * fabsf(y)));
+     a2 = a0 + (y > 0 ? 1 : -1) * (a1 - d) / 2;
+     a = 0;
+
+    if (fabsf(y) > d) {
+        a = a2;
+    } else {
+        a = a0 + y / h0;
+    }
+
+    float fhan_output = 0;
+    if (fabsf(a) > d) {
+        fhan_output = -r * (a > 0 ? 1 : -1);
+    } else {
+        fhan_output = -r * a / d;
+    }
+
+    return fhan_output;
 }
 
-int float_rounding(float raw)
-{
-    static int integer;
-    static float decimal;
-    integer = (int)raw;
-    decimal = raw - integer;
-    if (decimal > 0.5f)
-        integer++;
-    return integer;
-}
 
 
 /**
@@ -293,6 +297,144 @@ void LowpassFilter_Process(LowpassFilter_t *filter, float32_t input, float32_t *
 }
 
 /**
+ * @brief 注册二阶巴特沃斯滤波器实例
+ * @param config 滤波器初始化配置
+ * @return 滤波器实例指针，失败返回NULL
+ */
+ButterworthFilter_t* ButterworthFilter_Register(FilterInitConfig_t *config) {
+    if (config == NULL || config->sample_freq <= 0 || config->cutoff_freq <= 0) {
+        return NULL;
+    }
+    
+    // 动态分配内存
+    ButterworthFilter_t *filter = (ButterworthFilter_t *)pvPortMalloc(sizeof(ButterworthFilter_t));
+    if (filter == NULL) {
+        return NULL;
+    }
+    
+    // 初始化滤波器状态
+    memset(filter, 0, sizeof(ButterworthFilter_t));
+    filter->sample_freq = config->sample_freq;
+    filter->cutoff_freq = config->cutoff_freq;
+    filter->initialized = 0;
+    
+    // 计算二阶巴特沃斯系数 (双线性变换法)
+    // K = tan(pi * fc / fs)
+    float32_t K = tanf(PI * config->cutoff_freq / config->sample_freq);
+    float32_t K2 = K * K;
+    float32_t sqrt2 = 1.41421356f;
+    float32_t norm = 1.0f / (1.0f + sqrt2 * K + K2);
+    
+    filter->b[0] = K2 * norm;
+    filter->b[1] = 2.0f * filter->b[0];
+    filter->b[2] = filter->b[0];
+    
+    filter->a[1] = 2.0f * (K2 - 1.0f) * norm;
+    filter->a[2] = (1.0f - sqrt2 * K + K2) * norm;
+    
+    return filter;
+}
+
+/**
+ * @brief 注册二阶陷波滤波器实例
+ * @param config 滤波器初始化配置
+ * @return 滤波器实例指针，失败返回NULL
+ */
+NotchFilter_t* NotchFilter_Register(FilterInitConfig_t *config) {
+    if (config == NULL || config->sample_freq <= 0.0f || config->notch_freq <= 0.0f) {
+        return NULL;
+    }
+
+    // 陷波中心频率必须小于奈奎斯特频率
+    if (config->notch_freq >= (config->sample_freq * 0.5f)) {
+        return NULL;
+    }
+
+    NotchFilter_t *filter = (NotchFilter_t *)pvPortMalloc(sizeof(NotchFilter_t));
+    if (filter == NULL) {
+        return NULL;
+    }
+
+    memset(filter, 0, sizeof(NotchFilter_t));
+    filter->sample_freq = config->sample_freq;
+    filter->notch_freq = config->notch_freq;
+
+    // 默认半径，越接近1陷波越窄
+    filter->r = (config->notch_r > 0.0f && config->notch_r < 1.0f) ? config->notch_r : 0.98f;
+
+    float32_t w0 = 2.0f * PI * filter->notch_freq / filter->sample_freq;
+    float32_t c = cosf(w0);
+
+    filter->b0 = 1.0f;
+    filter->b1 = -2.0f * c;
+    filter->b2 = 1.0f;
+    filter->a1 = -2.0f * filter->r * c;
+    filter->a2 = filter->r * filter->r;
+
+    filter->initialized = 1;
+    return filter;
+}
+
+/**
+ * @brief 二阶巴特沃斯滤波器处理函数
+ * @param filter 滤波器实例
+ * @param input 输入数据
+ * @param output 输出数据指针
+ */
+void ButterworthFilter_Process(ButterworthFilter_t *filter, float32_t input, float32_t *output) {
+    if (filter == NULL || output == NULL) {
+        return;
+    }
+    
+    // 初始化处理
+    if (!filter->initialized) {
+        filter->x[0] = filter->x[1] = filter->x[2] = input;
+        filter->y[0] = filter->y[1] = filter->y[2] = input;
+        filter->initialized = 1;
+        *output = input;
+        return;
+    }
+    
+    // 差分方程：y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+    filter->x[0] = input;
+    filter->y[0] = filter->b[0] * filter->x[0] + filter->b[1] * filter->x[1] + filter->b[2] * filter->x[2] 
+                  - filter->a[1] * filter->y[1] - filter->a[2] * filter->y[2];
+    
+    *output = filter->y[0];
+    
+    // 更新历史记录
+    filter->x[2] = filter->x[1];
+    filter->x[1] = filter->x[0];
+    filter->y[2] = filter->y[1];
+    filter->y[1] = filter->y[0];
+}
+
+/**
+ * @brief 二阶陷波滤波器处理函数
+ * @param filter 滤波器实例
+ * @param input 输入数据
+ * @param output 输出数据指针
+ */
+void NotchFilter_Process(NotchFilter_t *filter, float32_t input, float32_t *output) {
+    if (filter == NULL || output == NULL) {
+        return;
+    }
+
+    float32_t y_out = filter->b0 * input
+                    + filter->b1 * filter->x1
+                    + filter->b2 * filter->x2
+                    - filter->a1 * filter->y1
+                    - filter->a2 * filter->y2;
+
+    filter->x2 = filter->x1;
+    filter->x1 = input;
+    filter->y2 = filter->y1;
+    filter->y1 = y_out;
+
+    *output = y_out;
+}
+
+/**
  * @brief 释放滑动平均滤波器实例
  * @param filter 滤波器实例指针
  */
@@ -310,4 +452,70 @@ void LowpassFilter_Free(LowpassFilter_t *filter) {
     if (filter != NULL) {
         vPortFree(filter);
     }
+}
+
+/**
+ * @brief 释放巴特沃斯滤波器实例
+ * @param filter 滤波器实例指针
+ */
+void ButterworthFilter_Free(ButterworthFilter_t *filter) {
+    if (filter != NULL) {
+        vPortFree(filter);
+    }
+}
+
+/**
+ * @brief 释放陷波滤波器实例
+ * @param filter 滤波器实例指针
+ */
+void NotchFilter_Free(NotchFilter_t *filter) {
+    if (filter != NULL) {
+        vPortFree(filter);
+    }
+}
+
+
+
+/**
+ * @brief 快速平方根倒数计算函数
+ * @param x 输入值
+ * @return 输入值的平方根倒数
+ */
+float invSqrt(float x) {
+    float halfx = 0.5f * x;
+    float y = x;
+    long i = *(long *)&y;
+    i = 0x5f3759df - (i >> 1);
+    y = *(float *)&i;
+    y = y * (1.5f - (halfx * y * y));
+    return y;
+}
+/**
+ * @brief 符号函数
+ * @param x 输入值
+ * @return 符号函数结果
+ */
+int sgn(int x){
+    return x == 0 ? 0 : x > 0 ? 1 : -1;
+}
+/**
+ * @brief 类符号函数
+ * @param x 输入值
+ * @param d 死区范围
+ * @return 类符号函数结果
+ */
+int fsgn(float x) {
+    return (x != 0.0f ? (x < 0.0f ? -1 : 1) : 0);
+}
+/**
+ * @brief 带死区的类符号函数
+ * @param x 输入值
+ * @param d 死区范围
+ * @return 带死区的类符号函数结果
+ */
+float sgn_like(float x, float d) {
+    if (fabs(x) >= d)
+        return fsgn(x);
+    else
+        return x / d;
 }

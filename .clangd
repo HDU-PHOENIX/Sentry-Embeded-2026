@@ -1,0 +1,13 @@
+CompileFlags:
+  CompilationDatabase: .
+  Add:
+    - -D__CC_ARM
+    - -D__arm__
+    - -D__packed=__attribute__((packed))
+    - -D__align(x)=__attribute__((aligned(x)))
+    - -D__inline=inline
+    - -D__asm=__asm__
+    - -D__weak=__attribute__((weak))
+  Compiler: arm-none-eabi-gcc
+Diagnostics:
+  UnusedIncludes: None

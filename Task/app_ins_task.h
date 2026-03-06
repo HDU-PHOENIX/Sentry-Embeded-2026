@@ -22,16 +22,11 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "arm_math.h"
-
-
-#include "bsp_dwt.h"  // 添加DWT头文件
-#include "bsp_log.h"
-
-
-#include "app_gimbal_task.h"
 //#include "alg_quaternionEKF.h"  //已经接入，也可以切换成mahony
-#include "MahonyAHRS.h"
+#include "MadgwickAHRS.h"
+#include "Fusion_AHRS.h"
 #include "alg_pid.h"  //温度控制相关
+
 #include "math.h"
 #include "dev_bmi088.h"          // BMI088传感器
 #include "alg_fliter.h"          // 滤波器
@@ -40,7 +35,7 @@
 
 //CMSIS好像要求用float32_t，可能是为了可移植性考虑。我这里就不管了
 
-#define M_PI 3.14159265358979323846
+
 
 typedef struct
 {
@@ -55,8 +50,8 @@ typedef struct
       float32_t pitch;   // 俯仰角（度）
     float32_t yaw;     // 偏航角（度）
     acceleration Acc;  // 保留加速度数据
-    float32_t gryo_pitch;// 陀螺仪角速度数据
-    float32_t gryo_yaw; // 陀螺仪角速度数据
+    float Gyro[3]; // 三轴陀螺仪数据
+    uint8_t ins_ready; // INS数据就绪标志
 }quaternions_struct_t;
 
 
@@ -74,9 +69,9 @@ void quaternion_normalize(float* quaternion);
 void quaternion_update(float* origin_quater);
 float calculate_norm(const float *arr);
 
-// EKF辅助函数
-void get_ekf_euler_angles(float* roll, float* pitch, float* yaw);
-uint8_t get_ekf_status(void);
+// // EKF辅助函数
+// void get_ekf_euler_angles(float* roll, float* pitch, float* yaw);
+// uint8_t get_ekf_status(void);
 
 /**
  * @brief EKF使用示例
@@ -100,7 +95,6 @@ uint8_t get_ekf_status(void);
  */
 
 // 全局变量声明
-extern uint8_t ready_flag;                    // 姿态解算完成标志
 extern quaternions_struct_t Quater;           // 四元数结构体
 extern PidInstance_s *ins_pid;                // INS PID控制器
 extern uint8_t test_data[5];                  // 磁力计测试数据

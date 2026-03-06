@@ -67,12 +67,13 @@ frame/app_shooter_task.o: ..\Task\app_shooter_task.c \
   ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h ..\Core\Inc\gpio.h \
   ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
-  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h \
-  ..\Sentry_libs\Algorithm\Mahony\MahonyAHRS.h \
+  ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \
+  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
+  ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
   ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
   ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Core\Inc\spi.h \
-  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
   ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h \
+  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h \
   ..\Sentry_libs\Module\Motor\Dm\dev_motor_dm.h \
   ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h

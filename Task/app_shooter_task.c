@@ -135,7 +135,7 @@ void StartShooterTask(void const * argument)
   Right_Wheel=Motor_Dji_Register(&Right_Config);
   Shooter_State=SHOOTER_STOP;
   #ifdef DEBUG
-  //Shooter_State = SHOOTER_TEST;
+  Shooter_State = SHOOTER_TEST;
   #endif
   right_wheel_filter_config.cutoff_freq = right_wheel_vel_lpf_cutoff;
   right_wheel_filter_config.sample_freq = right_wheel_vel_sample_freq;
@@ -166,7 +166,9 @@ void StartShooterTask(void const * argument)
   for(;;)
   { 
     
-
+	#ifdef DEBUG
+		Shooter_State=SHOOTER_TEST;
+		#endif 
 
     Shooter_State_last=Shooter_State;
 
@@ -262,7 +264,9 @@ void StartShooterTask(void const * argument)
 //					pos_target_tr=pos_target_tr<-HALF_RANGE?pos_target_tr+2*HALF_RANGE:pos_target_tr;
 					pos_target_tr=target_speed_tr;	
 				}
-				target_wheel_speed=-5500.0f;
+				Pid_Disable(Left_Wheel->velocity_pid);
+        Pid_Disable(Right_Wheel->velocity_pid);
+				target_wheel_speed=0.0f;//-5500.0f;
       //  Motor_Dji_Control(Trigger,pos_target_tr);
 			//	Motor_Dji_Transmit(Trigger);
         break;
