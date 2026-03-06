@@ -19,6 +19,26 @@ extern "C" {
 #define FUSION_OFFSET_STRICT_STATIONARY_DETECTION (0)
 #endif
 
+#ifndef FUSION_OFFSET_THRESHOLD_RAD_S
+#define FUSION_OFFSET_THRESHOLD_RAD_S (0.03f)
+#endif
+
+#ifndef FUSION_OFFSET_TIMEOUT_S
+#define FUSION_OFFSET_TIMEOUT_S (1U)
+#endif
+
+#ifndef FUSION_OFFSET_TIMER_DECAY_ON_MOTION
+#define FUSION_OFFSET_TIMER_DECAY_ON_MOTION (1)
+#endif
+
+#ifndef FUSION_OFFSET_TIMER_INCREMENT
+#define FUSION_OFFSET_TIMER_INCREMENT (2U)
+#endif
+
+#ifndef FUSION_OFFSET_TIMER_MOTION_PENALTY
+#define FUSION_OFFSET_TIMER_MOTION_PENALTY (1U)
+#endif
+
 //------------------------------------------------------------------------------
 // Mathematical Library Definitions
 

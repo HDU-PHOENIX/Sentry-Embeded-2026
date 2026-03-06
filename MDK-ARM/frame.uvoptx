@@ -376,6 +376,11 @@
           <WinNumber>2</WinNumber>
           <ItemText>offline_time,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>25</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>fusion_offset,0x0A</ItemText>
+        </Ww>
       </WatchWindow2>
       <Tracepoint>
         <THDelay>0</THDelay>

@@ -254,14 +254,14 @@ void isttask(void const * argument)
     };
 
     const float32_t noise_fundamental_hz = 92.24f;  // FFT主噪声
-    const float32_t noise_harmonic_hz = 184.48f;    // 次级明显谐波
+    const float32_t noise_harmonic_hz = 184.48f;    // 次级谐波
     
     // 只为加速度计和陀螺仪的XYZ轴创建滑动平均滤波器实例
     MovingAvgFilter_t *accel_moving_filters[3];    // 加速度计滑动平均滤波器
     MovingAvgFilter_t *gyro_moving_filters[3];     // 陀螺仪滑动平均滤波器
-    NotchFilter_t *accel_notch_92_filters[3];      // 加速度计92Hz陷波
+    NotchFilter_t *accel_notch_92_filters[3];      // 加速度计92Hz陷波（加宽覆盖90-95Hz）
     NotchFilter_t *accel_notch_184_filters[3];     // 加速度计184Hz陷波
-    NotchFilter_t *gyro_notch_92_filters[3];       // 陀螺仪92Hz陷波
+    NotchFilter_t *gyro_notch_92_filters[3];       // 陀螺仪92Hz陷波（同上）
     NotchFilter_t *gyro_notch_184_filters[3];      // 陀螺仪184Hz陷波
     LowpassFilter_t *accel_lowpass_filters[3];     // 加速度计低通
     LowpassFilter_t *gyro_lowpass_filters[3];      // 陀螺仪低通
@@ -272,7 +272,7 @@ void isttask(void const * argument)
         gyro_moving_filters[i] = MovingAvgFilter_Register(&filter_config);
 
         filter_config.notch_freq = noise_fundamental_hz;
-        filter_config.notch_r = 0.965f;
+        filter_config.notch_r = 0.90f; // 陷波带更宽，覆盖90~95Hz
         accel_notch_92_filters[i] = NotchFilter_Register(&filter_config);
 
         filter_config.notch_freq = noise_harmonic_hz;
@@ -280,14 +280,14 @@ void isttask(void const * argument)
         accel_notch_184_filters[i] = NotchFilter_Register(&filter_config);
 
         filter_config.notch_freq = noise_fundamental_hz;
-        filter_config.notch_r = 0.97f;
+        filter_config.notch_r = 0.90f; // 同样加宽陀螺仪陷波
         gyro_notch_92_filters[i] = NotchFilter_Register(&filter_config);
 
         filter_config.notch_freq = noise_harmonic_hz;
         filter_config.notch_r = 0.98f;
         gyro_notch_184_filters[i] = NotchFilter_Register(&filter_config);
 
-        filter_config.cutoff_freq = 45.0f;
+        filter_config.cutoff_freq = 45.0f; // 低通回到适中值
         accel_lowpass_filters[i] = LowpassFilter_Register(&filter_config);
 
         filter_config.cutoff_freq = 120.0f;
@@ -605,8 +605,12 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
      //初始化EKF
     //IMU_QuaternionEKF_Init(origin_quater,10, 0.001, 10000000,1,0);
      //MadgwickAHRS_init(madgwick_ahrs,0.1f, 0.001f);
-        FusionAhrsSetSettings(&fusion_ahrs, &settings);
         FusionAhrsInitialise(&fusion_ahrs);
+        FusionAhrsSetSettings(&fusion_ahrs, &settings);
+        FusionOffsetInitialise(&fusion_offset, 1000); // 保证非check路径也正确初始化动态校准
+        fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
+        fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
+        fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
     }
     
     return 1;

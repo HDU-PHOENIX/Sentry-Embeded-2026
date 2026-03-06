@@ -264,9 +264,9 @@ void StartShooterTask(void const * argument)
 //					pos_target_tr=pos_target_tr<-HALF_RANGE?pos_target_tr+2*HALF_RANGE:pos_target_tr;
 					pos_target_tr=target_speed_tr;	
 				}
-				Pid_Disable(Left_Wheel->velocity_pid);
-        Pid_Disable(Right_Wheel->velocity_pid);
-				target_wheel_speed=0.0f;//-5500.0f;
+//				Pid_Disable(Left_Wheel->velocity_pid);
+//        Pid_Disable(Right_Wheel->velocity_pid);
+				target_wheel_speed=-5500.0f;
       //  Motor_Dji_Control(Trigger,pos_target_tr);
 			//	Motor_Dji_Transmit(Trigger);
         break;
