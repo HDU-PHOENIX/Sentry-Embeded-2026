@@ -548,13 +548,17 @@ void StartGimbalTask(void const * argument)
                 #ifdef G_FEED_TEST
                  Pid_Disable(Up_yaw->velocity_pid);
                 Pid_Disable(Up_yaw->angle_pid);
-                target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
+                //target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
                 //Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
 								
 								test_output=pitch->message.torque;
                 test_position=pitch->message.out_position;
                 /////下面这行是测试重力补偿效果的//////
-			    Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
+                target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
+                pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);
+			   // Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
+                  output=pitch->output+G_feed(pitch->message.out_position);
+				Motor_Dm_Mit_Control(pitch,0,0,output);
                 Motor_Dm_Transmit(pitch);
                 //////////////////////////////////////////////////////
                 #endif
