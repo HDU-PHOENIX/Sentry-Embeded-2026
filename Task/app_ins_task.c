@@ -82,7 +82,7 @@ FusionAhrsSettings settings = {
     .convention = FusionConventionNwu,  // 坐标系：NWU（北西上）
     .gain = 0.5f,                      // 算法增益
     .gyroscopeRange = 0.0f,            // 禁用量程检测重置（避免34.9rad/s满量程时误重置）
-    .accelerationRejection = 20.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
+    .accelerationRejection = 10.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
     .recoveryTriggerPeriod = 5000,        // 恢复触发周期
 };
 
@@ -234,17 +234,17 @@ void isttask(void const * argument)
     // 【新增】在上电初期强制等待温度达到 40 度
     // 只有在温度稳定后，陀螺仪零偏才不会剧烈漂移，AHRS 的高增益初始化才有意义
     float init_temp = 0.0f;
-//    while (init_temp < 39.5f) {
-//        if (BMI088_ReadTemperature(bmi088_test->spi_acc, &init_temp)) {
-//            // 在等待过程中持续运行 PID 控温逻辑
-//            float pid_output = Pid_Calculate(temp_pid, 40.0f, init_temp);
-//            float duty_ratio = pid_output / 20.0f;
-//            if (duty_ratio < 0.0f) duty_ratio = 0.0f;
-//            if (duty_ratio > 1.0f) duty_ratio = 1.0f;
-//            Pwm_SetDutyRatio(heater_pwm, duty_ratio);
-//        }
-//        osDelay(2); // 2ms 周期
-//    }
+    while (init_temp < 39.5f) {
+        if (BMI088_ReadTemperature(bmi088_test->spi_acc, &init_temp)) {
+            // 在等待过程中持续运行 PID 控温逻辑
+            float pid_output = Pid_Calculate(temp_pid, 40.0f, init_temp);
+            float duty_ratio = pid_output / 20.0f;
+            if (duty_ratio < 0.0f) duty_ratio = 0.0f;
+            if (duty_ratio > 1.0f) duty_ratio = 1.0f;
+            Pwm_SetDutyRatio(heater_pwm, duty_ratio);
+        }
+        osDelay(2); // 2ms 周期
+    }
 
     // 实例化滤波器配置
     FilterInitConfig_t filter_config = {
@@ -352,12 +352,11 @@ void isttask(void const * argument)
                 Acc_Raw[i]=bmi088_test->accel[i];
                 Gyro_Raw[i]=bmi088_test->gyro[i];
             }
-            // 数据读取与预处理
+            // 数据读取与预处理（恢复滤波链路）
             for (int i = 0; i < 3; i++) {
                 NotchFilter_Process(accel_notch_171_filters[i], bmi088_test->accel[i], &notch_accel_171[i]);
                 NotchFilter_Process(accel_notch_367_filters[i], notch_accel_171[i], &notch_accel_367[i]);
                 MovingAvgFilter_Process(accel_moving_filters[i], notch_accel_367[i], &filtered_accel[i]);
-                
             }
 
         //    FusionAhrsFlags flags = FusionAhrsGetFlags(&fusion_ahrs);
@@ -583,8 +582,9 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
      //初始化EKF
     //IMU_QuaternionEKF_Init(origin_quater,10, 0.001, 10000000,1,0);
      //MadgwickAHRS_init(madgwick_ahrs,0.1f, 0.001f);
-        FusionAhrsSetSettings(&fusion_ahrs, &settings);
+        
         FusionAhrsInitialise(&fusion_ahrs);
+        FusionAhrsSetSettings(&fusion_ahrs, &settings);
     }
     
     return 1;

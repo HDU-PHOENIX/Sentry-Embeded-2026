@@ -63,7 +63,7 @@ uint8_t Mode_Change(Dr16Instance_s *dr16){
       mode= last_mode==DISABLE_MODE?TRANS_MODE:UP_MODE;
       return mode;
       break;
-    case 0x32: // s1=3 (中), s2=2 (中)
+    case 0x32: // s1=3 (中), s2=2 (下)
     if (last_mode == UP_MODE||last_mode == SHOOT_MODE)//之前忘记加SHOOT_MODE了，汗，导致他会自己切出到DISABLE_MODE
     {
       mode = SHOOT_MODE;
@@ -75,7 +75,9 @@ uint8_t Mode_Change(Dr16Instance_s *dr16){
       return mode;
       break;
     case 0x31:
-    case 0x33:
+			mode= DISABLE_MODE;
+		break;
+    case 0x33://中 中
 			if(last_mode!=SCROP_MODE){
 			mode = last_mode==RC_MODE?SCROP_MODE:DISABLE_MODE;
 			}else{

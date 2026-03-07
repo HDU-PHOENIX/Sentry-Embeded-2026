@@ -292,7 +292,7 @@ board_config_t board_config = {
 };
 
 gimbal_follow_config_s GimbalFollow_config = {
-    .up_origin = 3.14f, // 云台偏航零点角度，需与Chassis_config.gimbal_yaw_zero保持一致
+    .up_origin = 0.0f, // 云台偏航零点角度，需与Chassis_config.gimbal_yaw_zero保持一致
     .up_angle_ptr = NULL, // 指向上云台yaw电机的角度反馈,因为不能赋值变量初始化，所以在任务开始时赋值
     .angle_range = 2.0f * PI, // 角度范围，单位弧度，360度为2*PI
     .gimbal_follow_pid_config = {
@@ -444,7 +444,7 @@ void StartChassisTask(void const * argument)
     }
 
     Minipc_UpdateAllInstances();
-		if(MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x31||control_mode==UP_MODE){
+		if(control_mode==PC_MODE||control_mode==UP_MODE){
       //两个周期跑一次。也就是500Hz
       if(send_flag==0){
         send_flag=1;

@@ -47,6 +47,12 @@ MadgwickParam madgwickParam;
 #define FUSION_OFFSET_ACCEL_DEV_THR (0.03f)
 
 /**
+ * @brief Accelerometer magnitude tolerance for AHRS rejection (in g)
+ * @note Adds a magnitude gate on top of tilt-error rejection to better suppress translational acceleration
+ */
+#define FUSION_AHRS_ACCEL_MAG_REJECTION_G (0.08f)
+
+/**
  * @brief Flag to enable gradient descent compensation
  */
 #define GRAD_DEC 0
@@ -92,7 +98,7 @@ void FusionAhrsInitialise(FusionAhrs *const ahrs) {
     const FusionAhrsSettings settings = {
             .convention = FusionConventionNwu,  // Default to NWU coordinate system
             .gain = 0.5f,                      // Default gain value
-            .gyroscopeRange = 2000.0f,         // Default gyroscope range 2000��/s
+            .gyroscopeRange = FusionDegreesToRadians(2000.0f), // Default gyroscope range: 2000 deg/s (34.9 rad/s)
             .accelerationRejection = 30.0f,    // Default acceleration rejection threshold 30��
             .recoveryTriggerPeriod = 0,        // Default recovery trigger period
     };
@@ -175,7 +181,7 @@ void FusionAhrsSetSettings(FusionAhrs *const ahrs, const FusionAhrsSettings *con
 /**
  * @brief Update AHRS algorithm state without magnetometer
  * @param ahrs Pointer to AHRS algorithm structure
- * @param gyroscope Gyroscope data (degrees/second)
+ * @param gyroscope Gyroscope data (rad/s)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -188,7 +194,7 @@ void FusionAhrsUpdateNoMagnetometer(FusionAhrs *const ahrs, const FusionVector g
 /**
  * @brief Update AHRS algorithm state with gyroscope and accelerometer data
  * @param ahrs Pointer to AHRS algorithm structure
- * @param gyroscope Gyroscope data (degrees/second)
+ * @param gyroscope Gyroscope data (rad/s)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -234,9 +240,15 @@ void FusionAhrsUpdate(FusionAhrs *const ahrs, const FusionVector gyroscope,
     if (FusionVectorIsZero(accelerometer) == false) {
         // Calculate normalized accelerometer data feedback with gravity direction
         ahrs->halfAccelerometerFeedback = Feedback(FusionVectorNormalise(accelerometer), halfGravity);
+
+        // Magnitude gate: translational acceleration often preserves direction enough to pass tilt-only checks,
+        // so also require |a| to remain close to 1 g before trusting accelerometer correction.
+        const float accelerometerMagnitude = FusionVectorMagnitude(accelerometer);
+        const bool accelMagnitudeTrusted = fabsf(accelerometerMagnitude - 1.0f) <= FUSION_AHRS_ACCEL_MAG_REJECTION_G;
         
         // Check if accelerometer data should be ignored
-        if ((FusionVectorMagnitudeSquared(ahrs->halfAccelerometerFeedback) <= ahrs->settings.accelerationRejection)) {
+        if ((FusionVectorMagnitudeSquared(ahrs->halfAccelerometerFeedback) <= ahrs->settings.accelerationRejection) &&
+            accelMagnitudeTrusted) {
             ahrs->accelerometerIgnored = false;
             ahrs->accelerationRecoveryTrigger -= 9; // Accelerate recovery
         } else {
@@ -539,6 +551,7 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
     offset->timeout = TIMEOUT * sampleRate;  // Calculate timeout count
     offset->timer = 0;                       // Reset timer
     offset->gyroscopeOffset = FUSION_VECTOR_ZERO; // Reset bias estimate
+    offset->gyroLPF = FUSION_VECTOR_ZERO;  // initialize low-pass state
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     offset->gyroMean = FUSION_VECTOR_ZERO;
     offset->gyroAbsDev = FUSION_VECTOR_ZERO;
@@ -561,6 +574,14 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
     // Subtract current bias estimate first
     gyroscope = FusionVectorSubtract(gyroscope, offset->gyroscopeOffset);
 
+    // apply simple low-pass filter to gyro for stationary/threshold checks
+    const float lpf_alpha = FUSION_OFFSET_STATIONARY_ALPHA; // reuse same alpha constant
+    offset->gyroLPF = FusionVectorAdd(FusionVectorMultiplyScalar(offset->gyroLPF, 1.0f - lpf_alpha),
+                                      FusionVectorMultiplyScalar(gyroscope, lpf_alpha));
+    
+    // use filtered value going forward for detection
+    FusionVector gyroForCheck = offset->gyroLPF;
+
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     const float alpha = FUSION_OFFSET_STATIONARY_ALPHA;
 
@@ -576,9 +597,9 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
     offset->accelAbsDev.axis.y = (1.0f - alpha) * offset->accelAbsDev.axis.y + alpha * fabsf(accelDelta.axis.y);
     offset->accelAbsDev.axis.z = (1.0f - alpha) * offset->accelAbsDev.axis.z + alpha * fabsf(accelDelta.axis.z);
 
-    const bool gyroBelowThreshold = (fabsf(gyroscope.axis.x) <= THRESHOLD) &&
-                                    (fabsf(gyroscope.axis.y) <= THRESHOLD) &&
-                                    (fabsf(gyroscope.axis.z) <= THRESHOLD);
+    const bool gyroBelowThreshold = (fabsf(gyroForCheck.axis.x) <= THRESHOLD) &&
+                                    (fabsf(gyroForCheck.axis.y) <= THRESHOLD) &&
+                                    (fabsf(gyroForCheck.axis.z) <= THRESHOLD);
 
     const bool gyroStable = (offset->gyroAbsDev.axis.x <= FUSION_OFFSET_GYRO_DEV_THR) &&
                             (offset->gyroAbsDev.axis.y <= FUSION_OFFSET_GYRO_DEV_THR) &&
@@ -603,10 +624,10 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
         return gyroscope;
     }
 #else
-    // Reset timer if gyroscope data exceeds threshold
-    if ((fabsf(gyroscope.axis.x) > THRESHOLD) || 
-       (fabsf(gyroscope.axis.y) > THRESHOLD) || 
-       (fabsf(gyroscope.axis.z) > THRESHOLD)) {
+    // Reset timer if gyroscope data exceeds threshold (use low‑passed sample)
+    if ((fabsf(gyroForCheck.axis.x) > THRESHOLD) || 
+       (fabsf(gyroForCheck.axis.y) > THRESHOLD) || 
+       (fabsf(gyroForCheck.axis.z) > THRESHOLD)) {
 #if FUSION_OFFSET_TIMER_DECAY_ON_MOTION
         if (offset->timer > FUSION_OFFSET_TIMER_MOTION_PENALTY) {
             offset->timer -= FUSION_OFFSET_TIMER_MOTION_PENALTY;
@@ -643,9 +664,9 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
 
 /**
  * @brief Update IMU using Madgwick gradient descent algorithm
- * @param gx Gyroscope X-axis reading (degrees/second)
- * @param gy Gyroscope Y-axis reading (degrees/second)
- * @param gz Gyroscope Z-axis reading (degrees/second)
+ * @param gx Gyroscope X-axis reading (rad/s)
+ * @param gy Gyroscope Y-axis reading (rad/s)
+ * @param gz Gyroscope Z-axis reading (rad/s)
  * @param ax Accelerometer X-axis reading (g)
  * @param ay Accelerometer Y-axis reading (g)
  * @param az Accelerometer Z-axis reading (g)
