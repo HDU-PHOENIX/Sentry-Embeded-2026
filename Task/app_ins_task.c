@@ -22,6 +22,8 @@ PidInstance_s *ins_pid;
 uint8_t test_data[5]={0,0,0,0,0};
 quaternions_struct_t Quater;//四元数
 Bmi088Instance_s *bmi088_test;
+
+extern uint8_t gimbal_ready_flag;
 float Acc_Raw[3];//用于FFT的原始加速度数据
 float Gyro_Raw[3];//用于FFT的原始陀螺仪数据
 float Acc_Filtered[3];//滤波后的加速度数据
@@ -55,12 +57,12 @@ float32_t Gyro_Offset[3] = {0};        // 陀螺仪零偏
 
 // 温度控制PID配置
 PidInitConfig_s temp_pid_config = {
-    .kp = 15.0f,        // 比例系数
+    .kp = 9.0f,        // 比例系数
     .ki = 0.0f,         // 积分系数  
     .kd = 0.0f,           // 微分系数
     .kf = 0.0f,           // 前馈系数
     .angle_max = 0.0f,    // 不需要角度限幅
-    .i_max = 1000.0f,     // 积分限幅
+    .i_max = 2.0f,     // 积分限幅
     .out_max = 20.0f,     // 输出限幅(占空比0-100%,这里用0-20对应0-100%)
     .dead_zone = 0.0f,    // 死区
     .i_variable_min = 0.0f, // 变速积分下限
@@ -103,6 +105,8 @@ float test=0;
 static float sensor_offset_r_body[3] = {0.0f, 0.0f, 0.0f}; // IMU 到旋转中心的偏移（m）
 static float last_gyro_filtered[3] = {0.0f, 0.0f, 0.0f};
 static float last_alpha_filtered[3] = {0.0f, 0.0f, 0.0f};
+static float offset_gyro_lpf[3] = {0.0f, 0.0f, 0.0f}; // 零漂学习专用轻滤波角速度
+static const float offset_gyro_lpf_alpha = 0.15f;
 static const float alpha_lpf_tau = 0.02f; // alpha LPF 时间常数 (s)
 static const float omega_thresh = 0.5f;   // 当 |ω| < 阈值时不补偿 (rad/s)
 
@@ -317,7 +321,40 @@ void isttask(void const * argument)
     float32_t origin_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};  // 初始四元数
     uint8_t ins_initialized = 0;           // INS初始化标志
     
-    
+    // 等待云台对齐，同时让IMU升温并进入稳定温区，减少后续零漂学习漂移
+    const float target_temp = 40.0f;
+    const float warmup_enter_temp = 39.5f;
+    const uint16_t warmup_stable_cycles = 200; // 5ms循环下约1s稳定时间
+    uint16_t warmup_stable_count = 0;
+
+    while ((gimbal_ready_flag != 1) || (warmup_stable_count < warmup_stable_cycles))
+    {
+        if (bmi088_test != NULL) {
+            BMI088_Read(bmi088_test);
+            if (BMI088_ReadTemperature(bmi088_test->spi_acc, &temperature)) {
+                bmi088_test->temperature = temperature;
+
+                if (temp_pid != NULL && heater_pwm != NULL) {
+                    float pid_output = Pid_Calculate(temp_pid, target_temp, temperature);
+                    float duty_ratio = pid_output / 20.0f;
+                    if (duty_ratio < 0.0f) duty_ratio = 0.0f;
+                    if (duty_ratio > 1.0f) duty_ratio = 1.0f;
+                    Pwm_SetDutyRatio(heater_pwm, duty_ratio);
+                }
+
+                if (temperature >= warmup_enter_temp) {
+                    if (warmup_stable_count < warmup_stable_cycles) {
+                        warmup_stable_count++;
+                    }
+                } else {
+                    warmup_stable_count = 0;
+                }
+            }
+        }
+
+        osDelay(5);
+        // 有时间加个超时逻辑
+    }
     // 初始化四元数（简化版，实际应用中需要更复杂的初始化）
 	madgwick_ahrs=pvPortMalloc(sizeof(MadgwickAHRS));
     Quater_Init(origin_quaternion, 1); // 使用默认初始化
@@ -356,7 +393,6 @@ void isttask(void const * argument)
                 
                 // 温度控制PID计算
                 if (temp_pid != NULL && heater_pwm != NULL) {
-                    float target_temp = 40.0f; // 目标温度40摄氏度
                     float pid_output = Pid_Calculate(temp_pid, target_temp, temperature);
                     
                     // 将PID输出转换为占空比
@@ -385,7 +421,11 @@ void isttask(void const * argument)
 
             Quater.ins_ready = (!fusion_ahrs.initialising); // 误差小于1度
             // 构造 Fusion 向量并进行动态偏置补偿
-            FusionVector raw_gyro = {bmi088_test->gyro[0], bmi088_test->gyro[1], bmi088_test->gyro[2]};
+            for (int i = 0; i < 3; i++) {
+                // 仅用于零偏学习，避免原始抖动导致计时器持续清零
+                offset_gyro_lpf[i] += offset_gyro_lpf_alpha * (bmi088_test->gyro[i] - offset_gyro_lpf[i]);
+            }
+            FusionVector raw_gyro = {offset_gyro_lpf[0], offset_gyro_lpf[1], offset_gyro_lpf[2]};
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
             FusionVector raw_accel = {bmi088_test->accel[0] / 9.80665f, bmi088_test->accel[1] / 9.80665f, bmi088_test->accel[2] / 9.80665f};
             raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro, raw_accel); // 动态偏置学习与减除
@@ -508,6 +548,9 @@ void isttask(void const * argument)
 */
 uint8_t Quater_Init(float* origin_quater, uint8_t check) {
     extern Bmi088Instance_s *bmi088_test;
+    Gyro_Offset[0] = 0.0f;
+    Gyro_Offset[1] = 0.0f;
+    Gyro_Offset[2] = 0.0f;
     
     if(check == 1) { 
         float32_t g0[3] = {0,0,0};
@@ -540,6 +583,7 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
 
             g0[i] /= 50;
             Gyro_Offset[i] /= 100; //陀螺仪零偏
+            offset_gyro_lpf[i] = Gyro_Offset[i];
         }
 
     if(calculate_quaternion_from_gravity(g0,g1,origin_quater)<0){//此处即完成四元数初始化

@@ -9,7 +9,7 @@
 #define IMU
 
 
-#define YAW_ORIGIN -3.14f
+#define YAW_ORIGIN 0.0f
 #define G_FEED_TEST
 //实例声明
 //此处做了修改，现在完全不关心下云台电机
@@ -34,7 +34,7 @@ extern uint8_t mode;
 uint8_t ControlMode= RC_MODE;
 uint8_t gimbal_ready_flag;
 
-float target_position=0.3,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0;
+float target_position=0.3,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0,test_g_out=0.0;
 float target_up_speed=0.0;//yaw目标速度（用于IMU下）
 float target_up_position=0.0;
 float target_pitch_position=0.0;
@@ -132,8 +132,8 @@ static  DjiMotorInitConfig_s Up_config = {
     .angle_pid_config = {
         //.kp = 0.0f,
         .kp = 33.0f,                        // 位置环比例系数
-        //.ki = 0.0f,  
-        .ki = 0.05f,                      // 位置环积分系数
+        .ki = 0.0f,  
+        //.ki = 0.05f,                      // 位置环积分系数
         .kd = 0.0f,                        // 位置环微分系数
         .kf = 0.0f,                        // 前馈系数
         .angle_max = 2.0f * PI,//0.0f,                 // 角度最大值(限幅用，为0则不限幅)
@@ -355,6 +355,7 @@ void StartGimbalTask(void const * argument)
         // Motor_Dm_Mit_Control(pitch,0,0,output);
         // Motor_Dm_Transmit(pitch);
 			Up_yaw->control_mode=DJI_POSITION;
+			Up_yaw->angle_pid->ki=0.05f;
         Up_yaw->velocity_pid->kp=70.0f;
 			Up_yaw->velocity_pid->ki=0.0f;
         Motor_Dji_Control(Up_yaw,YAW_ORIGIN);
@@ -364,13 +365,14 @@ void StartGimbalTask(void const * argument)
             break;
         }
         #ifdef G_FEED_TEST
-        gimbal_ready_flag=1;
+        //gimbal_ready_flag=1;
         #endif
         
         osDelay(1);
     }
     //零点刚刚初始化的时候做个差，得出上下云台零点之间的偏移
-		osDelay(2);
+		Up_yaw->angle_pid->ki=0.0f;
+		osDelay(4);
 		if(Quater.ins_ready!=1){
 			Log("Erro!Offset may not correct.");
 		}
@@ -548,6 +550,8 @@ void StartGimbalTask(void const * argument)
                 #ifdef G_FEED_TEST
                  Pid_Disable(Up_yaw->velocity_pid);
                 Pid_Disable(Up_yaw->angle_pid);
+								//target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
+                 //Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.Gyro[2]);
                 //target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
                 //Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
 								
@@ -558,11 +562,13 @@ void StartGimbalTask(void const * argument)
                 pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);
 			   // Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
                   output=pitch->output+G_feed(pitch->message.out_position);
+						test_g_out=G_feed(pitch->message.out_position);
 				Motor_Dm_Mit_Control(pitch,0,0,output);
                 Motor_Dm_Transmit(pitch);
                 //////////////////////////////////////////////////////
                 #endif
-                Motor_Dji_Control(Up_yaw,target_up_position);
+                //Motor_Dji_Control(Up_yaw,target_up_position);
+								Up_yaw->output=0.0f;
                 Motor_Dji_Transmit(Up_yaw);
                 break;
             default:

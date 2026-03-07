@@ -9,7 +9,8 @@
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "bsp_dwt.h"
-#define BMI088_GYRO_2000_SEN        0.00106526443603169529841533860381f  // 2000°/s
+#define BMI088_GYRO_2000_SEN        0.00106526443603169529841533860381f  // 2000 deg/s range, sensitivity in rad/s per LSB
+#define BMI088_STANDARD_GRAVITY_M_S2 9.80665f
 #include "math.h"  // 添加数学函数支持
 /*!***************************************************
  * @file: BMI088.c
@@ -148,7 +149,7 @@ bool BMI088_ReadAccelData(SpiInstance_s* acc_spi, float* accel_data) {
 
     for (int i = 0; i < 3; i++) {
         int16_t raw_value = (int16_t)((raw_data[i*2+1] << 8) | raw_data[i*2]);
-        accel_data[i] = raw_value * acc_scale * 9.8f; // 转换为m/s²
+        accel_data[i] = raw_value * acc_scale * BMI088_STANDARD_GRAVITY_M_S2; // 转换为m/s²
     }
     
     return true;
@@ -174,13 +175,13 @@ bool BMI088_ReadGyroData(SpiInstance_s* gyro_spi, float* gyro_data) {
     }
     
     // 转换为实际值 (数据在字节2-7，对应X,Y,Z轴)
-    // float gyro_scale = 2000.0f / 32768.0f; // 假设±2000°/s量程
+    // float gyro_scale = 2000.0f / 32768.0f * (PI / 180.0f); // 假设±2000°/s量程，换算为rad/s
     
     
     for (int i = 0; i < 3; i++) {
         // 数据从第2字节开始 (跳过CHIP_ID和reserved byte)
         int16_t raw_value = (int16_t)((raw_data[i*2+3] << 8) | raw_data[i*2+2]);
-        gyro_data[i] = raw_value * BMI088_GYRO_2000_SEN; // 转换为°/s
+        gyro_data[i] = raw_value * BMI088_GYRO_2000_SEN; // 转换为rad/s
     }
     
     return true;
@@ -215,7 +216,7 @@ void BMI088_CalibrateOffset(Bmi088Instance_s *bmi088_ins) {
             bmi088_ins->gyro_offset[0] = 0.0f;
             bmi088_ins->gyro_offset[1] = 0.0f;
             bmi088_ins->gyro_offset[2] = 0.0f;
-            bmi088_ins->g_norm = 9.8f;
+            bmi088_ins->g_norm = BMI088_STANDARD_GRAVITY_M_S2;
             bmi088_ins->temp_when_cali = 40.0f;
             bmi088_ins->accel_scale[0] = bmi088_ins->accel_scale[1] = bmi088_ins->accel_scale[2] = 1.0f;
             break;
@@ -237,11 +238,11 @@ void BMI088_CalibrateOffset(Bmi088Instance_s *bmi088_ins) {
                 float accel_scale = 6.0f / 32768.0f; // ±6g量程
                 
                 raw_temp = (int16_t)((accel_buf[1] << 8) | accel_buf[0]);
-                bmi088_ins->accel[0] = raw_temp * accel_scale * 9.8f;
+                bmi088_ins->accel[0] = raw_temp * accel_scale * BMI088_STANDARD_GRAVITY_M_S2;
                 raw_temp = (int16_t)((accel_buf[3] << 8) | accel_buf[2]);
-                bmi088_ins->accel[1] = raw_temp * accel_scale * 9.8f;
+                bmi088_ins->accel[1] = raw_temp * accel_scale * BMI088_STANDARD_GRAVITY_M_S2;
                 raw_temp = (int16_t)((accel_buf[5] << 8) | accel_buf[4]);
-                bmi088_ins->accel[2] = raw_temp * accel_scale * 9.8f;
+                bmi088_ins->accel[2] = raw_temp * accel_scale * BMI088_STANDARD_GRAVITY_M_S2;
                 
                 // 计算重力模长
                 g_norm_temp = sqrtf(bmi088_ins->accel[0] * bmi088_ins->accel[0] +
@@ -314,7 +315,7 @@ void BMI088_CalibrateOffset(Bmi088Instance_s *bmi088_ins) {
         Dwt_Delay(0.005f); // 5ms延时后重试检查
         
     } while (g_norm_diff > max_g_norm_diff ||
-             fabsf(bmi088_ins->g_norm - 9.8f) > 0.5f ||
+             fabsf(bmi088_ins->g_norm - BMI088_STANDARD_GRAVITY_M_S2) > 0.5f ||
              gyro_diff[0] > max_gyro_diff ||
              gyro_diff[1] > max_gyro_diff ||
              gyro_diff[2] > max_gyro_diff ||
@@ -323,7 +324,7 @@ void BMI088_CalibrateOffset(Bmi088Instance_s *bmi088_ins) {
              fabsf(bmi088_ins->gyro_offset[2]) > max_gyro_offset);
     
     // 根据校准结果计算加速度计比例系数
-    float accel_scale_factor = 9.81f / bmi088_ins->g_norm;
+    float accel_scale_factor = BMI088_STANDARD_GRAVITY_M_S2 / bmi088_ins->g_norm;
     bmi088_ins->accel_scale[0] = accel_scale_factor;
     bmi088_ins->accel_scale[1] = accel_scale_factor;
     bmi088_ins->accel_scale[2] = accel_scale_factor;
@@ -583,7 +584,7 @@ bool Bmi088_Init(Bmi088Instance_s *instance) {
         instance->gyro[i] = 0.0f;
     }
     instance->temperature = 0.0f;
-    instance->g_norm = 9.8f;
+    instance->g_norm = BMI088_STANDARD_GRAVITY_M_S2;
     instance->temp_when_cali = 40.0f;
     instance->calibration_done = 0;  // 初始化校准完成标志
     // 注意：cali_offset 将在 Bmi088_Register 函数中设置

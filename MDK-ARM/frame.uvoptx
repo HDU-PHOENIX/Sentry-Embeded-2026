@@ -387,6 +387,16 @@
           <WinNumber>2</WinNumber>
           <ItemText>fusion_offset,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>\\frame\../Task/app_ins_task.c\Quater.yaw</ItemText>
+        </Ww>
+        <Ww>
+          <count>27</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>temp_pid</ItemText>
+        </Ww>
       </WatchWindow2>
       <Tracepoint>
         <THDelay>0</THDelay>

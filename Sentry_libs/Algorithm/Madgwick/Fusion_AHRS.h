@@ -438,7 +438,7 @@ typedef enum {
 typedef struct {
     FusionConvention convention;        // Coordinate system convention used
     float gain;                        // Algorithm gain
-    float gyroscopeRange;              // Gyroscope range limit (degrees/second)
+    float gyroscopeRange;              // Gyroscope range limit (rad/s)
     float accelerationRejection;       // Accelerometer rejection threshold
     unsigned int recoveryTriggerPeriod; // Recovery trigger period
 } FusionAhrsSettings;
@@ -491,7 +491,7 @@ void FusionAhrsSetSettings(FusionAhrs *const ahrs, const FusionAhrsSettings *con
 /**
  * @brief Update AHRS algorithm state with gyroscope and accelerometer data
  * @param ahrs Pointer to AHRS structure
- * @param gyroscope Gyroscope data (degrees/second)
+ * @param gyroscope Gyroscope data (rad/s)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -500,7 +500,7 @@ void FusionAhrsUpdate(FusionAhrs *const ahrs, const FusionVector gyroscope, cons
 /**
  * @brief Update AHRS algorithm state without magnetometer
  * @param ahrs Pointer to AHRS structure
- * @param gyroscope Gyroscope data (degrees/second)
+ * @param gyroscope Gyroscope data (rad/s)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -570,6 +570,7 @@ typedef struct {
     unsigned int timeout;               // Timeout counter
     unsigned int timer;                 // Timer counter
     FusionVector gyroscopeOffset;       // Gyroscope bias estimate
+    FusionVector gyroLPF;              // Simple low-pass filtered gyroscope used for detection
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     FusionVector gyroMean;              // Gyro mean for stationary detection
     FusionVector gyroAbsDev;            // Gyro absolute deviation estimate
@@ -631,9 +632,9 @@ typedef struct {
 
 /**
  * @brief Update IMU using Madgwick gradient descent algorithm
- * @param gx Gyroscope X-axis reading (degrees/second)
- * @param gy Gyroscope Y-axis reading (degrees/second)
- * @param gz Gyroscope Z-axis reading (degrees/second)
+ * @param gx Gyroscope X-axis reading (rad/s)
+ * @param gy Gyroscope Y-axis reading (rad/s)
+ * @param gz Gyroscope Z-axis reading (rad/s)
  * @param ax Accelerometer X-axis reading (g)
  * @param ay Accelerometer Y-axis reading (g)
  * @param az Accelerometer Z-axis reading (g)

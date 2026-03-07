@@ -3,9 +3,9 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Fri Mar  6 15:22:23 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sat Mar  7 12:47:01 2026
 <BR><P>
-<H3>Maximum Stack Usage =       1212 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =       1244 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 isttask &rArr; FusionAhrsUpdateNoMagnetometer &rArr; FusionAhrsUpdate &rArr; Feedback(FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 <P>
@@ -1131,16 +1131,17 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
-<P><STRONG><a name="[f3]"></a>FusionAhrsInitialise</STRONG> (Thumb, 64 bytes, Stack size 32 bytes, fusion_ahrs.o(.text.FusionAhrsInitialise))
-<BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = FusionAhrsInitialise &rArr; FusionAhrsSetSettings &rArr; __hardfp_powf &rArr; __set_errno
+<P><STRONG><a name="[f3]"></a>FusionAhrsInitialise</STRONG> (Thumb, 64 bytes, Stack size 40 bytes, fusion_ahrs.o(.text.FusionAhrsInitialise))
+<BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = FusionAhrsInitialise &rArr; FusionAhrsSetSettings &rArr; __hardfp_powf &rArr; __set_errno
 </UL>
-<BR>[Calls]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsReset
-<LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<BR>[Calls]<UL><LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsReset
+<LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionDegreesToRadians(float)
+<LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 </UL>
 
-<P><STRONG><a name="[f5]"></a>FusionAhrsReset</STRONG> (Thumb, 250 bytes, Stack size 52 bytes, fusion_ahrs.o(.text.FusionAhrsReset))
+<P><STRONG><a name="[f6]"></a>FusionAhrsReset</STRONG> (Thumb, 250 bytes, Stack size 52 bytes, fusion_ahrs.o(.text.FusionAhrsReset))
 <BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = FusionAhrsReset
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsUpdate
@@ -1153,10 +1154,10 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 </UL>
 
-<P><STRONG><a name="[f4]"></a>FusionAhrsSetSettings</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, fusion_ahrs.o(.text.FusionAhrsSetSettings))
+<P><STRONG><a name="[f5]"></a>FusionAhrsSetSettings</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, fusion_ahrs.o(.text.FusionAhrsSetSettings))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = FusionAhrsSetSettings &rArr; __hardfp_powf &rArr; __set_errno
 </UL>
-<BR>[Calls]<UL><LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionDegreesToRadians(float)
+<BR>[Calls]<UL><LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionDegreesToRadians(float)
 <LI><a href="#[f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sinf
 <LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_powf
 </UL>
@@ -1168,7 +1169,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 684<LI>Call Chain = FusionAhrsUpdate &rArr; Feedback(FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[105]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Madgwick_updateIMU
-<LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsReset
+<LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsReset
 <LI><a href="#[106]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionFastInverseSqrt(float)
 <LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionQuaternionNormalise(FusionQuaternion)
 <LI><a href="#[103]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionQuaternionAdd(FusionQuaternion, FusionQuaternion)
@@ -1193,14 +1194,14 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
-<P><STRONG><a name="[1fc]"></a>FusionOffsetInitialise</STRONG> (Thumb, 72 bytes, Stack size 20 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
-<BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = FusionOffsetInitialise
+<P><STRONG><a name="[1fc]"></a>FusionOffsetInitialise</STRONG> (Thumb, 96 bytes, Stack size 32 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = FusionOffsetInitialise
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 </UL>
 
-<P><STRONG><a name="[10a]"></a>FusionOffsetUpdate</STRONG> (Thumb, 416 bytes, Stack size 128 bytes, fusion_ahrs.o(.text.FusionOffsetUpdate))
-<BR><BR>[Stack]<UL><LI>Max Depth = 164<LI>Call Chain = FusionOffsetUpdate &rArr; FusionVectorSubtract(FusionVector, FusionVector)
+<P><STRONG><a name="[10a]"></a>FusionOffsetUpdate</STRONG> (Thumb, 584 bytes, Stack size 200 bytes, fusion_ahrs.o(.text.FusionOffsetUpdate))
+<BR><BR>[Stack]<UL><LI>Max Depth = 236<LI>Call Chain = FusionOffsetUpdate &rArr; FusionVectorSubtract(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[10b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorSubtract(FusionVector, FusionVector)
 <LI><a href="#[101]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorAdd(FusionVector, FusionVector)
@@ -2672,7 +2673,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pwm_Register
 </UL>
 
-<P><STRONG><a name="[1f9]"></a>Quater_Init</STRONG> (Thumb, 720 bytes, Stack size 88 bytes, app_ins_task.o(.text.Quater_Init))
+<P><STRONG><a name="[1f9]"></a>Quater_Init</STRONG> (Thumb, 756 bytes, Stack size 88 bytes, app_ins_task.o(.text.Quater_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 368 + Unknown Stack Size
 <LI>Call Chain = Quater_Init &rArr; BMI088_Read &rArr; BMI088_ReadAccelData &rArr; BMI088_AccelRead &rArr; Spi_TransRecv &rArr; HAL_SPI_TransmitReceive &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
@@ -2681,7 +2682,7 @@ Global Symbols
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvPortMalloc
 <LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetQuaternion
 <LI><a href="#[1fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionOffsetInitialise
-<LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsInitialise
 <LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MadgwickAHRS_init
 <LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
@@ -2812,8 +2813,8 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_defaultTask)
 </UL>
-<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 2380 bytes, Stack size 136 bytes, app_gimbal_task.o(.text.StartGimbalTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 792 + Unknown Stack Size
+<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 2404 bytes, Stack size 128 bytes, app_gimbal_task.o(.text.StartGimbalTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 784 + Unknown Stack Size
 <LI>Call Chain = StartGimbalTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
@@ -3722,8 +3723,8 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[1f0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSwitchContext
 </UL>
 
-<P><STRONG><a name="[8d]"></a>isttask</STRONG> (Thumb, 1572 bytes, Stack size 464 bytes, app_ins_task.o(.text.isttask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 1212 + Unknown Stack Size
+<P><STRONG><a name="[8d]"></a>isttask</STRONG> (Thumb, 1960 bytes, Stack size 496 bytes, app_ins_task.o(.text.isttask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 1244 + Unknown Stack Size
 <LI>Call Chain = isttask &rArr; FusionAhrsUpdateNoMagnetometer &rArr; FusionAhrsUpdate &rArr; Feedback(FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
@@ -4340,7 +4341,7 @@ Global Symbols
 <LI><a href="#[2ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__mathlib_flt_divzero
 <LI><a href="#[2a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_fpclassifyf
 </UL>
-<BR>[Called By]<UL><LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
 </UL>
 
 <P><STRONG><a name="[304]"></a>__mathlib_powf</STRONG> (Thumb, 0 bytes, Stack size 32 bytes, powf.o(i.__hardfp_powf), UNUSED)
@@ -4355,7 +4356,7 @@ Global Symbols
 <LI><a href="#[2a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__mathlib_flt_infnan
 <LI><a href="#[2a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ARM_fpclassifyf
 </UL>
-<BR>[Called By]<UL><LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
 </UL>
 
 <P><STRONG><a name="[c2]"></a>__hardfp_sqrtf</STRONG> (Thumb, 58 bytes, Stack size 16 bytes, sqrtf.o(i.__hardfp_sqrtf))
@@ -5733,10 +5734,11 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[1dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Calculate
 </UL>
 
-<P><STRONG><a name="[f6]"></a>FusionDegreesToRadians(float)</STRONG> (Thumb, 24 bytes, Stack size 4 bytes, fusion_ahrs.o(.text._ZL22FusionDegreesToRadiansf))
+<P><STRONG><a name="[f4]"></a>FusionDegreesToRadians(float)</STRONG> (Thumb, 24 bytes, Stack size 4 bytes, fusion_ahrs.o(.text._ZL22FusionDegreesToRadiansf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = FusionDegreesToRadians(float)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
+<LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsInitialise
 </UL>
 
 <P><STRONG><a name="[fa]"></a>HalfGravity(FusionAhrs const*)</STRONG> (Thumb, 268 bytes, Stack size 20 bytes, fusion_ahrs.o(.text._ZL11HalfGravityPK10FusionAhrs))
