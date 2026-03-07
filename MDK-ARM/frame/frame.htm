@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sat Mar  7 12:47:01 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sat Mar  7 14:53:46 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1244 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1221,8 +1221,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
 </UL>
 
-<P><STRONG><a name="[113]"></a>GenerateReversingRamp</STRONG> (Thumb, 500 bytes, Stack size 48 bytes, app_gimbal_task.o(.text.GenerateReversingRamp))
-<BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = GenerateReversingRamp &rArr; osKernelSysTick &rArr; xTaskGetTickCountFromISR &rArr; vPortValidateInterruptPriority
+<P><STRONG><a name="[113]"></a>GenerateReversingRamp</STRONG> (Thumb, 476 bytes, Stack size 56 bytes, app_gimbal_task.o(.text.GenerateReversingRamp))
+<BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = GenerateReversingRamp &rArr; osKernelSysTick &rArr; xTaskGetTickCountFromISR &rArr; vPortValidateInterruptPriority
 </UL>
 <BR>[Calls]<UL><LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osKernelSysTick
 </UL>
@@ -2813,12 +2813,13 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_defaultTask)
 </UL>
-<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 2404 bytes, Stack size 128 bytes, app_gimbal_task.o(.text.StartGimbalTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 784 + Unknown Stack Size
+<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 3580 bytes, Stack size 192 bytes, app_gimbal_task.o(.text.StartGimbalTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 848 + Unknown Stack Size
 <LI>Call Chain = StartGimbalTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_printf
+<LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osKernelSysTick
 <LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
 <LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Disable
 <LI><a href="#[217]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Clear
@@ -3805,7 +3806,8 @@ Global Symbols
 <LI><a href="#[263]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCountFromISR
 <LI><a href="#[264]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
 </UL>
-<BR>[Called By]<UL><LI><a href="#[113]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GenerateReversingRamp
+<BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
+<LI><a href="#[113]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GenerateReversingRamp
 </UL>
 
 <P><STRONG><a name="[1c8]"></a>osThreadCreate</STRONG> (Thumb, 172 bytes, Stack size 80 bytes, cmsis_os.o(.text.osThreadCreate))

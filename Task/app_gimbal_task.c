@@ -10,9 +10,11 @@
 
 
 #define YAW_ORIGIN 0.0f
-#define G_FEED_TEST
+//#define G_FEED_TEST
+#define GIMBAL_SWITCH_UT
 //实例声明
 //此处做了修改，现在完全不关心下云台电机
+ #define TEST_MODE_SOFT_KP
 DmMotorInstance_s *pitch;
 DjiMotorInstance_s *Up_yaw;
 extern board_instance_t *board_instance;
@@ -171,6 +173,31 @@ float G_feed(float position){
 }
 ////////测试用代码///////////
 #ifdef DEBUG
+
+typedef struct {
+    float target_setpoint;
+    int current_step;
+    uint32_t last_update_time;
+    float last_start;
+    float last_end;
+    int last_steps;
+    uint8_t initialized;
+} RampWithPauseState_s;
+
+typedef struct {
+    float target_setpoint;
+    int current_step;
+    uint32_t last_update_time;
+    uint8_t is_forward_trip; // 1: min->max, 0: max->min
+    uint8_t is_paused;       // 1: paused, 0: moving
+    float last_min_pos;
+    float last_max_pos;
+    int last_steps;
+    uint32_t last_interval_ms;
+    uint32_t last_pause_ms;
+    uint8_t initialized;
+} ReversingRampState_s;
+
 //假设end绝对大于start
 /**
  * @brief 生成一个简单的斜坡轨迹，在start和end之间切分出若干个点，
@@ -180,61 +207,57 @@ float G_feed(float position){
  * @param end 轨迹的结束位置 (rad)。
  * @param steps 从start到end分的步数。
  * @param interval_ms 切换到下一个点的时间间隔 (毫秒)。
+ * @param state 每个调用通道独立持有的状态对象。
  * 
  * @return float 当前应该对准的目标设定点 (rad)。
  */
-float GenerateSimpleRampWithPause(float start, float end, int steps, uint32_t interval_ms)
+float GenerateSimpleRampWithPause(float start, float end, int steps, uint32_t interval_ms, RampWithPauseState_s *state)
 {
-    // --- 静态变量，用于在函数调用间保持状态 ---
-    static float target_setpoint = 0.0f; // 当前的目标设定点
-    static int current_step = 0;         // 当前所在的步数
-    static uint32_t last_update_time = 0; // 上次更新目标点的时间
-
-    // --- 静态变量，用于检测输入参数变化并重置 ---
-    static float static_start = -1.0f;
-    static float static_end = -1.0f;
-    static int static_steps = -1;
-
     uint32_t current_time = osKernelSysTick(); // 获取当前系统时间
+
+    if (state == NULL) {
+        return start;
+    }
 
     // 1. 初始化或重置
     // 如果调用时 start, end 或 steps 的值变了，就重新初始化
-    if (start != static_start || end != static_end || steps != static_steps) {
-        target_setpoint = start;
-        current_step = 0;
-        last_update_time = current_time;
+    if (!state->initialized || start != state->last_start || end != state->last_end || steps != state->last_steps) {
+        state->target_setpoint = start;
+        state->current_step = 0;
+        state->last_update_time = current_time;
 
         // 保存当前的参数，用于下次比较
-        static_start = start;
-        static_end = end;
-        static_steps = steps;
+        state->last_start = start;
+        state->last_end = end;
+        state->last_steps = steps;
+        state->initialized = 1;
     }
 
     // 2. 检查是否到达更新时间
-    if (current_time - last_update_time >= interval_ms)
+    if (current_time - state->last_update_time >= interval_ms)
     {
         // 如果还没有到达最后一步
-        if (current_step < steps)
+        if (state->current_step < steps)
         {
-            current_step++; // 移动到下一步
-            last_update_time = current_time; // 更新时间戳
+            state->current_step++; // 移动到下一步
+            state->last_update_time = current_time; // 更新时间戳
         }
     }
     
     // 3. 计算当前的目标设定点
     if (steps > 0) {
-        target_setpoint = start + (end - start) * ((float)current_step / (float)steps);
+        state->target_setpoint = start + (end - start) * ((float)state->current_step / (float)steps);
     } else {
-        target_setpoint = start; // 如果步数为0，则目标点始终为起点
+        state->target_setpoint = start; // 如果步数为0，则目标点始终为起点
     }
 
     // 确保最终目标点不会超过终点
-    if ((end > start && target_setpoint > end) || (end < start && target_setpoint < end)) {
-        target_setpoint = end;
+    if ((end > start && state->target_setpoint > end) || (end < start && state->target_setpoint < end)) {
+        state->target_setpoint = end;
     }
 
     // 4. 返回当前计算出的目标值
-    return target_setpoint;
+    return state->target_setpoint;
 }
 /**
  * @brief 生成一个在端点暂停并自动往复的斜坡信号。
@@ -245,74 +268,80 @@ float GenerateSimpleRampWithPause(float start, float end, int steps, uint32_t in
  * @param steps         从一端到另一端所需的步数
  * @param interval_ms   每一步之间的时间间隔 (毫秒)
  * @param pause_ms      在端点暂停的时间 (毫秒)
+ * @param state 每个调用通道独立持有的状态对象。
  * @return float        当前的目标设定点
  */
-float GenerateReversingRamp(float min_pos, float max_pos, int steps, uint32_t interval_ms, uint32_t pause_ms)
+float GenerateReversingRamp(float min_pos, float max_pos, int steps, uint32_t interval_ms, uint32_t pause_ms, ReversingRampState_s *state)
 {
-    // --- 静态变量，用于在函数调用间保持状态 ---
-    static float target_setpoint = 0.0f;
-    static int current_step = 0;
-    static uint32_t last_update_time = 0;
-    static char is_forward_trip = 1; // 1: min->max, 0: max->min
-    static char is_paused = 0;       // 1: 正在暂停, 0: 正在运动
-
-    // --- 用于初始化的静态变量 ---
-    static int initialized = 0;
     uint32_t current_time = osKernelSysTick();
 
+    if (state == NULL) {
+        return min_pos;
+    }
+
     // 1. 仅在第一次调用时进行初始化
-    if (!initialized) {
-        target_setpoint = min_pos;
-        current_step = 0;
-        is_forward_trip = 1;
-        is_paused = 0;
-        last_update_time = current_time;
-        initialized = 1;
+    if (!state->initialized
+        || state->last_min_pos != min_pos
+        || state->last_max_pos != max_pos
+        || state->last_steps != steps
+        || state->last_interval_ms != interval_ms
+        || state->last_pause_ms != pause_ms) {
+        state->target_setpoint = min_pos;
+        state->current_step = 0;
+        state->is_forward_trip = 1;
+        state->is_paused = 0;
+        state->last_update_time = current_time;
+        state->last_min_pos = min_pos;
+        state->last_max_pos = max_pos;
+        state->last_steps = steps;
+        state->last_interval_ms = interval_ms;
+        state->last_pause_ms = pause_ms;
+        state->initialized = 1;
     }
 
     // 2. 状态机逻辑
-    if (is_paused) // 如果当前处于暂停状态
+    if (state->is_paused) // 如果当前处于暂停状态
     {
-        if (current_time - last_update_time >= pause_ms)
+        if (current_time - state->last_update_time >= pause_ms)
         {
             // 暂停结束，准备“掉头”
-            is_forward_trip = !is_forward_trip; // 切换方向
-            current_step = 0;                   // 重置步数
-            is_paused = 0;                      // 退出暂停状态
-            last_update_time = current_time;    // 更新时间戳，开始新的运动
+            state->is_forward_trip = (uint8_t)!state->is_forward_trip; // 切换方向
+            state->current_step = 0;                                 // 重置步数
+            state->is_paused = 0;                                    // 退出暂停状态
+            state->last_update_time = current_time;                  // 更新时间戳，开始新的运动
         }
     }
     else // 如果当前处于运动状态
     {
-        if (current_time - last_update_time >= interval_ms)
+        if (current_time - state->last_update_time >= interval_ms)
         {
-            if (current_step < steps)
+            if (state->current_step < steps)
             {
-                current_step++; // 移动到下一步
-                last_update_time = current_time;
+                state->current_step++; // 移动到下一步
+                state->last_update_time = current_time;
             }
             
-            if (current_step >= steps)
+            if (state->current_step >= steps)
             {
                 // 到达端点，开始暂停
-                is_paused = 1;
-                last_update_time = current_time; // 重置暂停计时器
+                state->is_paused = 1;
+                state->last_update_time = current_time; // 重置暂停计时器
             }
         }
     }
 
     // 3. 根据当前状态计算目标点
-    float start_pos = is_forward_trip ? min_pos : max_pos;
-    float end_pos = is_forward_trip ? max_pos : min_pos;
+    float start_pos = state->is_forward_trip ? min_pos : max_pos;
+    float end_pos = state->is_forward_trip ? max_pos : min_pos;
 
     if (steps > 0) {
-        target_setpoint = start_pos + (end_pos - start_pos) * ((float)current_step / (float)steps);
+        state->target_setpoint = start_pos + (end_pos - start_pos) * ((float)state->current_step / (float)steps);
     } else {
-        target_setpoint = start_pos;
+        state->target_setpoint = start_pos;
     }
 
     // 4. 返回当前计算出的目标值
-    return target_setpoint;
+    return state->target_setpoint;
 }
 
 #endif
@@ -390,6 +419,8 @@ void StartGimbalTask(void const * argument)
 
     Log("Gimbal ready\r\n");
     static uint8_t last_gimbal_mode = IMU_MODE;
+        static ReversingRampState_s pc_yaw_scan_ramp_state = {0};
+        static ReversingRampState_s test_encoder_yaw_ramp_state = {0};
   for(;;)
   {
 		#ifdef DEBUG
@@ -428,7 +459,7 @@ void StartGimbalTask(void const * argument)
                 // 参数：范围, 总步数, 步进间隔(ms), 到达端点停顿时间(ms)
                 
                 gimbal_mode=ENCODER_MODE;//切换到相对坐标的，进行扫描
-                target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200);
+                target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200, &pc_yaw_scan_ramp_state);
                 // break; // 此处不应break，否则不执行下面的控制逻辑导致云台不动
             } else {
                 gimbal_mode=IMU_MODE;
@@ -456,8 +487,11 @@ void StartGimbalTask(void const * argument)
             if (gimbal_mode != last_gimbal_mode) {
                 Pid_Clear(Up_yaw->angle_pid);
                 Pid_Clear(Up_yaw->velocity_pid);
-                Pid_Clear(pitch->angle_pid);
-                Pid_Clear(pitch->velocity_pid);
+                // PC下仅测试/切换yaw链路，pitch保持IMU控制连续性。
+                if (ControlMode != PC_MODE) {
+                    Pid_Clear(pitch->angle_pid);
+                    Pid_Clear(pitch->velocity_pid);
+                }
                 last_gimbal_mode = gimbal_mode;
             }
 
@@ -484,12 +518,9 @@ void StartGimbalTask(void const * argument)
             
             #else 
             if(Quater.ins_ready==1){
-                if(gimbal_mode==IMU_MODE){
-                    target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
-                    pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);//速度反向，IMU和编码器方向相反
-                }else{
-                    Motor_Dm_Control(pitch,target_position);
-                }
+                // pitch不参与IMU/编码器切换，始终使用IMU角度+IMU角速度闭环。
+                target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
+                pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);//速度反向，IMU和编码器方向相反
 			 
             }else{
                 pitch->angle_pid->i_out=0.0;
@@ -512,11 +543,16 @@ void StartGimbalTask(void const * argument)
                 temp_position=target_up_position;
                 Motor_Dji_Control(Up_yaw,temp_position);
                 #else
-                if(gimbal_mode==IMU_MODE){
-                    target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
+                {
+                    float yaw_angle_feedback;
+                    // 角度环按模式切换，速度环统一使用IMU角速度反馈。
+                    if(gimbal_mode==IMU_MODE){
+                        yaw_angle_feedback = Quater.yaw;
+                    }else{
+                        yaw_angle_feedback = Up_yaw->message.out_position;
+                    }
+                    target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, yaw_angle_feedback);
                     Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.Gyro[2]);
-                }else{
-                    Motor_Dji_Control(Up_yaw,target_up_position);
                 }
                 #endif
 
@@ -546,31 +582,163 @@ void StartGimbalTask(void const * argument)
                 
 				break;
             case TEST_MODE:
-                //仅测试上云台
+#ifdef TEST_MODE_SOFT_KP
+                // TEST模式使用更温和的Kp，降低切换测试时的冲击。
+                pitch->angle_pid->kp = 10.0f;
+                pitch->velocity_pid->kp = 0.30f;
+                Up_yaw->angle_pid->kp = 20.0f;
+                Up_yaw->velocity_pid->kp = 1200.0f;
+#endif
+#ifdef GIMBAL_SWITCH_UT
+            {
+                // 条件编译单元测试: 使用虚拟find_bool温和随机切换，验证IMU/编码器切换逻辑稳定性。
+                static uint8_t test_last_raw_mode = IMU_MODE;
+                static uint8_t test_filtered_mode = IMU_MODE;
+                static uint16_t test_same_cnt = 0;
+                static uint32_t test_last_mode_switch_tick = 0;
+                static uint32_t test_last_eval_tick = 0;
+                static uint8_t virtual_find_bool = 1;
+                static uint32_t rng_state = 0xA5A5F00Du;
+                uint32_t now_tick = osKernelSysTick();
+                const float test_hold_yaw_target = 0.0f;
+                const float test_hold_pitch_target = -0.2f;
+
+                const uint16_t test_debounce_ticks = 30; // 约30ms
+                const uint32_t test_min_mode_hold_ms = 1200;
+                const uint32_t test_eval_ms = 100;
+
+                if (last_ControlMode == DISABLE_MODE || pitch->motor_state == DM_DISABLE || Up_yaw->velocity_pid->is_enabled == 0) {
+                    ControlMode = TRANS_MODE;
+                    break;
+                }
+
+                // 生成“温和随机”虚拟find_bool: 1.8s~4.0s后才允许尝试切换。
+                if (now_tick - test_last_eval_tick >= test_eval_ms) {
+                    uint32_t dynamic_hold_ms;
+                    uint8_t random_bit;
+                    test_last_eval_tick = now_tick;
+
+                    rng_state ^= (rng_state << 13);
+                    rng_state ^= (rng_state >> 17);
+                    rng_state ^= (rng_state << 5);
+
+                    dynamic_hold_ms = 1800u + (rng_state % 2200u);
+                    random_bit = (uint8_t)(rng_state & 0x1u);
+
+                    if ((now_tick - test_last_mode_switch_tick) >= dynamic_hold_ms) {
+                        if (random_bit != virtual_find_bool || ((rng_state & 0xFu) == 0u)) {
+                            virtual_find_bool = random_bit;
+                            test_last_mode_switch_tick = now_tick;
+                        }
+                    }
+                }
+
+                // 仅用于遥测观察，和真实链路解耦。
+                find_bool = virtual_find_bool;
+
+                {
+                    uint8_t requested_mode = (virtual_find_bool == 0) ? ENCODER_MODE : IMU_MODE;
+
+                    if (requested_mode == test_last_raw_mode) {
+                        if (test_same_cnt < 0xFFFF) {
+                            test_same_cnt++;
+                        }
+                    } else {
+                        test_last_raw_mode = requested_mode;
+                        test_same_cnt = 0;
+                    }
+
+                    if (requested_mode != test_filtered_mode
+                        && test_same_cnt >= test_debounce_ticks
+                        && (now_tick - test_last_mode_switch_tick) >= test_min_mode_hold_ms) {
+                        test_filtered_mode = requested_mode;
+                        test_last_mode_switch_tick = now_tick;
+                    }
+                }
+
+                gimbal_mode = test_filtered_mode;
+
+#ifdef TEST_MODE_SOFT_KP
+                // pitch固定走IMU软Kp；yaw按模式调整Kp。
+                pitch->angle_pid->kp = 10.0f;
+                pitch->velocity_pid->kp = 0.30f;
+                if (gimbal_mode == ENCODER_MODE) {
+                    Up_yaw->angle_pid->kp = 12.0f;
+                    Up_yaw->velocity_pid->kp = 600.0f;
+                } else {
+                    Up_yaw->angle_pid->kp = 20.0f;
+                    Up_yaw->velocity_pid->kp = 1200.0f;
+                }
+#endif
+
+                // 定点切换测试: IMU模式定点，编码器模式小范围慢速往复。
+                if (gimbal_mode == ENCODER_MODE) {
+                    target_up_position = GenerateReversingRamp(-1.0472f, 1.0472f, 1600, 10, 500, &test_encoder_yaw_ramp_state);
+                } else {
+                    target_up_position = test_hold_yaw_target;
+                }
+                target_position = test_hold_pitch_target;
+
+                if (gimbal_mode != last_gimbal_mode) {
+                    Pid_Clear(Up_yaw->angle_pid);
+                    Pid_Clear(Up_yaw->velocity_pid);
+                    last_gimbal_mode = gimbal_mode;
+                }
+
+                if (pitch->control_mode == DM_POSITION) {
+                    target_position = target_position > 0.3f ? 0.3f : target_position;
+                    target_position = target_position < -0.7f ? -0.7f : target_position;
+                }
+
+                if (Quater.ins_ready == 1) {
+                    // pitch不参与IMU/编码器切换，始终保持IMU控制。
+                    target_speed = Pid_Calculate(pitch->angle_pid, target_position, Quater.pitch);
+                    pitch->output = Pid_Calculate(pitch->velocity_pid, Quater.Gyro[1], target_speed);
+                } else {
+                    pitch->angle_pid->i_out = 0.0f;
+                    pitch->velocity_pid->i_out = 0.0f;
+                    pitch->output = 0.0f;
+                }
+
+                output = pitch->output + G_feed(pitch->message.out_position);
+                test_g_out = G_feed(pitch->message.out_position);
+                test_output = pitch->message.torque;
+                test_position = pitch->message.out_position;
+                Motor_Dm_Mit_Control(pitch, 0, 0, output);
+                Motor_Dm_Transmit(pitch);
+
+                {
+                    float yaw_angle_feedback;
+                    // 角度环按模式切换，速度环始终使用IMU角速度，保持现有正负号约定。
+                    if (gimbal_mode == IMU_MODE) {
+                        yaw_angle_feedback = Quater.yaw;
+                    } else {
+                        yaw_angle_feedback = Up_yaw->message.out_position;
+                    }
+                    target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, yaw_angle_feedback);
+                    Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.Gyro[2]);
+                }
+                Motor_Dji_Transmit(Up_yaw);
+                break;
+            }
+#else
+                // 保留原TEST分支: 主要用于重力补偿测试。
                 #ifdef G_FEED_TEST
                  Pid_Disable(Up_yaw->velocity_pid);
                 Pid_Disable(Up_yaw->angle_pid);
-								//target_up_speed = Pid_Calculate(Up_yaw->angle_pid, target_up_position, Quater.yaw);
-                 //Up_yaw->output = Pid_Calculate(Up_yaw->velocity_pid, target_up_speed, Quater.Gyro[2]);
-                //target_position=GenerateReversingRamp(0, 1, 50, 6000, 6000); //50个点，间隔2s，端点停止2s
-                //Motor_Dm_Pos_Vel_Control(pitch,target_position,10);
-								
-								test_output=pitch->message.torque;
+                test_output=pitch->message.torque;
                 test_position=pitch->message.out_position;
-                /////下面这行是测试重力补偿效果的//////
                 target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
                 pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);
-			   // Motor_Dm_Mit_Control(pitch,0,0,G_feed(pitch->message.out_position));
-                  output=pitch->output+G_feed(pitch->message.out_position);
-						test_g_out=G_feed(pitch->message.out_position);
-				Motor_Dm_Mit_Control(pitch,0,0,output);
+                output=pitch->output+G_feed(pitch->message.out_position);
+                test_g_out=G_feed(pitch->message.out_position);
+                Motor_Dm_Mit_Control(pitch,0,0,output);
                 Motor_Dm_Transmit(pitch);
-                //////////////////////////////////////////////////////
                 #endif
-                //Motor_Dji_Control(Up_yaw,target_up_position);
-								Up_yaw->output=0.0f;
+                Up_yaw->output=0.0f;
                 Motor_Dji_Transmit(Up_yaw);
                 break;
+#endif
             default:
                 Pid_Disable(Up_yaw->velocity_pid);
                 Pid_Disable(Up_yaw->angle_pid);
