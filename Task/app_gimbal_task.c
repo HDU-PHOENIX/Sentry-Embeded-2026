@@ -60,7 +60,7 @@ static DmMotorInitConfig_s pitch_config = {
             #ifndef G_FEED_TEST
           .tx_id = 0x006,
           #else
-         .tx_id = 0x006,
+         .tx_id = 0x106,
          #endif
          .rx_id = 0x016,
          
@@ -437,7 +437,7 @@ void StartGimbalTask(void const * argument)
         }
 			//Pid_Disable(pitch->velocity_pid);
 		#endif
-        //ControlMode=board_instance->received_control_mode;
+        ControlMode=board_instance->received_control_mode;
 
         //把发送频率降低一点
         if(send_flag==0){

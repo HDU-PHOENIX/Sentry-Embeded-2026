@@ -14,7 +14,7 @@ Publisher *Command_publisher;
 ShooterState_t Shooter_State;
 ShooterState_t Shooter_State_last;
 
-#define UP_DEBUG
+//#define UP_DEBUG
 //配置
 board_config_t board_config = {
 .board_id=1,
