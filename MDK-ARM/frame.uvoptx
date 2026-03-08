@@ -120,6 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
+          <Name>)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -263,6 +264,16 @@
           <count>20</count>
           <WinNumber>1</WinNumber>
           <ItemText>bmi088_test</ItemText>
+        </Ww>
+        <Ww>
+          <count>21</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>shoot_bool</ItemText>
+        </Ww>
+        <Ww>
+          <count>22</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>control_mode</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

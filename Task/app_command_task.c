@@ -14,8 +14,8 @@ Publisher *Command_publisher;
 RefereeInstance_s* ref_instance;
 
 //变量
-uint8_t mode=0,last_mode=0;
-uint8_t combined_state_global=0;
+volatile uint8_t mode=0,last_mode=0;
+volatile uint8_t combined_state_global=0;
 RefereeData_t RefreeData;
 
 //配置
@@ -63,8 +63,8 @@ uint8_t Mode_Change(Dr16Instance_s *dr16){
       mode= last_mode==DISABLE_MODE?TRANS_MODE:UP_MODE;
       return mode;
       break;
-    case 0x32: // s1=3 (中), s2=2 (中)
-    if (last_mode == UP_MODE||last_mode == SHOOT_MODE)//之前忘记加SHOOT_MODE了，汗，导致他会自己切出到DISABLE_MODE
+    case 0x32: // s1=3 (中), s2=2 (下)
+    if (last_mode == UP_MODE || last_mode == SHOOT_MODE || last_mode == TRANS_MODE)
     {
       mode = SHOOT_MODE;
     }else{

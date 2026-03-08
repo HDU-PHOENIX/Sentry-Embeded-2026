@@ -32,8 +32,8 @@ float target_position=0.0;//后续改为上位机提供
 float target_up_position=0.0;
 float target_up_pitch=0.0;
 #else
-extern uint8_t mode;
-extern uint8_t combined_state_global;
+extern volatile uint8_t mode;
+extern volatile uint8_t combined_state_global;
 float target_position=0.0f,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0;
 float target_tr=40.0;
 float test_vel_tr=0.0,test_output_tr=0.0;
@@ -497,6 +497,7 @@ void StartChassisTask(void const * argument)
                     // 堵转反转
                     Trigger->target_velocity = -target_tr;
                     lasttime++;
+                    if(last_time > 1000) Pid_Disable(Trigger->velocity_pid);
                     if(lasttime > 400) lasttime = 0;
                 } else {
                     // 正常射击
@@ -597,9 +598,9 @@ void StartChassisTask(void const * argument)
         //target_tr=60.0f;
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 				Motor_Dm_Transmit(Down_yaw);
-		
+				target_tr=40.0;
 				Chassis_Change_Mode(Chassis,CHASSIS_NORMAL);
-        Chassis_Disable(Chassis);
+        
 				
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;

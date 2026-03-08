@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Fri Mar  6 18:24:22 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sun Mar  8 18:13:59 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1116 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1385,14 +1385,14 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
-<P><STRONG><a name="[224]"></a>FusionOffsetInitialise</STRONG> (Thumb, 76 bytes, Stack size 20 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
+<P><STRONG><a name="[224]"></a>FusionOffsetInitialise</STRONG> (Thumb, 72 bytes, Stack size 20 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = FusionOffsetInitialise
 </UL>
 <BR>[Called By]<UL><LI><a href="#[221]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 </UL>
 
-<P><STRONG><a name="[137]"></a>FusionOffsetUpdate</STRONG> (Thumb, 368 bytes, Stack size 120 bytes, fusion_ahrs.o(.text.FusionOffsetUpdate))
-<BR><BR>[Stack]<UL><LI>Max Depth = 156<LI>Call Chain = FusionOffsetUpdate &rArr; FusionVectorSubtract(FusionVector, FusionVector)
+<P><STRONG><a name="[137]"></a>FusionOffsetUpdate</STRONG> (Thumb, 416 bytes, Stack size 128 bytes, fusion_ahrs.o(.text.FusionOffsetUpdate))
+<BR><BR>[Stack]<UL><LI>Max Depth = 164<LI>Call Chain = FusionOffsetUpdate &rArr; FusionVectorSubtract(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[138]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorSubtract(FusionVector, FusionVector)
 <LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorAdd(FusionVector, FusionVector)
@@ -2702,7 +2702,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Minipc_UpdateAllInstances
 </UL>
 
-<P><STRONG><a name="[248]"></a>Mode_Change</STRONG> (Thumb, 446 bytes, Stack size 16 bytes, app_command_task.o(.text.Mode_Change))
+<P><STRONG><a name="[248]"></a>Mode_Change</STRONG> (Thumb, 462 bytes, Stack size 16 bytes, app_command_task.o(.text.Mode_Change))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = Mode_Change
 </UL>
 <BR>[Called By]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
@@ -3089,7 +3089,7 @@ Global Symbols
 <LI><a href="#[c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_AccelWrite
 </UL>
 
-<P><STRONG><a name="[8f]"></a>StartChassisTask</STRONG> (Thumb, 5208 bytes, Stack size 360 bytes, app_chassis_task.o(.text.StartChassisTask))
+<P><STRONG><a name="[8f]"></a>StartChassisTask</STRONG> (Thumb, 5232 bytes, Stack size 360 bytes, app_chassis_task.o(.text.StartChassisTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1064 + Unknown Stack Size
 <LI>Call Chain = StartChassisTask &rArr; Chassis_Register &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
