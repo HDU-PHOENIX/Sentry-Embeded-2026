@@ -1072,12 +1072,22 @@
             <File>
               <FileName>Fusion_AHRS.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.cpp</FilePath>
+              <FilePath>..\Sentry_libs\Algorithm\Kalman\Fusion_AHRS.cpp</FilePath>
             </File>
             <File>
               <FileName>Fusion_AHRS.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h</FilePath>
+              <FilePath>..\Sentry_libs\Algorithm\Kalman\Fusion_AHRS.h</FilePath>
+            </File>
+            <File>
+              <FileName>Tactical_Fusion.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\Sentry_libs\Algorithm\Kalman\Tactical_Fusion.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>Tactical_Fusion.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Sentry_libs\Algorithm\Kalman\Tactical_Fusion.h</FilePath>
             </File>
             <File>
               <FileName>alg_crc.c</FileName>

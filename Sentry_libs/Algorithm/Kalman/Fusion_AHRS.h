@@ -15,30 +15,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifndef FUSION_OFFSET_STRICT_STATIONARY_DETECTION
-#define FUSION_OFFSET_STRICT_STATIONARY_DETECTION (0)
-#endif
-
-#ifndef FUSION_OFFSET_THRESHOLD_RAD_S
-#define FUSION_OFFSET_THRESHOLD_RAD_S (0.005f)
-#endif
-
-#ifndef FUSION_OFFSET_TIMEOUT_S
-#define FUSION_OFFSET_TIMEOUT_S (5U)
-#endif
-
-#ifndef FUSION_OFFSET_TIMER_DECAY_ON_MOTION
-#define FUSION_OFFSET_TIMER_DECAY_ON_MOTION (0)
-#endif
-
-#ifndef FUSION_OFFSET_TIMER_INCREMENT
-#define FUSION_OFFSET_TIMER_INCREMENT (1U)
-#endif
-
-#ifndef FUSION_OFFSET_TIMER_MOTION_PENALTY
-#define FUSION_OFFSET_TIMER_MOTION_PENALTY (1U)
-#endif
-
 //------------------------------------------------------------------------------
 // Mathematical Library Definitions
 
@@ -409,20 +385,6 @@ static inline FusionEuler FusionQuaternionToEuler(const FusionQuaternion quatern
     }};
 }
 
-/**
- * @brief Convert quaternion to Euler angles in Radians
- * @param quaternion Input quaternion
- * @return Corresponding Euler angles in Radians (roll, pitch, yaw)
- */
-static inline FusionEuler FusionQuaternionToEulerRad(const FusionQuaternion quaternion) {
-    const float halfMinusQySquared = 0.5f - quaternion.element.y * quaternion.element.y;
-    return (FusionEuler){.angle = {
-        .roll = atan2f(quaternion.element.w * quaternion.element.x + quaternion.element.y * quaternion.element.z, halfMinusQySquared - quaternion.element.x * quaternion.element.x),
-        .pitch = FusionAsin(2.0f * (quaternion.element.w * quaternion.element.y - quaternion.element.z * quaternion.element.x)),
-        .yaw = atan2f(quaternion.element.w * quaternion.element.z + quaternion.element.x * quaternion.element.y, halfMinusQySquared - quaternion.element.z * quaternion.element.z),
-    }};
-}
-
 //------------------------------------------------------------------------------
 // Earth Coordinate System Definitions
 
@@ -438,7 +400,7 @@ typedef enum {
 typedef struct {
     FusionConvention convention;        // Coordinate system convention used
     float gain;                        // Algorithm gain
-    float gyroscopeRange;              // Gyroscope range limit (rad/s)
+    float gyroscopeRange;              // Gyroscope range limit (degrees/second)
     float accelerationRejection;       // Accelerometer rejection threshold
     unsigned int recoveryTriggerPeriod; // Recovery trigger period
 } FusionAhrsSettings;
@@ -491,7 +453,7 @@ void FusionAhrsSetSettings(FusionAhrs *const ahrs, const FusionAhrsSettings *con
 /**
  * @brief Update AHRS algorithm state with gyroscope and accelerometer data
  * @param ahrs Pointer to AHRS structure
- * @param gyroscope Gyroscope data (rad/s)
+ * @param gyroscope Gyroscope data (degrees/second)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -500,7 +462,7 @@ void FusionAhrsUpdate(FusionAhrs *const ahrs, const FusionVector gyroscope, cons
 /**
  * @brief Update AHRS algorithm state without magnetometer
  * @param ahrs Pointer to AHRS structure
- * @param gyroscope Gyroscope data (rad/s)
+ * @param gyroscope Gyroscope data (degrees/second)
  * @param accelerometer Accelerometer data (g)
  * @param deltaTime Time step (seconds)
  */
@@ -570,13 +532,6 @@ typedef struct {
     unsigned int timeout;               // Timeout counter
     unsigned int timer;                 // Timer counter
     FusionVector gyroscopeOffset;       // Gyroscope bias estimate
-    FusionVector gyroLPF;              // Simple low-pass filtered gyroscope used for detection
-#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
-    FusionVector gyroMean;              // Gyro mean for stationary detection
-    FusionVector gyroAbsDev;            // Gyro absolute deviation estimate
-    FusionVector accelMean;             // Acc mean for stationary detection
-    FusionVector accelAbsDev;           // Acc absolute deviation estimate
-#endif
 } FusionOffset;
 
 /**
@@ -592,11 +547,7 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
  * @param gyroscope Raw gyroscope data
  * @return Bias-corrected gyroscope data
  */
-#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
-FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope, FusionVector accelerometer);
-#else
 FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyroscope);
-#endif
 
 //------------------------------------------------------------------------------
 // Gradient Descent Algorithm Parameters
@@ -632,9 +583,9 @@ typedef struct {
 
 /**
  * @brief Update IMU using Madgwick gradient descent algorithm
- * @param gx Gyroscope X-axis reading (rad/s)
- * @param gy Gyroscope Y-axis reading (rad/s)
- * @param gz Gyroscope Z-axis reading (rad/s)
+ * @param gx Gyroscope X-axis reading (degrees/second)
+ * @param gy Gyroscope Y-axis reading (degrees/second)
+ * @param gz Gyroscope Z-axis reading (degrees/second)
  * @param ax Accelerometer X-axis reading (g)
  * @param ay Accelerometer Y-axis reading (g)
  * @param az Accelerometer Z-axis reading (g)

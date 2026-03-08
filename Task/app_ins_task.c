@@ -15,9 +15,7 @@
 #include "FreeRTOS.h"
 #include "bsp_dwt.h"  // 添加DWT头文件
 //extern Ist8310Instance_s *asdf;
-MadgwickAHRS *madgwick_ahrs;  
-FusionAhrs fusion_ahrs;
-FusionOffset fusion_offset;
+TacticalSystem tactical_sys;
 PidInstance_s *ins_pid;
 uint8_t test_data[5]={0,0,0,0,0};
 quaternions_struct_t Quater;//四元数
@@ -77,20 +75,6 @@ PwmInitConfig_s pwm_config = {
     .callback = NULL,          // 不需要回调
     .id = NULL                 // 不需要ID
 };
-
-FusionAhrsSettings settings = {
-    .convention = FusionConventionNwu,  // 坐标系：NWU（北西上）
-    .gain = 0.5f,                      // 算法增益
-    .gyroscopeRange = 0.0f,            // 禁用量程检测重置（避免34.9rad/s满量程时误重置）
-    .accelerationRejection = 10.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
-    .recoveryTriggerPeriod = 5000,        // 恢复触发周期
-};
-
-
-
-
-
-
 
 //测试代码
 float test=0;
@@ -299,7 +283,6 @@ void isttask(void const * argument)
     
     
     // 初始化四元数（简化版，实际应用中需要更复杂的初始化）
-	madgwick_ahrs=pvPortMalloc(sizeof(MadgwickAHRS));
     Quater_Init(origin_quaternion, 1); // 使用默认初始化
   
     ins_initialized = 1;
@@ -310,7 +293,6 @@ void isttask(void const * argument)
     uint32_t dwt_cnt_last = 0;
     float dt = 0.001f;  // 初始dt
     static float lasttime = 0;
-    uint8_t flag=1;
     // 初始化DWT计数器
     dwt_cnt_last = DWT->CYCCNT;
     
@@ -359,18 +341,9 @@ void isttask(void const * argument)
                 MovingAvgFilter_Process(accel_moving_filters[i], notch_accel_367[i], &filtered_accel[i]);
             }
 
-        //    FusionAhrsFlags flags = FusionAhrsGetFlags(&fusion_ahrs);
-        //     FusionAhrsInternalStates states = FusionAhrsGetInternalStates(&fusion_ahrs);
-
-            Quater.ins_ready = (!fusion_ahrs.initialising); // 误差小于1度
-            // 构造 Fusion 向量并进行动态偏置补偿
+            Quater.ins_ready = 1;
+            // Tactical EKF expects gyro in deg/s. BMI088 driver output is rad/s.
             FusionVector raw_gyro = {bmi088_test->gyro[0], bmi088_test->gyro[1], bmi088_test->gyro[2]};
-#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
-            FusionVector raw_accel = {bmi088_test->accel[0] / 9.80665f, bmi088_test->accel[1] / 9.80665f, bmi088_test->accel[2] / 9.80665f};
-            raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro, raw_accel); // 动态偏置学习与减除
-#else
-            raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro); // 动态偏置学习与减除
-#endif
             
             for (int i = 0; i < 3; i++) {
                 NotchFilter_Process(gyro_notch_171_filters[i], raw_gyro.array[i], &notch_gyro_171[i]);
@@ -384,25 +357,31 @@ void isttask(void const * argument)
                 // float compensated_accel[3];
                 // compensate_centrifugal_accel(filtered_gyro, filtered_accel, dt, compensated_accel);
                 
-                // 使用 Fusion AHRS 更新姿态（已修改库底层支持弧度）
-                FusionVector fusion_gyro = {filtered_gyro[0], filtered_gyro[1], filtered_gyro[2]};
-                // FusionVector fusion_accel = {compensated_accel[0]/9.80665f, compensated_accel[1]/9.80665f, compensated_accel[2]/9.80665f};
-                // 直接使用滤波后的加速度，不进行额外的 "Rejection" 和 "Centrifugal" 处理
-                FusionVector fusion_accel = {filtered_accel[0]/9.80665f, filtered_accel[1]/9.80665f, filtered_accel[2]/9.80665f};
-                FusionAhrsUpdateNoMagnetometer(&fusion_ahrs, fusion_gyro, fusion_accel, dt);
+                FusionVector ekf_gyro = {
+                    filtered_gyro[0] * 57.2957795f,
+                    filtered_gyro[1] * 57.2957795f,
+                    filtered_gyro[2] * 57.2957795f,
+                };
+                FusionVector ekf_acc = {
+                    filtered_accel[0] / 9.80665f,
+                    filtered_accel[1] / 9.80665f,
+                    filtered_accel[2] / 9.80665f,
+                };
 
-                // 从 Fusion AHRS 获取四元数
-                FusionQuaternion fq = FusionAhrsGetQuaternion(&fusion_ahrs);
+                Tactical_Update(&tactical_sys, ekf_gyro, ekf_acc);
+
+                // 从 Tactical EKF 获取四元数
+                FusionQuaternion fq = tactical_sys.quaternion;
                 current_quaternion[0] = fq.element.w;
                 current_quaternion[1] = fq.element.x;
                 current_quaternion[2] = fq.element.y;
                 current_quaternion[3] = fq.element.z;
 
-                // 获取弧度制欧拉角
-                FusionEuler fe = FusionQuaternionToEulerRad(fq);
-                Quater.roll = fe.angle.roll;
-                Quater.pitch = fe.angle.pitch;
-                Quater.yaw = fe.angle.yaw;
+                // Tactical/Fusion Euler API returns degrees; convert to radians for existing outputs.
+                FusionEuler fe_deg = FusionQuaternionToEuler(fq);
+                Quater.roll = FusionDegreesToRadians(fe_deg.angle.roll);
+                Quater.pitch = FusionDegreesToRadians(fe_deg.angle.pitch);
+                Quater.yaw = FusionDegreesToRadians(fe_deg.angle.yaw);
 
                 // // 使用补偿后的加速度更新 EKF
                 // IMU_QuaternionEKF_Update(filtered_gyro[0], filtered_gyro[1], filtered_gyro[2], 
@@ -523,24 +502,12 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
       //处理失败情况
       Error_Handler();
     };
-    //初始化Madgwick
-    //beta，滤波器增益
-    //sampleFreq，采样频率
-    madgwick_ahrs=pvPortMalloc(sizeof(MadgwickAHRS));
-    MadgwickAHRS_init(madgwick_ahrs, 0.1f, 1000.0f);
-
-    //初始化Fusion AHRS - 必须先Initialise再SetSettings，否则会被覆盖
-    FusionAhrsInitialise(&fusion_ahrs);
-    FusionAhrsSetSettings(&fusion_ahrs, &settings);
-    FusionOffsetInitialise(&fusion_offset, 1000); // 1000Hz 动态校准
-    fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
-    fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
-    fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
+    Tactical_Init(&tactical_sys, 1000.0f, 0.5f);
     
     FusionQuaternion init_q = {
         .element = {origin_quater[0], origin_quater[1], origin_quater[2], origin_quater[3]}
     };
-    FusionAhrsSetQuaternion(&fusion_ahrs, init_q);
+    tactical_sys.quaternion = init_q;
 
    // IMU_QuaternionEKF_Init(origin_quater,10, 0.001, 1000000,1,0);
     //初始化PID
@@ -581,10 +548,12 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
         origin_quater[3]=0;//假设初始姿态就和坐标系对齐
      //初始化EKF
     //IMU_QuaternionEKF_Init(origin_quater,10, 0.001, 10000000,1,0);
-     //MadgwickAHRS_init(madgwick_ahrs,0.1f, 0.001f);
-        
-        FusionAhrsInitialise(&fusion_ahrs);
-        FusionAhrsSetSettings(&fusion_ahrs, &settings);
+      //MadgwickAHRS_init(madgwick_ahrs,0.1f, 0.001f);
+          Tactical_Init(&tactical_sys, 1000.0f, 0.5f);
+          FusionQuaternion init_q = {
+                .element = {origin_quater[0], origin_quater[1], origin_quater[2], origin_quater[3]}
+          };
+          tactical_sys.quaternion = init_q;
     }
     
     return 1;
