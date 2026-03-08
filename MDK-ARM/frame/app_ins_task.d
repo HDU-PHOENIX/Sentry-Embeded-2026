@@ -49,11 +49,11 @@ frame/app_ins_task.o: ..\Task\app_ins_task.c ..\Task\app_ins_task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
   ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \
-  ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \
-  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
-  ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
+  ..\Task\..\Sentry_libs\Algorithm\Kalman\Tactical_Fusion.h \
+  ..\Task\..\Sentry_libs\Algorithm\Kalman\Fusion_AHRS.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
   ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
   ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Core\Inc\spi.h \
+  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
   ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h \
   ..\Sentry_libs\Bsp\DWT\bsp_dwt.h

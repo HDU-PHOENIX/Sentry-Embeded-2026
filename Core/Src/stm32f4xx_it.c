@@ -42,6 +42,20 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 
+typedef struct {
+  uint32_t cfsr;
+  uint32_t hfsr;
+  uint32_t dfsr;
+  uint32_t afsr;
+  uint32_t mmfar;
+  uint32_t bfar;
+  uint32_t msp;
+  uint32_t psp;
+  uint32_t lr;
+} HardFaultContext_t;
+
+volatile HardFaultContext_t g_hardfault_ctx;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,6 +108,20 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+
+  g_hardfault_ctx.cfsr = SCB->CFSR;
+  g_hardfault_ctx.hfsr = SCB->HFSR;
+  g_hardfault_ctx.dfsr = SCB->DFSR;
+  g_hardfault_ctx.afsr = SCB->AFSR;
+  g_hardfault_ctx.mmfar = SCB->MMFAR;
+  g_hardfault_ctx.bfar = SCB->BFAR;
+  g_hardfault_ctx.msp = __get_MSP();
+  g_hardfault_ctx.psp = __get_PSP();
+  {
+    uint32_t lr_value;
+    __asm volatile ("MOV %0, LR" : "=r" (lr_value));
+    g_hardfault_ctx.lr = lr_value;
+  }
 
   /* USER CODE END HardFault_IRQn 0 */
   while (1)

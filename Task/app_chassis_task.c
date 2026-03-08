@@ -17,6 +17,7 @@ DjiMotorInstance_s *Trigger;
 DjiMotorInstance_s *Up_yaw;
 Subscriber *CH_Subs;
 Dr16Instance_s* CH_Receive_s;
+static Dr16Instance_s g_ch_receive_storage;
 MiniPC_Instance *MiniPC;
 MiniPC_Instance *MiniPC_SelfAim;
 board_instance_t *board_instance;
@@ -348,7 +349,7 @@ void StartChassisTask(void const * argument)
 {
   /* USER CODE BEGIN StartChassisTask */
 	CH_Subs=Create_Subscriber("dr16_topic",sizeof(Dr16Instance_s));
-  CH_Receive_s = (Dr16Instance_s*)pvPortMalloc(sizeof(Dr16Instance_s)); // 为指针分配内存
+  CH_Receive_s = &g_ch_receive_storage;
   Chassis = Chassis_Register(&Chassis_config);
     if (Chassis == NULL) {
         Log_Error("Chassis Register Failed!");

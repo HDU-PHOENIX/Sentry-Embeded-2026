@@ -88,6 +88,7 @@
 "frame\kalman_filter.o"
 "frame\madgwickahrs.o"
 "frame\fusion_ahrs.o"
+"frame\tactical_fusion.o"
 "frame\alg_crc.o"
 "..\Middlewares\ST\ARM\DSP\Lib\arm_cortexM4lf_math.lib"
 --strict --scatter "frame\frame.sct"

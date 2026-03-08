@@ -76,8 +76,8 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
   ..\Sentry_libs\Bsp\I2c\bsp_iic.h ..\Core\Inc\i2c.h \
   ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h ..\Core\Inc\gpio.h \
-  ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \
-  ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
+  ..\Task\..\Sentry_libs\Algorithm\Kalman\Tactical_Fusion.h \
+  ..\Task\..\Sentry_libs\Algorithm\Kalman\Fusion_AHRS.h \
   ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
   ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Core\Inc\spi.h \
   ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h

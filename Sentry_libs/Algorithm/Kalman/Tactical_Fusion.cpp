@@ -289,12 +289,10 @@ static void EkfUpdateAccel(TacticalSystem *const sys, const FusionVector acc) {
     float rAcc = 0.0f;
     ComputeAdaptiveNoise(sys, accError, &qAngle, &qBias, &rAcc);
 
-    // [NEW] Apply impact-based adaptive weighting
-    // Increase observation noise (reduce accel weight) during impact/recovery
-    // [Alternative] Increase process noise instead of observation noise for cleaner EKF logic
-    // This makes the prediction more uncertain during impact, relying more on gyro integration
-    const float impactQScale = 1.0f / sys->accWeight;  // Q scales inversely with weight
-    qAngle = qAngle * impactQScale;
+    // Apply adaptive accelerometer weight to observation noise.
+    // Lower accWeight means less trust in accel, so increase R accordingly.
+    const float safeAccWeight = ClampFloat(sys->accWeight, 0.05f, 1.0f);
+    rAcc *= (1.0f / safeAccWeight);
     (void)qAngle;
     (void)qBias;
 
@@ -445,10 +443,10 @@ void Tactical_Init(TacticalSystem *const sys, const float sampleRate, const floa
     sys->params.biasNoiseScale = 0.1f;
     sys->params.accErrorScale = 2.0f;
     sys->params.noiseTau = 1.0f;
-    sys->params.accStaticThreshold = 0.02f;
+    sys->params.accStaticThreshold = 0.06f;
     sys->params.gyroStaticThreshold = 0.5f;
-    sys->params.accStableThreshold = 0.15f;
-    sys->params.gyroStableThreshold = 50.0f;
+    sys->params.accStableThreshold = 0.10f;
+    sys->params.gyroStableThreshold = 15.0f;
     sys->params.accVarStatic = 0.0004f;
     sys->params.gyroVarStatic = 0.25f;
     sys->params.heaveCutoffFreq = heaveCutoffFreq;
@@ -529,7 +527,7 @@ void Tactical_Update(TacticalSystem *const sys, const FusionVector gyro, const F
     if (sys->impactState == TACTICAL_IMPACT_NONE) {
         // Check for sudden acceleration or rotation change
         if ((accDelta > sys->params.impactAccThreshold) ||
-            (gyroDelta > sys->params.impactGyroThreshold * dt)) {
+            (gyroDelta > sys->params.impactGyroThreshold)) {
             sys->impactState = TACTICAL_IMPACT_DETECTED;
             sys->impactRecoveryTimer = 0.0f;
         }
@@ -597,8 +595,12 @@ void Tactical_Update(TacticalSystem *const sys, const FusionVector gyro, const F
     EkfPredict(sys, gyro, dt);
     EkfUpdateAccel(sys, acc);
 
-    if (sys->motionState == TACTICAL_MOTION_STATIC) {
-        const float alpha = ClampFloat(sys->params.gyroBiasAlpha, 0.0f, 1.0f);
+    if (sys->motionState == TACTICAL_MOTION_STATIC ||
+        sys->motionState == TACTICAL_MOTION_STABLE) {
+        const float biasAlpha = (sys->motionState == TACTICAL_MOTION_STATIC) ?
+                                sys->params.gyroBiasAlpha :
+                                (sys->params.gyroBiasAlpha * 0.2f);
+        const float alpha = ClampFloat(biasAlpha, 0.0f, 1.0f);
         sys->gyroBias.axis.x += (gyro.axis.x - sys->gyroBias.axis.x) * alpha;
         sys->gyroBias.axis.y += (gyro.axis.y - sys->gyroBias.axis.y) * alpha;
         sys->gyroBias.axis.z += (gyro.axis.z - sys->gyroBias.axis.z) * alpha;

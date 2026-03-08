@@ -146,7 +146,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of Isttask */
-  osThreadDef(Isttask, isttask, osPriorityHigh, 0, 512);
+  osThreadDef(Isttask, isttask, osPriorityHigh, 0, 1024);
   IsttaskHandle = osThreadCreate(osThread(Isttask), NULL);
 
   /* definition and creation of Chassis_task */
@@ -239,5 +239,31 @@ __weak void StartCommandTask(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+volatile const char *g_rtos_fault_task_name = 0;
+volatile uint32_t g_rtos_fault_code = 0;
+volatile uint32_t g_rtos_free_heap_bytes = 0;
+volatile uint32_t g_rtos_min_ever_free_heap_bytes = 0;
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+  (void)xTask;
+  g_rtos_fault_task_name = pcTaskName;
+  g_rtos_fault_code = 1U;
+  taskDISABLE_INTERRUPTS();
+  for (;;) {
+  }
+}
+
+void vApplicationMallocFailedHook(void)
+{
+  g_rtos_fault_task_name = pcTaskGetName(NULL);
+  g_rtos_fault_code = 2U;
+  g_rtos_free_heap_bytes = (uint32_t)xPortGetFreeHeapSize();
+  g_rtos_min_ever_free_heap_bytes = (uint32_t)xPortGetMinimumEverFreeHeapSize();
+  taskDISABLE_INTERRUPTS();
+  for (;;) {
+  }
+}
 
 /* USER CODE END Application */
