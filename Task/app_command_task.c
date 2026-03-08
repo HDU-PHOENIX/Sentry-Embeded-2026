@@ -126,12 +126,15 @@ void StartCommandTask(void const * argument)
     case PC_MODE:
       if(Shooter_State_last==SHOOTER_STOP){
         Shooter_State=SHOOTER_TRANS;
-      }else if(board_instance->received_shoot_bool==1){
-      //Shooter_State=SHOOTER_AUTO;//暂时的逻辑
-				Shooter_State=SHOOTER_TEST;//暂时的逻辑
-      }else{
-        Shooter_State=SHOOTER_READY;
+      }else {
+        Shooter_State=SHOOTER_TEST;
       }
+      // }else if(board_instance->received_shoot_bool==1){
+      // //Shooter_State=SHOOTER_AUTO;//暂时的逻辑
+			// 	Shooter_State=SHOOTER_TEST;//暂时的逻辑
+      // }else{
+      //   Shooter_State=SHOOTER_READY;
+      // }
       break;
     case SHOOT_MODE:
     

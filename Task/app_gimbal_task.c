@@ -468,6 +468,7 @@ void StartGimbalTask(void const * argument)
             }
             // fallthrough
 			case SHOOT_MODE:
+                
             case SCROP_MODE:
 			case UP_MODE:
 				//这里有个fallthough

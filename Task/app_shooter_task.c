@@ -163,7 +163,7 @@ void StartShooterTask(void const * argument)
 		osDelay(1);
 	}
   //测试用↓
-  Right_Wheel->velocity_pid->is_enabled = 0;
+  //Right_Wheel->velocity_pid->is_enabled = 0;
   //测试用↑
   /* Infinite loop */
   for(;;)
