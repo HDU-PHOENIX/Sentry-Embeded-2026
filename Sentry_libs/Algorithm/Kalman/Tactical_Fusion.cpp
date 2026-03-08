@@ -5,10 +5,27 @@
 
 #include "Tactical_Fusion.h"
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 
 #define G_CONST 9.80665f
 #define SQRT2_F 1.41421356237f
+
+#ifndef TACTICAL_FUSION_DIAG_LOG_ENABLE
+#define TACTICAL_FUSION_DIAG_LOG_ENABLE 1
+#endif
+
+#ifndef TACTICAL_FUSION_DIAG_LOG_DIV
+#define TACTICAL_FUSION_DIAG_LOG_DIV 200
+#endif
+
+#ifndef TACTICAL_FUSION_DIAG_YAW_TRIGGER
+#define TACTICAL_FUSION_DIAG_YAW_TRIGGER 0.5f
+#endif
+
+#if TACTICAL_FUSION_DIAG_LOG_ENABLE
+#include "../../Bsp/Log/bsp_log.h"
+#endif
 
 static float ClampFloat(const float value, const float minValue, const float maxValue) {
     if (value < minValue) return minValue;
@@ -267,7 +284,7 @@ static void EkfPredict(TacticalSystem *const sys, const FusionVector gyro, const
     }
 }
 
-static void EkfUpdateAccel(TacticalSystem *const sys, const FusionVector acc) {
+static void EkfUpdateAccel(TacticalSystem *const sys, const FusionVector acc, const FusionVector calibGyro) {
     const float accMagSq = FusionVectorMagnitudeSquared(acc);
     if (accMagSq < 1e-6f) {
         return;
@@ -350,8 +367,19 @@ static void EkfUpdateAccel(TacticalSystem *const sys, const FusionVector acc) {
                                           FusionQuaternionMultiplyVector(sys->quaternion, correction));
     sys->quaternion = FusionQuaternionNormalise(sys->quaternion);
 
-    const FusionVector deltaBiasDeg = FusionVectorMultiplyScalar(deltaBias, FusionRadiansToDegrees(1.0f));
-    sys->gyroBias = FusionVectorAdd(sys->gyroBias, deltaBiasDeg);
+    // Bias correction from accelerometer should be conservative.
+    // During yaw rotation, accel error can map into false z-bias updates.
+    const float gyroMag = FusionVectorMagnitude(calibGyro);
+    const float yawRateAbs = fabsf(calibGyro.axis.z);
+    const bool strictStaticForBias = (sys->motionState == TACTICAL_MOTION_STATIC) &&
+                                     (gyroMag < (sys->params.gyroStaticThreshold * 0.8f)) &&
+                                     (yawRateAbs < 5.0f) &&
+                                     (accError < (sys->params.accStaticThreshold * 0.8f));
+
+    if (strictStaticForBias) {
+        const FusionVector deltaBiasDeg = FusionVectorMultiplyScalar(deltaBias, FusionRadiansToDegrees(1.0f));
+        sys->gyroBias = FusionVectorAdd(sys->gyroBias, deltaBiasDeg);
+    }
 
     float K[6][3] = {0};
     for (int r = 0; r < 3; ++r) {
@@ -568,11 +596,11 @@ void Tactical_Update(TacticalSystem *const sys, const FusionVector gyro, const F
     // ===== END IMPACT DETECTION =====
 
     // ===== LINEAR MOTION COMPENSATION =====
+    const float accDeviation = fabsf(accMag - 1.0f);
+    float linearMotionWeight = 1.0f;
+
     // Detect and compensate for linear acceleration (translation)
     if (sys->params.accCompensationEnabled) {
-        // Calculate deviation from 1g (gravity)
-        const float accDeviation = fabsf(accMag - 1.0f);
-        
         // Detect linear motion: acceleration magnitude significantly different from 1g
         if (accDeviation > sys->params.linearAccThreshold) {
             sys->isLinearMotion = true;
@@ -582,7 +610,7 @@ void Tactical_Update(TacticalSystem *const sys, const FusionVector gyro, const F
             sys->linearAccMagnitude = accDeviation;
             
             // Further reduce accel weight during linear motion
-            const float linearMotionWeight = sys->params.linearAccThreshold / accDeviation;
+            linearMotionWeight = sys->params.linearAccThreshold / accDeviation;
             sys->accWeight = sys->accWeight * linearMotionWeight;
         } else {
             // Gradually decay linear motion detection
@@ -592,18 +620,51 @@ void Tactical_Update(TacticalSystem *const sys, const FusionVector gyro, const F
     }
     // ===== END LINEAR MOTION =====
 
-    EkfPredict(sys, gyro, dt);
-    EkfUpdateAccel(sys, acc);
+    // Extra accel rejection during fast yaw turns to reduce yaw->pitch/roll coupling.
+    const float yawRateAbs = fabsf(calibGyro.axis.z); // deg/s
+    const float yawRejectStart = 80.0f;
+    const float yawRejectFull = 260.0f;
+    float yawWeightScale = 1.0f;
+    if (yawRateAbs > yawRejectStart) {
+        const float t = ClampFloat((yawRateAbs - yawRejectStart) / (yawRejectFull - yawRejectStart), 0.0f, 1.0f);
+        yawWeightScale = 1.0f - 0.85f * t; // scale to [1.0, 0.15]
+        sys->accWeight = ClampFloat(sys->accWeight * yawWeightScale, 0.05f, 1.0f);
+    }
 
-    if (sys->motionState == TACTICAL_MOTION_STATIC ||
-        sys->motionState == TACTICAL_MOTION_STABLE) {
-        const float biasAlpha = (sys->motionState == TACTICAL_MOTION_STATIC) ?
-                                sys->params.gyroBiasAlpha :
-                                (sys->params.gyroBiasAlpha * 0.2f);
-        const float alpha = ClampFloat(biasAlpha, 0.0f, 1.0f);
+#if TACTICAL_FUSION_DIAG_LOG_ENABLE
+    static uint16_t diagLogDecimation = 0;
+    if ((yawRateAbs > TACTICAL_FUSION_DIAG_YAW_TRIGGER) &&
+        (++diagLogDecimation >= TACTICAL_FUSION_DIAG_LOG_DIV)) {
+        diagLogDecimation = 0;
+        const int yz_dps = (int) (yawRateAbs + 0.5f);
+        const int aw_x1000 = (int) (sys->accWeight * 1000.0f + 0.5f);
+        const int bz_mdps = (int) (sys->gyroBias.axis.z * 1000.0f);
+        Log_Debug("TF yz=%d aw=%d m=%d i=%d bz=%d",
+                  yz_dps,
+                  aw_x1000,
+                  (int) sys->motionState,
+                  (int) sys->impactState,
+                  bz_mdps);
+    }
+#endif
+
+    EkfPredict(sys, gyro, dt);
+    EkfUpdateAccel(sys, acc, calibGyro);
+
+    // EMA bias learning should only happen in strict static state.
+    // Allowing it in STABLE causes bias to chase slow yaw and inject coupling.
+    {
+        const float yawRateAbs = fabsf(calibGyro.axis.z);
+        const bool strictStaticForBias = (sys->motionState == TACTICAL_MOTION_STATIC) &&
+                                         (FusionVectorMagnitude(calibGyro) < (sys->params.gyroStaticThreshold * 0.8f)) &&
+                                         (yawRateAbs < 5.0f) &&
+                                         (fabsf(sys->accMagnitude - 1.0f) < (sys->params.accStaticThreshold * 0.8f));
+        if (strictStaticForBias) {
+        const float alpha = ClampFloat(sys->params.gyroBiasAlpha, 0.0f, 1.0f);
         sys->gyroBias.axis.x += (gyro.axis.x - sys->gyroBias.axis.x) * alpha;
         sys->gyroBias.axis.y += (gyro.axis.y - sys->gyroBias.axis.y) * alpha;
         sys->gyroBias.axis.z += (gyro.axis.z - sys->gyroBias.axis.z) * alpha;
+        }
     }
 
     FusionVector earthAcc = Tactical_GetEarthAcceleration(sys, acc);

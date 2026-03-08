@@ -275,6 +275,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>tactical_sys</ItemText>
         </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>TACTICAL_FUSION_DIAG_LOG_ENABLE</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

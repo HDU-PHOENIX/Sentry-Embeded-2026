@@ -3,11 +3,11 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sun Mar  8 14:49:51 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sun Mar  8 15:49:25 2026
 <BR><P>
-<H3>Maximum Stack Usage =       2164 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =       2300 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-isttask &rArr; Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
+isttask &rArr; Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 <P>
 <H3>
 Functions with no stack information
@@ -661,8 +661,8 @@ Global Symbols
 <LI><a href="#[cf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Bmi088_Register
 <LI><a href="#[100]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Register
 <LI><a href="#[105]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Create_Publisher
-<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[1f8]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
@@ -2919,6 +2919,7 @@ Global Symbols
 <LI><a href="#[e6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Can_Register_To_x_Instance
 <LI><a href="#[e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Can_Register_Check
 <LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Can_Init
+<LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
 <LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartChassisTask
 <LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Daemon_Reload
@@ -3142,16 +3143,17 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[20b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 </UL>
 
-<P><STRONG><a name="[237]"></a>Tactical_Update</STRONG> (Thumb, 1376 bytes, Stack size 248 bytes, tactical_fusion.o(.text.Tactical_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 1804 + Unknown Stack Size
-<LI>Call Chain = Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
+<P><STRONG><a name="[237]"></a>Tactical_Update</STRONG> (Thumb, 1860 bytes, Stack size 344 bytes, tactical_fusion.o(.text.Tactical_Update))
+<BR><BR>[Stack]<UL><LI>Max Depth = 1940 + Unknown Stack Size
+<LI>Call Chain = Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
-<BR>[Calls]<UL><LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_GetEarthAcceleration
+<BR>[Calls]<UL><LI><a href="#[df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_printf
+<LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_GetEarthAcceleration
 <LI><a href="#[234]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_GetCalibratedGyro
 <LI><a href="#[23f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DigitalFilterApply(DigitalFilter*, float)
-<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClampFloat(float, float, float)
-<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClampFloat(float, float, float)
 <LI><a href="#[23a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AnalyzeMotion(TacticalSystem*, FusionVector, FusionVector)
 <LI><a href="#[239]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateNoiseStats(TacticalSystem*, FusionVector, FusionVector, float)
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitude(FusionVector)
@@ -4005,8 +4007,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[91]"></a>isttask</STRONG> (Thumb, 1448 bytes, Stack size 360 bytes, app_ins_task.o(.text.isttask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 2164 + Unknown Stack Size
-<LI>Call Chain = isttask &rArr; Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
+<BR><BR>[Stack]<UL><LI>Max Depth = 2300 + Unknown Stack Size
+<LI>Call Chain = isttask &rArr; Tactical_Update &rArr; EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
@@ -4714,7 +4716,7 @@ Global Symbols
 <LI><a href="#[284]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_norm
 <LI><a href="#[20d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 <LI><a href="#[c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_CalibrateOffset
-<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 <LI><a href="#[239]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateNoiseStats(TacticalSystem*, FusionVector, FusionVector, float)
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitude(FusionVector)
 </UL>
@@ -6361,7 +6363,7 @@ Local Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = FusionVectorSubtract(FusionVector, FusionVector)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[234]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_GetCalibratedGyro
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[238]"></a>FusionVectorMagnitude(FusionVector)</STRONG> (Thumb, 52 bytes, Stack size 32 bytes, tactical_fusion.o(.text._ZL21FusionVectorMagnitude12FusionVector))
@@ -6371,6 +6373,7 @@ Local Symbols
 <LI><a href="#[278]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitudeSquared(FusionVector)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 <LI><a href="#[23a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AnalyzeMotion(TacticalSystem*, FusionVector, FusionVector)
 <LI><a href="#[239]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UpdateNoiseStats(TacticalSystem*, FusionVector, FusionVector, float)
 </UL>
@@ -6393,7 +6396,15 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
 </UL>
 
-<P><STRONG><a name="[23b]"></a>EkfPredict(TacticalSystem*, FusionVector, float)</STRONG> (Thumb, 1270 bytes, Stack size 784 bytes, tactical_fusion.o(.text._ZL10EkfPredictP14TacticalSystem12FusionVectorf))
+<P><STRONG><a name="[23b]"></a>ClampFloat(float, float, float)</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, tactical_fusion.o(.text._ZL10ClampFloatfff))
+<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = ClampFloat(float, float, float)
+</UL>
+<BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
+<LI><a href="#[276]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+</UL>
+
+<P><STRONG><a name="[23c]"></a>EkfPredict(TacticalSystem*, FusionVector, float)</STRONG> (Thumb, 1270 bytes, Stack size 784 bytes, tactical_fusion.o(.text._ZL10EkfPredictP14TacticalSystem12FusionVectorf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 864 + Unknown Stack Size
 <LI>Call Chain = EkfPredict(TacticalSystem*, FusionVector, float) &rArr; ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*) &rArr; ClampFloat(float, float, float)
 </UL>
@@ -6409,9 +6420,9 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
 </UL>
 
-<P><STRONG><a name="[23c]"></a>EkfUpdateAccel(TacticalSystem*, FusionVector)</STRONG> (Thumb, 2774 bytes, Stack size 1400 bytes, tactical_fusion.o(.text._ZL14EkfUpdateAccelP14TacticalSystem12FusionVector))
-<BR><BR>[Stack]<UL><LI>Max Depth = 1556 + Unknown Stack Size
-<LI>Call Chain = EkfUpdateAccel(TacticalSystem*, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
+<P><STRONG><a name="[23d]"></a>EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)</STRONG> (Thumb, 3016 bytes, Stack size 1440 bytes, tactical_fusion.o(.text._ZL14EkfUpdateAccelP14TacticalSystem12FusionVectorS1_))
+<BR><BR>[Stack]<UL><LI>Max Depth = 1596 + Unknown Stack Size
+<LI>Call Chain = EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sqrtf
 <LI><a href="#[d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
@@ -6427,15 +6438,10 @@ Local Symbols
 <LI><a href="#[273]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionQuaternionMultiplyVector(FusionQuaternion, FusionVector)
 <LI><a href="#[272]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMultiplyScalar(FusionVector, float)
 <LI><a href="#[278]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitudeSquared(FusionVector)
+<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClampFloat(float, float, float)
+<LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitude(FusionVector)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
-</UL>
-
-<P><STRONG><a name="[23d]"></a>ClampFloat(float, float, float)</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, tactical_fusion.o(.text._ZL10ClampFloatfff))
-<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = ClampFloat(float, float, float)
-</UL>
-<BR>[Called By]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Tactical_Update
-<LI><a href="#[276]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*)
 </UL>
 
 <P><STRONG><a name="[23f]"></a>DigitalFilterApply(DigitalFilter*, float)</STRONG> (Thumb, 122 bytes, Stack size 12 bytes, tactical_fusion.o(.text._ZL18DigitalFilterApplyP13DigitalFilterf))
@@ -6451,7 +6457,7 @@ Local Symbols
 <LI><a href="#[281]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[279]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorNormalise(FusionVector)
-<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitude(FusionVector)
 </UL>
 
@@ -6465,7 +6471,7 @@ Local Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = FusionDegreesToRadians(float)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[276]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[272]"></a>FusionVectorMultiplyScalar(FusionVector, float)</STRONG> (Thumb, 82 bytes, Stack size 28 bytes, tactical_fusion.o(.text._ZL26FusionVectorMultiplyScalar12FusionVectorf))
@@ -6473,22 +6479,22 @@ Local Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[279]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorNormalise(FusionVector)
 <LI><a href="#[277]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GravityBody(FusionQuaternion, FusionConvention)
-<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[273]"></a>FusionQuaternionMultiplyVector(FusionQuaternion, FusionVector)</STRONG> (Thumb, 242 bytes, Stack size 44 bytes, tactical_fusion.o(.text._ZL30FusionQuaternionMultiplyVector16FusionQuaternion12FusionVector))
 <BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = FusionQuaternionMultiplyVector(FusionQuaternion, FusionVector)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[274]"></a>FusionQuaternionAdd(FusionQuaternion, FusionQuaternion)</STRONG> (Thumb, 118 bytes, Stack size 48 bytes, tactical_fusion.o(.text._ZL19FusionQuaternionAdd16FusionQuaternionS_))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = FusionQuaternionAdd(FusionQuaternion, FusionQuaternion)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[275]"></a>FusionQuaternionNormalise(FusionQuaternion)</STRONG> (Thumb, 156 bytes, Stack size 48 bytes, tactical_fusion.o(.text._ZL25FusionQuaternionNormalise16FusionQuaternion))
@@ -6496,18 +6502,18 @@ Local Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[27f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionFastInverseSqrt(float)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[276]"></a>ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*)</STRONG> (Thumb, 372 bytes, Stack size 64 bytes, tactical_fusion.o(.text._ZL20ComputeAdaptiveNoisePK14TacticalSystemfPfS2_S2_))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = ComputeAdaptiveNoise(TacticalSystem const*, float, float*, float*, float*) &rArr; ClampFloat(float, float, float)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[271]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionDegreesToRadians(float)
-<LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClampFloat(float, float, float)
+<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ClampFloat(float, float, float)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
-<LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
+<LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfPredict(TacticalSystem*, FusionVector, float)
 </UL>
 
 <P><STRONG><a name="[277]"></a>GravityBody(FusionQuaternion, FusionConvention)</STRONG> (Thumb, 310 bytes, Stack size 80 bytes, tactical_fusion.o(.text._ZL11GravityBody16FusionQuaternion16FusionConvention))
@@ -6515,7 +6521,7 @@ Local Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[272]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMultiplyScalar(FusionVector, float)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[279]"></a>FusionVectorNormalise(FusionVector)</STRONG> (Thumb, 112 bytes, Stack size 64 bytes, tactical_fusion.o(.text._ZL21FusionVectorNormalise12FusionVector))
@@ -6525,31 +6531,31 @@ Local Symbols
 <LI><a href="#[272]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMultiplyScalar(FusionVector, float)
 <LI><a href="#[278]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionVectorMagnitudeSquared(FusionVector)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[27a]"></a>FusionVectorCrossProduct(FusionVector, FusionVector)</STRONG> (Thumb, 138 bytes, Stack size 36 bytes, tactical_fusion.o(.text._ZL24FusionVectorCrossProduct12FusionVectorS_))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = FusionVectorCrossProduct(FusionVector, FusionVector)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[27b]"></a>Mat3Inverse(float const (*) [3], float (*) [3])</STRONG> (Thumb, 568 bytes, Stack size 24 bytes, tactical_fusion.o(.text._ZL11Mat3InversePA3_KfPA3_f))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = Mat3Inverse(float const (*) [3], float (*) [3])
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[27c]"></a>FusionRadiansToDegrees(float)</STRONG> (Thumb, 24 bytes, Stack size 4 bytes, tactical_fusion.o(.text._ZL22FusionRadiansToDegreesf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = FusionRadiansToDegrees(float)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[27d]"></a>FusionVectorAdd(FusionVector, FusionVector)</STRONG> (Thumb, 90 bytes, Stack size 36 bytes, tactical_fusion.o(.text._ZL15FusionVectorAdd12FusionVectorS_))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = FusionVectorAdd(FusionVector, FusionVector)
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector)
+<BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EkfUpdateAccel(TacticalSystem*, FusionVector, FusionVector)
 </UL>
 
 <P><STRONG><a name="[281]"></a>FusionVectorHadamardProduct(FusionVector, FusionVector)</STRONG> (Thumb, 90 bytes, Stack size 36 bytes, tactical_fusion.o(.text._ZL27FusionVectorHadamardProduct12FusionVectorS_))
