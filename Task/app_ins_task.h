@@ -61,11 +61,11 @@ void isttask(void const * argument);
 
 
 uint8_t Quater_Init(float* origin_quater,uint8_t check);
-uint8_t caculate_angle(const float* gyro, const float* origin_quater, float* quaternion, float dt);
+// uint8_t caculate_angle(const float* gyro, const float* origin_quater, float* quaternion, float dt);  // unused helper
 uint8_t calculate_quaternion_from_gravity( float32_t* g0,  float32_t* g1, float32_t* quaternion);
-void quaternion_multiply(const float* q1, const float* q2, float* result);
-void quaternion_to_euler(const float* quaternion, float* roll, float* pitch, float* yaw);
-void quaternion_normalize(float* quaternion);
+// void quaternion_multiply(const float* q1, const float* q2, float* result);  // unused helper
+// void quaternion_to_euler(const float* quaternion, float* roll, float* pitch, float* yaw);  // unused helper
+// void quaternion_normalize(float* quaternion);  // unused helper
 void quaternion_update(float* origin_quater);
 float calculate_norm(const float *arr);
 

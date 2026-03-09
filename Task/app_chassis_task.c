@@ -234,8 +234,7 @@ static DjiMotorInitConfig_s Up_config = {
 static  DjiMotorInitConfig_s Trigger_Config = {
     .id = 2,                      // 电机ID(1~4)
     .type = M2006,               // 电机类型
-     .control_mode = DJI_VELOCITY,  // 电机控制模式
-    //.control_mode = DJI_POSITION,
+  .control_mode = DJI_POSITION,  // 电机控制模式
 		.topic_name = "Trigger",
     .can_config = {
         .can_number = 2,//记得改回来
@@ -323,20 +322,32 @@ static void Chassis_Enable(ChassisInstance_s *chassis){
 }
 
 static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool){
+  if(trigger == NULL){
+    return;
+  }
+
   if(shoot_bool==1){
-    if(trigger->message.torque_current>max_torque||trigger->message.torque_current<-max_torque){
+    Pid_Enable(trigger->angle_pid);
+    if(lasttime>200){
+      // 保留现有堵转回弹逻辑
+      trigger->target_position-=10.0f*BULLET_ANGLE;
       lasttime++;
-      if(lasttime>5){
+      if(lasttime>400){
         lasttime=0;
-        trigger->target_position-= 10*BULLET_ANGLE;
       }
     }else{
-      lasttime=0;
-    
       trigger->target_position+= BULLET_ANGLE;
+      if(trigger->message.torque_current>max_torque||trigger->message.torque_current<-max_torque){
+        lasttime++;
+      }else{
+        lasttime=0;
+      }
     }
   }else{
-    trigger->target_velocity=0.0f;
+    // 非射击状态下将目标锁定在当前角度，避免下次使能出现跳变
+    trigger->target_position=trigger->message.out_position;
+    trigger->output=0.0f;
+    lasttime=0;
     Pid_Disable(trigger->angle_pid);
   }
 }
@@ -370,6 +381,11 @@ void StartChassisTask(void const * argument)
 		if (Trigger == NULL){
 				Log_Error("Trigger Register Failed!");
 		}
+  if (Trigger != NULL) {
+    // 初始化目标角度为当前角度
+    Trigger->target_position = Trigger->message.out_position;
+    Pid_Disable(Trigger->angle_pid);
+  }
   board_instance= board_init(&board_config);
     if (board_instance == NULL) {
         Log_Error("Board Register Failed!");
@@ -485,36 +501,14 @@ void StartChassisTask(void const * argument)
         
         Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 				Motor_Dm_Transmit(Down_yaw);
-				Pid_Disable(Trigger->velocity_pid);
+        Pid_Disable(Trigger->angle_pid);
 
 
         target_position=Quater.yaw;
         //防止疯车用的
 
-        if(shoot_bool){
-								Pid_Enable(Trigger->velocity_pid);
-                if(lasttime > 200) {
-                    // 堵转反转
-                    Trigger->target_velocity = -target_tr;
-                    lasttime++;
-                    if(last_time > 1000) Pid_Disable(Trigger->velocity_pid);
-                    if(lasttime > 400) lasttime = 0;
-                } else {
-                    // 正常射击
-                    Trigger->target_velocity = target_tr;
-                    if(Trigger->message.torque_current > max_torque || Trigger->message.torque_current < -max_torque) {
-                        lasttime++;
-                    } else {
-                        lasttime = 0;
-                    }
-                }
-            }else{
-							Pid_Disable(Trigger->velocity_pid);
-							
-      Trigger->target_velocity=0.0f;
-    }
-		
-    Motor_Dji_Control(Trigger,Trigger->target_velocity);
+        Trigger_Control(Trigger, shoot_bool);
+      Motor_Dji_Control(Trigger,Trigger->target_position);
     Motor_Dji_Transmit(Trigger);
 
 
@@ -560,6 +554,8 @@ void StartChassisTask(void const * argument)
 				Motor_Dm_Transmit(Down_yaw);
 
          target_tr=0.0f;
+        Pid_Disable(Trigger->angle_pid);
+        Trigger->target_position = Trigger->message.out_position;
         Trigger->output=0.0f;
         Motor_Dji_Transmit(Trigger);
 				break;
@@ -570,7 +566,8 @@ void StartChassisTask(void const * argument)
 				Chassis_Enable(Chassis);
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_ENABLE);
 				Motor_Dm_Transmit(Down_yaw);
-				Pid_Enable(Trigger->velocity_pid);
+        Trigger->target_position = Trigger->message.out_position;
+        Pid_Enable(Trigger->angle_pid);
 				
                 // 修正2: 切换模式时，将目标设为当前IMU角度，实现平滑“锁头”
                 target_position = Quater.yaw; 
@@ -582,13 +579,15 @@ void StartChassisTask(void const * argument)
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 
 		Motor_Dm_Transmit(Down_yaw);
-				Pid_Disable(Trigger->velocity_pid);
+        Pid_Disable(Trigger->angle_pid);
 				Chassis_Change_Mode(Chassis,CHASSIS_NORMAL);
         Chassis_Disable(Chassis);
 				
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
+        Trigger->target_position = Trigger->message.out_position;
+        Trigger->output = 0.0f;
         
         // 修正: 禁用模式下持续重置目标位置为当前角度，防止切出时疯转
         target_position = Quater.yaw;
@@ -605,29 +604,11 @@ void StartChassisTask(void const * argument)
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
-				Pid_Enable(Trigger->velocity_pid);                
+				Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
-                if(shoot_bool){
-                    if(lasttime > 200) {
-                        // 堵转反转
-                        Trigger->target_velocity = -target_tr;
-                        //Trigger->target_position -= 10*BULLET_ANGLE;
-                        lasttime++;
-                        if(lasttime > 400) lasttime = 0;
-                    } else {
-                        // 正常射击
-                        Trigger->target_velocity = target_tr;
-                        if(Trigger->message.torque_current > max_torque || Trigger->message.torque_current < -max_torque) {
-                            lasttime++;
-                        } else {
-                            lasttime = 0;
-                        }
-                    }
-                }else{
-          Trigger->target_velocity=0.0f;
-        }
-        Motor_Dji_Control(Trigger,Trigger->target_velocity);
+        Trigger_Control(Trigger, shoot_bool);
+    Motor_Dji_Control(Trigger,Trigger->target_position);
 //                if(Trigger->message.torque_current>max_torque||Trigger->message.torque_current<-max_torque){
 //                    lasttime++;
 //                    if(lasttime>100){
@@ -681,7 +662,8 @@ void StartChassisTask(void const * argument)
 				Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
 				
-        Pid_Disable(Trigger->velocity_pid);
+        Pid_Disable(Trigger->angle_pid);
+        Trigger->target_position = Trigger->message.out_position;
         target_tr=0.0f;
         Trigger->output=0.0f;
         Motor_Dji_Transmit(Trigger);
@@ -719,7 +701,8 @@ void StartChassisTask(void const * argument)
 
         target_tr=0.0f;
         Trigger->output=0.0f;
-				Pid_Disable(Trigger->velocity_pid);
+				Pid_Disable(Trigger->angle_pid);
+        Trigger->target_position = Trigger->message.out_position;
         Motor_Dji_Transmit(Trigger);
 				break;
     default:
