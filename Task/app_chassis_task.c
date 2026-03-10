@@ -36,7 +36,7 @@ extern volatile uint8_t mode;
 extern volatile uint8_t combined_state_global;
 float target_position=0.0f,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0;
 float target_tr=40.0;
-float test_vel_tr=0.0,test_output_tr=0.0;
+float test_vel_tr=0.0,test_output_tr=0.0,test_pos_tr=0.0f;
 uint16_t lasttime=0;
 //float speed1=0.0,speed2=0.0,speed3=0.0,speed4=0.0;
 //float target1=0.0,target2=0.0,target3=0.0,target4=0.0;
@@ -50,7 +50,7 @@ uint16_t max_torque=5000;
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = -0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = 2.32890654f,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
@@ -325,18 +325,23 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool){
   if(trigger == NULL){
     return;
   }
+  if(Trigger->target_position>PI){
+    Trigger->target_position-=2*PI;
 
+  }else if(Trigger->target_position<-PI){
+    Trigger->target_position+=2*PI;
+  }
   if(shoot_bool==1){
     Pid_Enable(trigger->angle_pid);
     if(lasttime>200){
       // 保留现有堵转回弹逻辑
-      trigger->target_position-=10.0f*BULLET_ANGLE;
+      trigger->target_position-=5.0f*BULLET_ANGLE;
       lasttime++;
       if(lasttime>400){
         lasttime=0;
       }
     }else{
-      trigger->target_position+= BULLET_ANGLE;
+      trigger->target_position+= 0.7f*BULLET_ANGLE;
       if(trigger->message.torque_current>max_torque||trigger->message.torque_current<-max_torque){
         lasttime++;
       }else{
@@ -430,7 +435,7 @@ void StartChassisTask(void const * argument)
 		
 		#ifdef DEBUG
 		test_speed=Down_yaw->message.out_velocity;
-    
+    test_pos_tr=Trigger->message.out_position;
     uint16_t last_wheel=CH_Receive_s->dr16_handle.wheel;
 //    speed1=Chassis->chassis_motor[0]->message.out_velocity;
 //    speed2=Chassis->chassis_motor[1]->message.out_velocity;
@@ -480,6 +485,7 @@ void StartChassisTask(void const * argument)
     switch (control_mode)
     {
     case PC_MODE:
+				target_tr=Trigger->target_position;
         
         // Chassis->gimbal_yaw_angle
         //后面这里加个自动打弹逻辑

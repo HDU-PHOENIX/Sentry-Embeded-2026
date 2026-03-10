@@ -62,7 +62,7 @@ void isttask(void const * argument);
 
 uint8_t Quater_Init(float* origin_quater,uint8_t check);
 // uint8_t caculate_angle(const float* gyro, const float* origin_quater, float* quaternion, float dt);  // unused helper
-uint8_t calculate_quaternion_from_gravity( float32_t* g0,  float32_t* g1, float32_t* quaternion);
+//uint8_t calculate_quaternion_from_gravity( float32_t* g0,  float32_t* g1, float32_t* quaternion);
 // void quaternion_multiply(const float* q1, const float* q2, float* result);  // unused helper
 // void quaternion_to_euler(const float* quaternion, float* roll, float* pitch, float* yaw);  // unused helper
 // void quaternion_normalize(float* quaternion);  // unused helper
@@ -97,7 +97,7 @@ float calculate_norm(const float *arr);
 // 全局变量声明
 extern quaternions_struct_t Quater;           // 四元数结构体
 extern PidInstance_s *ins_pid;                // INS PID控制器
-extern uint8_t test_data[5];                  // 磁力计测试数据
+extern float test_data[5];                  // 磁力计测试数据
 
 // EKF相关外部访问接口
 //extern QEKF_INS_t QEKF_INS;                   // EKF状态结构体（来自alg_quaternionEKF.c）

@@ -19,7 +19,7 @@ MadgwickAHRS *madgwick_ahrs;
 FusionAhrs fusion_ahrs;
 FusionOffset fusion_offset;
 PidInstance_s *ins_pid;
-uint8_t test_data[5]={0,0,0,0,0};
+float test_data[5]={0.0,0.0,0.0,0.0,0.0};
 quaternions_struct_t Quater;//四元数
 Bmi088Instance_s *bmi088_test;
 float Acc_Raw[3];//用于FFT的原始加速度数据
@@ -83,7 +83,7 @@ FusionAhrsSettings settings = {
     .convention = FusionConventionNwu,  // 坐标系：NWU（北西上）
     .gain = 0.5f,                      // 算法增益
     .gyroscopeRange = 0.0f,            // 禁用量程检测重置（避免34.9rad/s满量程时误重置）
-    .accelerationRejection = 20.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
+    .accelerationRejection = 7.0f,    // 加速度计拒绝阈值（度）- 调大此值以容忍摩擦轮振动
     .recoveryTriggerPeriod = 5000,        // 恢复触发周期
 };
 
@@ -97,6 +97,11 @@ FusionAhrsSettings settings = {
 float test=0;
 
 //测试代码结束
+
+// 陀螺仪 g-sensitivity 补偿系数 (rad/s per g)
+// z轴陀螺仪对 x/y 方向平动加速度的交叉敏感系数，需标定
+float g_sens_zx = 0.015f;  // 典型值 0.01~0.02，正负号需标定确定
+float g_sens_zy = 0.015f;
 
 
 
@@ -298,6 +303,18 @@ void isttask(void const * argument)
                 // FusionVector fusion_accel = {compensated_accel[0]/9.80665f, compensated_accel[1]/9.80665f, compensated_accel[2]/9.80665f};
                 // 直接使用滤波后的加速度，不进行额外的 "Rejection" 和 "Centrifugal" 处理
                 FusionVector fusion_accel = {filtered_accel[0]/9.80665f, filtered_accel[1]/9.80665f, filtered_accel[2]/9.80665f};
+                
+                // g-sensitivity 补偿：用上一帧姿态估计重力，从加速度中去除得到平动加速度
+                FusionVector gravity = FusionAhrsGetGravity(&fusion_ahrs); // 体坐标系重力 (单位g)
+                FusionVector linear_accel = {
+                    fusion_accel.axis.x - gravity.axis.x,
+                    fusion_accel.axis.y - gravity.axis.y,
+                    fusion_accel.axis.z - gravity.axis.z
+                };
+                // 补偿 z 轴陀螺仪的线性加速度交叉敏感
+                // fusion_gyro.axis.z -= g_sens_zx * linear_accel.axis.x
+                //                     + g_sens_zy * linear_accel.axis.y;
+                
                 FusionAhrsUpdateNoMagnetometer(&fusion_ahrs, fusion_gyro, fusion_accel, dt);
 
                 // 从 Fusion AHRS 获取四元数
@@ -345,6 +362,11 @@ void isttask(void const * argument)
                 Quater.Acc.A_x = filtered_accel[0];
                 Quater.Acc.A_y = filtered_accel[1];
                 Quater.Acc.A_z = filtered_accel[2];
+                //////////角度制测试用代码///////////
+                test_data[0]=Quater.roll*57.2958f;
+                test_data[1]=Quater.pitch*57.2958f;
+                test_data[2]=Quater.yaw*57.2958f;
+                //////////测试代码结束//////////////
 				///////////测试代码开始//////////////
 							////////////测试代码结束//////////////
                 // 可选：备用的四元数积分方法（用于对比或故障恢复）
@@ -428,10 +450,10 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
             Gyro_Offset[i] /= 100; //陀螺仪零偏
         }
 
-    if(calculate_quaternion_from_gravity(g0,g1,origin_quater)<0){//此处即完成四元数初始化
-      //处理失败情况
-      Error_Handler();
-    };
+//    if(calculate_quaternion_from_gravity(g0,g1,origin_quater)<0){//此处即完成四元数初始化
+//      //处理失败情况
+//      Error_Handler();
+//    };
     //初始化Madgwick
     //beta，滤波器增益
     //sampleFreq，采样频率
@@ -491,8 +513,8 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
      //初始化EKF
     //IMU_QuaternionEKF_Init(origin_quater,10, 0.001, 10000000,1,0);
      //MadgwickAHRS_init(madgwick_ahrs,0.1f, 0.001f);
-        FusionAhrsSetSettings(&fusion_ahrs, &settings);
         FusionAhrsInitialise(&fusion_ahrs);
+        FusionAhrsSetSettings(&fusion_ahrs, &settings);
     }
     
     return 1;
