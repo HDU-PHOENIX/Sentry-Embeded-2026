@@ -61,6 +61,7 @@ static ChassisInitConfig_s Chassis_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
       .kd = 0.0f,
+      .angle_max = 2.0f * PI,
 			.dead_zone = 0.15f,
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
