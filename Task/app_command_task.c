@@ -121,6 +121,7 @@ void StartCommandTask(void const * argument)
     #ifdef UP_DEBUG
     mode=TEST_MODE;
     #endif
+    Shooter_State_last=Shooter_State;
     switch (mode)
     {
     case PC_MODE:

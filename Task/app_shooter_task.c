@@ -159,9 +159,10 @@ void StartShooterTask(void const * argument)
 //    //或许可以来个超时检测，但是等看门狗什么的都完善了再一并加入吧
 //    osDelay(1);
 //}
-	while(gimbal_ready_flag!=1){
+	while(gimbal_ready_flag!=1||Quater.ins_ready!=1){
 		osDelay(1);
 	}
+  osDelay(20);
   //测试用↓
   //Right_Wheel->velocity_pid->is_enabled = 0;
   //测试用↑
@@ -170,10 +171,10 @@ void StartShooterTask(void const * argument)
   { 
     
 	#ifdef DEBUG
-		Shooter_State=SHOOTER_TEST;
+		//Shooter_State=SHOOTER_TEST;
 		#endif 
 
-    Shooter_State_last=Shooter_State;
+    //Shooter_State_last=Shooter_State;
 
     switch(Shooter_State){
       case SHOOTER_READY:
@@ -192,7 +193,7 @@ void StartShooterTask(void const * argument)
 			break;
       case SHOOTER_STOP:
         //清空PID
-        //target_wheel_speed=0.0f;
+        target_wheel_speed=0.0f;
 				
         Pid_Disable(Left_Wheel->velocity_pid);
         Pid_Disable(Right_Wheel->velocity_pid);

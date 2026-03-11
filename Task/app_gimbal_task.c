@@ -36,7 +36,7 @@ extern uint8_t mode;
 uint8_t ControlMode= RC_MODE;
 uint8_t gimbal_ready_flag;
 
-float target_position=0.3,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0,test_g_out=0.0;
+float target_position=0.0,test_speed=0.0,test_position=0.0,target_speed=0.0,test_output=0.0,test_g_out=0.0;
 float target_up_speed=0.0;//yaw目标速度（用于IMU下）
 float target_up_position=0.0;
 float target_pitch_position=0.0;
@@ -79,7 +79,7 @@ static DmMotorInitConfig_s pitch_config = {
 		.angle_pid_config = {
 			
         .kp = 17.0f,
-        .ki = 0.0f,
+        .ki = 0.0015f,
         .kd = 0.06f,
         .kf = 0.0f,
         .angle_max = 2.0f * PI,
