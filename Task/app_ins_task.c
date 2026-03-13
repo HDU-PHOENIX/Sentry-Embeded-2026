@@ -13,12 +13,15 @@
 //本任务基本上都使用arm_math库，因此都采用float32_t
 #include "app_ins_task.h"
 #include "FreeRTOS.h"
+#include "bsp_buzzer.h"
 #include "bsp_dwt.h"  // 添加DWT头文件
+#include "tim.h"
 //extern Ist8310Instance_s *asdf;
 MadgwickAHRS *madgwick_ahrs;  
 FusionAhrs fusion_ahrs;
 FusionOffset fusion_offset;
 PidInstance_s *ins_pid;
+BuzzerInstance_s *buzzer;
 float test_data[5]={0.0,0.0,0.0,0.0,0.0};
 quaternions_struct_t Quater;//四元数
 Bmi088Instance_s *bmi088_test;
@@ -87,7 +90,10 @@ FusionAhrsSettings settings = {
     .recoveryTriggerPeriod = 5000,        // 恢复触发周期
 };
 
-
+Buzzer_Init_Config_s buzzer_config = {
+    .htim = &htim4,          // 使用TIM4
+    .channel = TIM_CHANNEL_1, // 通道1
+};
 
 
 
@@ -138,7 +144,12 @@ void isttask(void const * argument)
     Error_Handler();
   }
     
-    
+    buzzer = buzzer_register(&buzzer_config);
+    if(buzzer == NULL) {
+        // 蜂鸣器注册失败，添加错误处理
+        Error_Handler();
+    }
+    buzzer_init(buzzer);
     
     // 注册温度控制PID和PWM实例
     PidInstance_s *temp_pid = Pid_Register(&temp_pid_config);
@@ -216,8 +227,7 @@ void isttask(void const * argument)
     Quater_Init(origin_quaternion, 1); // 使用默认初始化
   
     ins_initialized = 1;
-    
-    
+    buzzer_play_note(buzzer, 1, 2, 1, 1000);
     
     // DWT计时变量
     uint32_t dwt_cnt_last = 0;

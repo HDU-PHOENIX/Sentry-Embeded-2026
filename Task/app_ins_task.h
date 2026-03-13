@@ -32,7 +32,7 @@
 #include "alg_fliter.h"          // 滤波器
 #include "bsp_pwm.h"             // PWM控制
 #include "tim.h"                 // 定时器
-
+#include "bsp_buzzer.h"           // 蜂鸣器
 //CMSIS好像要求用float32_t，可能是为了可移植性考虑。我这里就不管了
 
 
