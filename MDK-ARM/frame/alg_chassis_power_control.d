@@ -1,6 +1,6 @@
-frame/alg_chassis_calc.o: \
-  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.c \
-  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.h \
+frame/alg_chassis_power_control.o: \
+  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_power_control.c \
+  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_power_control.h \
   ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h \
   ..\..\Sentry-Embeded-2026\robot_config.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
@@ -44,5 +44,4 @@ frame/alg_chassis_calc.o: \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
   ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
-  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
-  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_power_control.h
+  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h

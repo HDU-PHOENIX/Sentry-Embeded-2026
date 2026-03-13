@@ -7,6 +7,8 @@
  */
 #include "app_chassis_task.h"
 #include "app_command_task.h"
+#include <stdbool.h>
+#include <stdint.h>
 //宏定义
 #define DEBUG
 //#define SHOOT_DEBUG
@@ -25,6 +27,7 @@ gimbal_follow_instance_s* GimbalFollow_Instance;
 //extern QEKF_INS_t QEKF_INS; 
 uint8_t enemy_color =1;//暂时的逻辑
 uint8_t shoot_bool=0;
+uint8_t find_bool=0;
 //变量声明
 #ifndef DEBUG
 uint8_t controlmode=DISABLE_MODE;
@@ -46,7 +49,56 @@ float target_up_pitch=0.0f;
 uint8_t rune_flag=0;//打符开关
 uint8_t minipc_mode=0;//0自瞄，1打符
 uint8_t control_mode=RC_MODE;//默认遥控器模式
-uint16_t max_torque=5000;
+uint16_t max_torque=14000;
+
+#define TRIGGER_STEP_ANGLE (0.7f * BULLET_ANGLE)
+#define TRIGGER_FIRE_PERIOD_S 0.050f
+#define TRIGGER_JAM_REBOUND_ANGLE (2.0f * BULLET_ANGLE)
+#define TRIGGER_JAM_REBOUND_DURATION_S 0.030f
+
+typedef struct {
+  float base_position;
+  int32_t shot_index;
+  float shot_timer_s;
+  float jam_rebound_timer_s;
+  uint8_t shoot_last;
+  uint8_t jam_latched;
+} TriggerTargetGenerator_s;
+
+static TriggerTargetGenerator_s trigger_gen = {
+  .base_position = 0.0f,
+  .shot_index = 0,
+  .shot_timer_s = 0.0f,
+  .jam_rebound_timer_s = 0.0f,
+  .shoot_last = 0,
+  .jam_latched = 0,
+};
+
+static float WrapAnglePi(float angle) {
+  while (angle > PI) {
+    angle -= 2.0f * PI;
+  }
+  while (angle <= -PI) {
+    angle += 2.0f * PI;
+  }
+  return angle;
+}
+
+static void TriggerGenerator_ResetAtCurrent(DjiMotorInstance_s *trigger) {
+  if (trigger == NULL) {
+    return;
+  }
+  trigger_gen.base_position = WrapAnglePi(trigger->message.out_position);
+  trigger_gen.shot_index = 0;
+  trigger_gen.shot_timer_s = 0.0f;
+  trigger_gen.jam_rebound_timer_s = 0.0f;
+  trigger_gen.jam_latched = 0;
+}
+
+static float TriggerGenerator_Target(void) {
+  float target = trigger_gen.base_position + ((float)trigger_gen.shot_index) * TRIGGER_STEP_ANGLE;
+  return WrapAnglePi(target);
+}
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
@@ -56,7 +108,7 @@ static ChassisInitConfig_s Chassis_config={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.26176f,
 		},
-    .Gyroscope_Speed = 0.1f,  // 设置小陀螺旋转速度 (rad/s)
+    .Gyroscope_Speed = 0.4f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
@@ -66,6 +118,30 @@ static ChassisInitConfig_s Chassis_config={
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
 		},
+
+    .power_control_config = {
+      .enabled = false,
+      .power_buffer_target = 30.0f,
+      .steering_power_ratio = 0.0f,
+
+      .wheel_group = {
+          .method = CHASSIS_POWER_CONTROL_METHOD_CURRENT_ATTENUATION,
+          .motor_count = 4,
+          .model = {
+              .k0 = 0.66419934f,
+              .k1 = 0.00644428f,
+              .k2 = 0.00014239f,
+              .k3 = 0.01764443f,
+              .k4 = 0.16501439f,
+              .k5 = 0.00003097f,
+          },
+      },
+
+      .steering_group = {
+          .method = CHASSIS_POWER_CONTROL_METHOD_DISABLED,
+          .motor_count = 0,
+      },
+    },
 		.motor_config[0]={
     .type = M3508,
     .control_mode = DJI_VELOCITY,
@@ -322,40 +398,62 @@ static void Chassis_Enable(ChassisInstance_s *chassis){
 	
 }
 
-static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool){
+static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, float dt){
   if(trigger == NULL){
     return;
   }
-  if(Trigger->target_position>PI){
-    Trigger->target_position-=2*PI;
-
-  }else if(Trigger->target_position<-PI){
-    Trigger->target_position+=2*PI;
+  if(dt < 0.0f){
+    dt = 0.0f;
   }
+
+  if(trigger_gen.jam_rebound_timer_s > 0.0f){
+    trigger_gen.jam_rebound_timer_s -= dt;
+    if(trigger_gen.jam_rebound_timer_s < 0.0f){
+      trigger_gen.jam_rebound_timer_s = 0.0f;
+    }
+  }
+
   if(shoot_bool==1){
     Pid_Enable(trigger->angle_pid);
-    if(lasttime>200){
-      // 保留现有堵转回弹逻辑
-      trigger->target_position-=5.0f*BULLET_ANGLE;
-      lasttime++;
-      if(lasttime>400){
-        lasttime=0;
+
+    if(trigger_gen.shoot_last == 0){
+      trigger_gen.shot_timer_s = TRIGGER_FIRE_PERIOD_S;
+    }
+    trigger_gen.shoot_last = 1;
+
+    if(trigger->message.torque_current > max_torque || trigger->message.torque_current < -max_torque){
+      if(trigger_gen.jam_rebound_timer_s <= 0.0f){
+        trigger_gen.jam_rebound_timer_s = TRIGGER_JAM_REBOUND_DURATION_S;
       }
-    }else{
-      trigger->target_position+= 0.7f*BULLET_ANGLE;
-      if(trigger->message.torque_current>max_torque||trigger->message.torque_current<-max_torque){
-        lasttime++;
-      }else{
-        lasttime=0;
+      trigger_gen.jam_latched = 1;
+      lasttime = 1;
+    } else if(trigger_gen.jam_rebound_timer_s <= 0.0f) {
+      trigger_gen.jam_latched = 0;
+      lasttime = 0;
+    }
+
+    if(trigger_gen.jam_rebound_timer_s <= 0.0f){
+      trigger_gen.shot_timer_s += dt;
+      while(trigger_gen.shot_timer_s >= TRIGGER_FIRE_PERIOD_S){
+        trigger_gen.shot_timer_s -= TRIGGER_FIRE_PERIOD_S;
+        trigger_gen.shot_index++;
       }
     }
-  }else{
-    // 非射击状态下将目标锁定在当前角度，避免下次使能出现跳变
+
+    trigger->target_position = TriggerGenerator_Target();
+    if(trigger_gen.jam_rebound_timer_s > 0.0f){
+      trigger->target_position = WrapAnglePi(trigger->target_position - TRIGGER_JAM_REBOUND_ANGLE);
+    }
+  } else {
+    trigger_gen.shoot_last = 0;
+    TriggerGenerator_ResetAtCurrent(trigger);
     trigger->target_position=trigger->message.out_position;
     trigger->output=0.0f;
     lasttime=0;
     Pid_Disable(trigger->angle_pid);
   }
+
+  trigger->target_position = WrapAnglePi(trigger->target_position);
 }
 
 
@@ -390,6 +488,7 @@ void StartChassisTask(void const * argument)
   if (Trigger != NULL) {
     // 初始化目标角度为当前角度
     Trigger->target_position = Trigger->message.out_position;
+    TriggerGenerator_ResetAtCurrent(Trigger);
     Pid_Disable(Trigger->angle_pid);
   }
   board_instance= board_init(&board_config);
@@ -467,12 +566,13 @@ void StartChassisTask(void const * argument)
     }
 
     Minipc_UpdateAllInstances();
+    find_bool=MiniPC_SelfAim->message.norm_aim_pack.find_bool;
 		if(control_mode==PC_MODE||control_mode==UP_MODE||control_mode==SHOOT_MODE){
       //两个周期跑一次。也就是500Hz
       if(send_flag==0){
         send_flag=1;
       }else{
-      board_send_message(board_instance,target_up_position,Quater.yaw ,target_up_pitch, combined_state_global, shoot_bool);
+      board_send_message(board_instance,target_up_position,Quater.yaw ,target_up_pitch, combined_state_global, find_bool);
       send_flag=0;
       }
   }
@@ -514,7 +614,7 @@ void StartChassisTask(void const * argument)
         target_position=Quater.yaw;
         //防止疯车用的
 
-        Trigger_Control(Trigger, shoot_bool);
+        Trigger_Control(Trigger, shoot_bool, dt2);
       Motor_Dji_Control(Trigger,Trigger->target_position);
     Motor_Dji_Transmit(Trigger);
 
@@ -562,6 +662,8 @@ void StartChassisTask(void const * argument)
 
          target_tr=0.0f;
         Pid_Disable(Trigger->angle_pid);
+        trigger_gen.shoot_last = 0;
+        TriggerGenerator_ResetAtCurrent(Trigger);
         Trigger->target_position = Trigger->message.out_position;
         Trigger->output=0.0f;
         Motor_Dji_Transmit(Trigger);
@@ -593,6 +695,8 @@ void StartChassisTask(void const * argument)
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
+        trigger_gen.shoot_last = 0;
+        TriggerGenerator_ResetAtCurrent(Trigger);
         Trigger->target_position = Trigger->message.out_position;
         Trigger->output = 0.0f;
         
@@ -614,7 +718,7 @@ void StartChassisTask(void const * argument)
 				Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
-        Trigger_Control(Trigger, shoot_bool);
+        Trigger_Control(Trigger, shoot_bool, dt2);
     Motor_Dji_Control(Trigger,Trigger->target_position);
 //                if(Trigger->message.torque_current>max_torque||Trigger->message.torque_current<-max_torque){
 //                    lasttime++;
@@ -670,6 +774,8 @@ void StartChassisTask(void const * argument)
 				Motor_Dm_Transmit(Down_yaw);
 				
         Pid_Disable(Trigger->angle_pid);
+        trigger_gen.shoot_last = 0;
+        TriggerGenerator_ResetAtCurrent(Trigger);
         Trigger->target_position = Trigger->message.out_position;
         target_tr=0.0f;
         Trigger->output=0.0f;

@@ -89,6 +89,7 @@
 "frame\madgwickahrs.o"
 "frame\fusion_ahrs.o"
 "frame\alg_crc.o"
+"frame\alg_chassis_power_control.o"
 "..\Middlewares\ST\ARM\DSP\Lib\arm_cortexM4lf_math.lib"
 --strict --scatter "frame\frame.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

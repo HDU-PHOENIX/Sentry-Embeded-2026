@@ -36,6 +36,43 @@ static bool Chassis_judgment(ChassisInitConfig_s *config)
     }
     return true;
 }
+
+static bool Chassis_Apply_Power_Control(ChassisInstance_s *Chassis)
+{
+    DjiMotorInstance_s *wheel_motors[4] = {0};
+    DjiMotorInstance_s *steering_motors[4] = {0};
+    uint8_t wheel_motor_count = 4U;
+    uint8_t steering_motor_count = 0U;
+    uint8_t index;
+
+    if (Chassis == NULL)
+    {
+        return false;
+    }
+
+    for (index = 0U; index < wheel_motor_count; ++index)
+    {
+        wheel_motors[index] = Chassis->chassis_motor[index];
+    }
+
+    if (Chassis->type == Steering_Wheel)
+    {
+        steering_motor_count = 4U;
+        for (index = 0U; index < steering_motor_count; ++index)
+        {
+            steering_motors[index] = Chassis->chassis_motor[index + 4U];
+        }
+    }
+
+    return Chassis_PowerControl_Apply(&Chassis->power_control,
+                                      wheel_motors,
+                                      wheel_motor_count,
+                                      steering_motors,
+                                      steering_motor_count,
+                                      Chassis->Chassis_power_limit,
+                                      Chassis->Chassis_power_limit_pid_config,
+                                      Chassis->chassis_power_buffer);
+}
 /**
  * @brief 注册并初始化底盘实例
  * @param Chassis_config 底盘初始化配置结构体指针
@@ -57,6 +94,10 @@ ChassisInstance_s *Chassis_Register(ChassisInitConfig_s *Chassis_config){
      Chassis_Instance->omni_steering_message = Chassis_config->omni_steering_message;
      Chassis_Instance->mecanum_message = Chassis_config->mecanum_message;
      Chassis_Instance->Chassis_Mode =  Chassis_config->Chassis_Mode;
+
+    Chassis_Instance->chassis_power_feedback = 0.0f;
+    Chassis_Instance->chassis_power_buffer = 0.0f;
+    Chassis_PowerControl_Init(&Chassis_Instance->power_control, &Chassis_config->power_control_config);
 	
     for(int i = 0; i < 4; i++)
     {
@@ -179,83 +220,6 @@ static float Find_Angle(ChassisInstance_s *Chassis)
  * @note 预留功能，用于防止底盘超功率
  * @date 2025-07-03
  */
-static bool Chassis_Power_Limit(ChassisInstance_s* Chassis, float power_buffer)
-{
-     if(Chassis == NULL||Chassis->Chassis_power_limit<=0) {
-        return false;
-       }
-       float power_max = Pid_Calculate(Chassis->Chassis_power_limit_pid_config, 30, power_buffer)+Chassis->Chassis_power_limit;
-       float total_steering_power = 0;
-       float motor_target_power[8]; //目标功率数组
-       for(int i = 4; i < 8; i++)
-       {  float x = Chassis->chassis_motor[i]->output;
-          float y = Chassis->chassis_motor[i]->message.rotor_velocity;//为了计算方便的临时变量
-          Chassis->motor_power[i] = 1.421e-05f*x*y+Chassis->motor_loss_config[i].K1*x*x+Chassis->motor_loss_config[i].K2*y*y+Chassis->motor_loss_config[i].Ka;
-          total_steering_power += Chassis->motor_power[i];
-       } //计算舵组总功率
-       float steering_scale = Chassis->omni_steering_message.Steering_Ratio * power_max / total_steering_power;//计算舵组功率缩放比例
-
-         if(steering_scale >= 1){
-          return false;//不超功率,不做处理
-         }
-         else if(steering_scale <= 1 && steering_scale >= 0){
-            for(int i = 4; i < 8; i++){
-            motor_target_power[i] = steering_scale*Chassis->motor_power[i];
-            float a = Chassis->motor_loss_config[i].K1;
-            float b = 1.421e-05f*Chassis->chassis_motor[i]->message.rotor_velocity;
-            float c = Chassis->motor_loss_config[i].K2*b*b+Chassis->motor_loss_config[i].Ka - motor_target_power[i];
-            if((b*b-4*a*c) < 0){
-              return false;
-            }//无解
-            else{
-            float target_torque1 = (-b+sqrtf(b*b-4*a*c))/(2*a);
-            float target_torque2 = (-b-sqrtf(b*b-4*a*c))/(2*a);//求解二次方程
-            if(target_torque1*Chassis->chassis_motor[i]->output > 0){
-              Motor_Dji_SetCurrent(Chassis->chassis_motor[i],target_torque1*0.3124f);
-            }else{
-              Motor_Dji_SetCurrent(Chassis->chassis_motor[i],target_torque2*0.3124f);
-            }
-       }
-        }
-        }//舵组功率限制
-
-       float total_wheel_power = 0;
-       for(int i = 0; i < 4; i++)
-       {  float x = Chassis->chassis_motor[i]->output;
-          float y = Chassis->chassis_motor[i]->message.rotor_velocity;//为了计算方便的临时变量
-          Chassis->motor_power[i] = 1.996e-6f*x*y+Chassis->motor_loss_config[i].K1*x*x+Chassis->motor_loss_config[i].K2*y*y+Chassis->motor_loss_config[i].Ka;
-          total_wheel_power += Chassis->motor_power[i];
-       } //计算轮组总功率
-
-       float wheel_scale = (power_max -steering_scale*total_steering_power) / total_wheel_power;//计算轮组功率缩放比例
-
-       if(wheel_scale >= 1){
-        return false;//不超功率,不做处理
-       }
-
-       else if(wheel_scale <= 1 && wheel_scale >= 0){
-       for(int i = 0; i < 4; i++){
-       motor_target_power[i] = wheel_scale*Chassis->motor_power[i];
-       float a = Chassis->motor_loss_config[i].K1;
-       float b = 1.996e-6f*Chassis->chassis_motor[i]->message.rotor_velocity;
-       float c = Chassis->motor_loss_config[i].K2*b*b+Chassis->motor_loss_config[i].Ka - motor_target_power[i];
-
-       if((b*b-4*a*c) < 0){
-          return false;
-       }//无解
-       else{
-       float target_torque1 = (-b+sqrtf(b*b-4*a*c))/(2*a);
-       float target_torque2 = (-b-sqrtf(b*b-4*a*c))/(2*a);//求解二次方程
-       if(target_torque1*Chassis->chassis_motor[i]->output > 0){
-         Motor_Dji_SetCurrent(Chassis->chassis_motor[i],target_torque1*0.3124f);
-       }else{
-         Motor_Dji_SetCurrent(Chassis->chassis_motor[i],target_torque2*0.3124f);
-       }
-     }
-   }
- } //轮向功率限制
-    return true;
-}
 /**
  * @brief 底盘运动控制主函数
  * @param chassis 底盘实例指针
@@ -303,8 +267,27 @@ bool Chassis_Control(ChassisInstance_s *Chassis)
     {
     Motor_Dji_Control(Chassis->chassis_motor[i], Chassis->out_angle[i-4]);
     }
-    Motor_Dji_Transmit(Chassis->chassis_motor[4]);
-    };
+    }
+
+    Chassis_Apply_Power_Control(Chassis);
+
+    Motor_Dji_Transmit(Chassis->chassis_motor[0]);
+    if(Chassis->type == Steering_Wheel)
+    {
+        Motor_Dji_Transmit(Chassis->chassis_motor[4]);
+    }
+    return true;
+}
+
+bool Chassis_Update_Power_State(ChassisInstance_s *Chassis, float chassis_power, float power_buffer)
+{
+    if (Chassis == NULL)
+    {
+        return false;
+    }
+
+    Chassis->chassis_power_feedback = chassis_power;
+    Chassis->chassis_power_buffer = power_buffer;
     return true;
 }
 

@@ -123,7 +123,61 @@ void ChassisTask(void const * argument)
 
 > 舵轮程序测试及完善
 
-> 添加功率限制
+> 添加更多功率策略
+
+## 功率控制挂载
+
+当前目录新增了独立模块：
+
+- `alg_chassis_power_control.h`
+- `alg_chassis_power_control.c`
+
+`alg_chassis_calc` 仅做接口融合，不直接在原文件里展开功率控制公式。
+
+### 配置方法
+
+在 `ChassisInitConfig_s` 中新增了 `power_control_config`，用于描述功率控制策略：
+
+- `enabled`：是否启用功率控制
+- `power_buffer_target`：功率缓冲目标值，会配合 `Chassis_power_limit_pid_config` 修正总功率上限
+- `steering_power_ratio`：给舵向电机预留的功率比例
+- `wheel_group`：轮向电机功率控制模型与方法
+- `steering_group`：舵向电机功率控制模型与方法
+
+其中 `wheel_group.method` / `steering_group.method` 支持：
+
+- `CHASSIS_POWER_CONTROL_METHOD_DISABLED`
+- `CHASSIS_POWER_CONTROL_METHOD_POWER_ATTENUATION`
+- `CHASSIS_POWER_CONTROL_METHOD_CURRENT_ATTENUATION`
+
+### 运行时更新
+
+上层在循环中更新功率状态：
+
+```c
+Chassis_Update_Power_State(chassis, now_chassis_power, now_power_buffer);
+Chassis_Control(chassis);
+```
+
+当前融合方式会在 `Chassis_Control` 中完成：
+
+1. 底盘逆解
+2. 驱动/舵向电机 PID 输出计算
+3. 功率控制模块二次限幅
+4. 发送 CAN
+
+### 系数说明
+
+功率模型默认使用如下形式：
+
+`P = k0 + k1 * I + k2 * w + k3 * I * w + k4 * I^2 + k5 * w^2`
+
+这里的 `I` 和 `w` 单位必须与工程实际输入保持一致：
+
+- `I` 使用的是 `DjiMotorInstance_s.output` 的单位
+- `w` 使用的是 `message.rotor_velocity` 的单位
+
+因此在移植模型参数时，需要保证拟合时采用的输入单位与这里一致。
 
 
 

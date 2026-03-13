@@ -33,6 +33,6 @@
 #define TRANS_MODE 3//用于失能，使能之间的过渡
 #define DISABLE_MODE 0
 
-#define BULLET_ANGLE 0.01f //拨弹盘发射一个小弹丸的角度
+#define BULLET_ANGLE 0.1f //拨弹盘发射一个小弹丸的角度
 
 #endif // APP_CHASSIS_TASK_H

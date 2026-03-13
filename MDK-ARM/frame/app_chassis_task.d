@@ -65,6 +65,7 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\Sentry_libs\Module\Dr16\dev_dr16.h \
   ..\Sentry_libs\Bsp\Uart\bsp_uart.h ..\Core\Inc\usart.h \
   ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.h \
+  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_power_control.h \
   ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
   ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
   ..\Drivers\CMSIS\Include\cmsis_compiler.h \

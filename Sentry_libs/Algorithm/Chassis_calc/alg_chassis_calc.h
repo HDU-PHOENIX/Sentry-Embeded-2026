@@ -3,6 +3,7 @@
 //#include "robot_config.h"
 #include "dev_motor_dji.h"
 #include "alg_pid.h"
+#include "alg_chassis_power_control.h"
 #define  CHASSIS
 /**
  * @brief 底盘类型枚举
@@ -69,6 +70,7 @@ typedef struct {
     float gimbal_yaw_zero;                  ///< 云台偏航零点角度
     float Chassis_power_limit;                 //底盘功率限制(W)
     float Gyroscope_Speed;                  //小陀螺旋转速度
+    ChassisPowerControlConfig_s power_control_config; ///< 功率控制配置
 }ChassisInitConfig_s;
 
 /**
@@ -91,6 +93,9 @@ typedef struct {
    	float gimbal_yaw_zero;                                       //< 云台偏航零点角度
     float gimbal_yaw_angle;                                      //<云台偏航角度
     float Gyroscope_Speed;                                       //<小陀螺旋转速度
+    float chassis_power_feedback;                                //< 当前底盘功率反馈
+    float chassis_power_buffer;                                  //< 当前功率缓冲值
+    ChassisPowerControlInstance_s power_control;                 //< 功率控制实例
 }ChassisInstance_s;
 
 /**
@@ -117,6 +122,15 @@ bool Chassis_Control(ChassisInstance_s *Chassis);
  * @return 计算是否成功
  */
 bool Chassis_Calc(ChassisInstance_s *Chassis);
+
+/**
+ * @brief 更新底盘功率状态
+ * @param Chassis 底盘实例指针
+ * @param chassis_power 当前底盘功率反馈
+ * @param power_buffer 当前缓冲值
+ * @return 更新成功返回true，失败返回false
+ */
+bool Chassis_Update_Power_State(ChassisInstance_s *Chassis, float chassis_power, float power_buffer);
 
 /**
  * @brief 底盘模式选择函数
