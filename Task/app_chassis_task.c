@@ -9,8 +9,10 @@
 #include "alg_chassis_calc.h"
 #include "app_command_task.h"
 #include "app_ins_task.h"
+#include "dev_motor_dji.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 //宏定义
 #define DEBUG
 //#define SHOOT_DEBUG
@@ -55,12 +57,14 @@ uint8_t control_mode=RC_MODE;//默认遥控器模式
 uint16_t max_torque=14000;
 
 #define TRIGGER_STEP_ANGLE (0.7f * BULLET_ANGLE)
-#define TRIGGER_FIRE_PERIOD_S 0.050f
+#define TRIGGER_FIRE_PERIOD_S 0.033f
 #define TRIGGER_JAM_REBOUND_ANGLE (2.0f * BULLET_ANGLE)
 #define TRIGGER_JAM_REBOUND_DURATION_S 0.030f
 #define TRIGGER_JAM_TORQUE_HYSTERESIS 1200
+#define TRIGGER_OVERSPEED_RATIO 1.30f
+#define TRIGGER_OVERSPEED_TARGET_MIN_RPM 50.0f
 // 置1启用卡弹退弹逻辑，置0可快速关闭退弹仅保留正常拨弹
-#define TRIGGER_JAM_REBOUND_ENABLE 1
+#define TRIGGER_JAM_REBOUND_ENABLE 0
 
 typedef struct {
   float base_position;
@@ -81,13 +85,21 @@ static TriggerTargetGenerator_s trigger_gen = {
 };
 
 static float WrapAnglePi(float angle) {
-  while (angle > PI) {
-    angle -= 2.0f * PI;
-  }
-  while (angle <= -PI) {
+  angle = fmodf(angle + PI, 2.0f * PI);
+  if (angle <= 0.0f) {
     angle += 2.0f * PI;
   }
-  return angle;
+  return angle - PI;
+}
+
+static void Trigger_ClearIntermediateValues(void) {
+  trigger_gen.base_position = 0.0f;
+  trigger_gen.shot_index = 0;
+  trigger_gen.shot_timer_s = 0.0f;
+  trigger_gen.jam_rebound_timer_s = 0.0f;
+  trigger_gen.shoot_last = 0;
+  trigger_gen.jam_latched = 0;
+  lasttime = 0;
 }
 
 static void TriggerGenerator_ResetAtCurrent(DjiMotorInstance_s *trigger) {
@@ -317,7 +329,7 @@ static DjiMotorInitConfig_s Up_config = {
 static  DjiMotorInitConfig_s Trigger_Config = {
     .id = 2,                      // 电机ID(1~4)
     .type = M2006,               // 电机类型
-  .control_mode = DJI_POSITION,  // 电机控制模式
+  .control_mode = DJI_VELOCITY,  // 电机控制模式
 		.topic_name = "Trigger",
     .can_config = {
         .can_number = 2,//记得改回来
@@ -338,7 +350,7 @@ static  DjiMotorInitConfig_s Trigger_Config = {
         .out_max = 4000.0f,                 // 输出限幅(速度环输入)
     },
     .velocity_pid_config = {
-        .kp = 1400.0f,                       // 速度环比例系数
+        .kp = 700.0f,                       // 速度环比例系数
         .ki = 0.0f,                        // 速度环积分系数
         .kd = 0.0f,                        // 速度环微分系数
         .kf = 0.0f,                        // 前馈系数
@@ -409,9 +421,9 @@ static void Chassis_Enable(ChassisInstance_s *chassis){
 	
 }
 
-static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, float dt){
+static bool Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, float dt){
   if(trigger == NULL){
-    return;
+    return false;
   }
   if(dt < 0.0f){
     dt = 0.0f;
@@ -427,6 +439,21 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, floa
 #endif
 
   if(shoot_bool==1){
+    float target_vel_abs = fabsf(trigger->target_velocity);
+    float actual_vel_abs = fabsf(trigger->message.out_velocity);
+    if(target_vel_abs > TRIGGER_OVERSPEED_TARGET_MIN_RPM &&
+       actual_vel_abs > target_vel_abs * TRIGGER_OVERSPEED_RATIO){
+      Trigger_ClearIntermediateValues();
+      TriggerGenerator_ResetAtCurrent(trigger);
+      trigger->target_velocity = 0.0f;
+      trigger->target_position = trigger->message.out_position;
+      trigger->output = 0.0f;
+      Pid_Disable(trigger->angle_pid);
+      Motor_Dji_SetCurrent(trigger, 0.0f);
+      Motor_Dji_Transmit(trigger);
+      return true;
+    }
+
 #if TRIGGER_JAM_REBOUND_ENABLE
     int32_t torque_abs = (trigger->message.torque_current >= 0) ? trigger->message.torque_current : -trigger->message.torque_current;
     int32_t jam_enter_th = (int32_t)max_torque;
@@ -463,6 +490,7 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, floa
       }
     }
 #else
+		Pid_Enable(trigger->angle_pid);
     trigger_gen.shot_timer_s += dt;
     while(trigger_gen.shot_timer_s >= TRIGGER_FIRE_PERIOD_S){
       trigger_gen.shot_timer_s -= TRIGGER_FIRE_PERIOD_S;
@@ -477,15 +505,16 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, floa
     }
 #endif
   } else {
-    trigger_gen.shoot_last = 0;
+    Trigger_ClearIntermediateValues();
     TriggerGenerator_ResetAtCurrent(trigger);
+    trigger->target_velocity = 0.0f;
     trigger->target_position=trigger->message.out_position;
     trigger->output=0.0f;
-    lasttime=0;
     Pid_Disable(trigger->angle_pid);
   }
 
   trigger->target_position = WrapAnglePi(trigger->target_position);
+  return false;
 }
 
 
@@ -651,9 +680,10 @@ void StartChassisTask(void const * argument)
         target_position=Quater.yaw;
         //防止疯车用的
 
-        Trigger_Control(Trigger, shoot_bool, dt2);
-      Motor_Dji_Control(Trigger,Trigger->target_position);
-    Motor_Dji_Transmit(Trigger);
+        if(!Trigger_Control(Trigger, shoot_bool, dt2)){
+          Motor_Dji_Control(Trigger,Trigger->target_position);
+          Motor_Dji_Transmit(Trigger);
+        }
 
 
 
@@ -756,8 +786,10 @@ void StartChassisTask(void const * argument)
 				Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
-        Trigger_Control(Trigger, shoot_bool, dt2);
-    Motor_Dji_Control(Trigger,Trigger->target_position);
+        if(!Trigger_Control(Trigger, shoot_bool, dt2)){
+          Motor_Dji_Control(Trigger,Trigger->target_position);
+          Motor_Dji_Transmit(Trigger);
+        }
 //                if(Trigger->message.torque_current>max_torque||Trigger->message.torque_current<-max_torque){
 //                    lasttime++;
 //                    if(lasttime>100){
@@ -766,7 +798,6 @@ void StartChassisTask(void const * argument)
 //                }else{
 //                    lasttime=0;
 //                }
-        Motor_Dji_Transmit(Trigger);
         break;
       case UP_MODE:
       //小云台逻辑
