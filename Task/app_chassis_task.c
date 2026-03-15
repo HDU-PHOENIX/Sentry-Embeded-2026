@@ -6,7 +6,9 @@
  * @version V1.0.0
  */
 #include "app_chassis_task.h"
+#include "alg_chassis_calc.h"
 #include "app_command_task.h"
+#include "app_ins_task.h"
 #include <stdbool.h>
 #include <stdint.h>
 //宏定义
@@ -22,6 +24,7 @@ Subscriber *CH_Subs;
 Dr16Instance_s* CH_Receive_s;
 MiniPC_Instance *MiniPC;
 MiniPC_Instance *MiniPC_SelfAim;
+MiniPC_Instance *MiniPC_ExpAim;
 board_instance_t *board_instance;
 gimbal_follow_instance_s* GimbalFollow_Instance;
 //extern QEKF_INS_t QEKF_INS; 
@@ -55,6 +58,9 @@ uint16_t max_torque=14000;
 #define TRIGGER_FIRE_PERIOD_S 0.050f
 #define TRIGGER_JAM_REBOUND_ANGLE (2.0f * BULLET_ANGLE)
 #define TRIGGER_JAM_REBOUND_DURATION_S 0.030f
+#define TRIGGER_JAM_TORQUE_HYSTERESIS 1200
+// 置1启用卡弹退弹逻辑，置0可快速关闭退弹仅保留正常拨弹
+#define TRIGGER_JAM_REBOUND_ENABLE 1
 
 typedef struct {
   float base_position;
@@ -355,7 +361,12 @@ MiniPC_Config SelfAim_config = {
     .message_type = USB_MSG_AIM_RX, // 底盘数据
     .Send_message_type = USB_MSG_FRIEND1_TX // 发送数据类型
 };
+MiniPC_Config ExpAim_config={
+	  .callback = NULL,
+	  .message_type = USB_MSG_EXP_AIM_RX,
+		.Send_message_type = USB_MSG_EXP_AIM_TX
 
+};
 
 board_config_t board_config = {
     .board_id = 1,
@@ -406,14 +417,24 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, floa
     dt = 0.0f;
   }
 
+#if TRIGGER_JAM_REBOUND_ENABLE
   if(trigger_gen.jam_rebound_timer_s > 0.0f){
     trigger_gen.jam_rebound_timer_s -= dt;
     if(trigger_gen.jam_rebound_timer_s < 0.0f){
       trigger_gen.jam_rebound_timer_s = 0.0f;
     }
   }
+#endif
 
   if(shoot_bool==1){
+#if TRIGGER_JAM_REBOUND_ENABLE
+    int32_t torque_abs = (trigger->message.torque_current >= 0) ? trigger->message.torque_current : -trigger->message.torque_current;
+    int32_t jam_enter_th = (int32_t)max_torque;
+    int32_t jam_exit_th = jam_enter_th - TRIGGER_JAM_TORQUE_HYSTERESIS;
+    if(jam_exit_th < 0){
+      jam_exit_th = 0;
+    }
+
     Pid_Enable(trigger->angle_pid);
 
     if(trigger_gen.shoot_last == 0){
@@ -421,29 +442,40 @@ static void Trigger_Control(DjiMotorInstance_s *trigger,uint8_t shoot_bool, floa
     }
     trigger_gen.shoot_last = 1;
 
-    if(trigger->message.torque_current > max_torque || trigger->message.torque_current < -max_torque){
+    if(torque_abs > jam_enter_th){
       if(trigger_gen.jam_rebound_timer_s <= 0.0f){
         trigger_gen.jam_rebound_timer_s = TRIGGER_JAM_REBOUND_DURATION_S;
       }
       trigger_gen.jam_latched = 1;
       lasttime = 1;
-    } else if(trigger_gen.jam_rebound_timer_s <= 0.0f) {
+    } else if(trigger_gen.jam_rebound_timer_s <= 0.0f && torque_abs < jam_exit_th) {
       trigger_gen.jam_latched = 0;
       lasttime = 0;
     }
+#endif
 
-    if(trigger_gen.jam_rebound_timer_s <= 0.0f){
+#if TRIGGER_JAM_REBOUND_ENABLE
+    if(trigger_gen.jam_rebound_timer_s <= 0.0f && trigger_gen.jam_latched == 0){
       trigger_gen.shot_timer_s += dt;
       while(trigger_gen.shot_timer_s >= TRIGGER_FIRE_PERIOD_S){
         trigger_gen.shot_timer_s -= TRIGGER_FIRE_PERIOD_S;
         trigger_gen.shot_index++;
       }
     }
+#else
+    trigger_gen.shot_timer_s += dt;
+    while(trigger_gen.shot_timer_s >= TRIGGER_FIRE_PERIOD_S){
+      trigger_gen.shot_timer_s -= TRIGGER_FIRE_PERIOD_S;
+      trigger_gen.shot_index++;
+    }
+#endif
 
     trigger->target_position = TriggerGenerator_Target();
-    if(trigger_gen.jam_rebound_timer_s > 0.0f){
+#if TRIGGER_JAM_REBOUND_ENABLE
+    if(trigger_gen.jam_rebound_timer_s > 0.0f || trigger_gen.jam_latched == 1){
       trigger->target_position = WrapAnglePi(trigger->target_position - TRIGGER_JAM_REBOUND_ANGLE);
     }
+#endif
   } else {
     trigger_gen.shoot_last = 0;
     TriggerGenerator_ResetAtCurrent(trigger);
@@ -471,7 +503,8 @@ void StartChassisTask(void const * argument)
     }
   MiniPC = Minipc_Register(&miniPC_config);
 	MiniPC_SelfAim = Minipc_Register(&SelfAim_config);	
-    if (MiniPC == NULL||MiniPC_SelfAim==NULL) {
+	MiniPC_ExpAim = Minipc_Register(&ExpAim_config);
+    if (MiniPC == NULL||MiniPC_SelfAim==NULL||MiniPC_SelfAim==NULL) {
         Log_Error("MiniPC Register Failed!");
     }
 		
@@ -528,8 +561,12 @@ void StartChassisTask(void const * argument)
 		dwt2_cnt_last = DWT->CYCCNT;
 
     static uint8_t send_flag=0;
-  /* Infinite loop */
   
+  while(Quater.ins_ready!=1)
+   {
+       osDelay(10);
+   }
+   //等待IMU初始化完成，确保姿态数据有效后再进入主循环
   for(;;)
   {
 		
@@ -558,7 +595,7 @@ void StartChassisTask(void const * argument)
     // target_up_position=MiniPC_SelfAim->message.exp_aim_pack.yaw;
     // target_up_pitch=MiniPC_SelfAim->message.exp_aim_pack.pitch;
 
-    if(CH_Receive_s->dr16_handle.wheel>400){
+    if(CH_Receive_s->dr16_handle.wheel>400||MiniPC_SelfAim->message.norm_aim_pack.shoot_bool==0x31){
       shoot_bool=1;
 
     }else{
@@ -632,11 +669,11 @@ void StartChassisTask(void const * argument)
         /* code */
 				//ch2：x，ch3：y
         //Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
-		    Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+		    Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
 				Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         //摇杆漂移死区
-        if(abs(CH_Receive_s->dr16_handle.ch3)<5){
-          CH_Receive_s->dr16_handle.ch3=0;
+        if(abs(CH_Receive_s->dr16_handle.ch2)<15){
+          CH_Receive_s->dr16_handle.ch2=0;
         }
 				Chassis->Chassis_speed.Vx=CH_Receive_s->dr16_handle.ch3/132.0f;
 				Chassis->Chassis_speed.Vy=-CH_Receive_s->dr16_handle.ch2/132.0f;
@@ -699,6 +736,7 @@ void StartChassisTask(void const * argument)
         TriggerGenerator_ResetAtCurrent(Trigger);
         Trigger->target_position = Trigger->message.out_position;
         Trigger->output = 0.0f;
+        Motor_Dji_Transmit(Trigger);
         
         // 修正: 禁用模式下持续重置目标位置为当前角度，防止切出时疯转
         target_position = Quater.yaw;

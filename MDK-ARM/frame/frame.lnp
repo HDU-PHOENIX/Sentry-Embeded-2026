@@ -65,6 +65,8 @@
 "frame\bsp_pwm.o"
 "frame\bsp_dwt.o"
 "frame\bsp_gpio.o"
+"frame\music_sheet.o"
+"frame\bsp_buzzer.o"
 "frame\dev_dr16.o"
 "frame\com_system.o"
 "frame\queue_1.o"

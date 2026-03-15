@@ -23,6 +23,10 @@ extern "C" {
 #define FUSION_OFFSET_THRESHOLD_RAD_S (0.03f)
 #endif
 
+#ifndef FUSION_OFFSET_STATIONARY_LPF_ALPHA
+#define FUSION_OFFSET_STATIONARY_LPF_ALPHA (0.15f)
+#endif
+
 #ifndef FUSION_OFFSET_TIMEOUT_S
 #define FUSION_OFFSET_TIMEOUT_S (1U)
 #endif
@@ -570,6 +574,7 @@ typedef struct {
     unsigned int timeout;               // Timeout counter
     unsigned int timer;                 // Timer counter
     FusionVector gyroscopeOffset;       // Gyroscope bias estimate
+    FusionVector gyroscopeLpf;          // Low-pass filtered gyro for stationary detection
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     FusionVector gyroMean;              // Gyro mean for stationary detection
     FusionVector gyroAbsDev;            // Gyro absolute deviation estimate

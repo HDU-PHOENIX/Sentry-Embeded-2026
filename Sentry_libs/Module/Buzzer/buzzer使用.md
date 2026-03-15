@@ -1,5 +1,6 @@
 # 蜂鸣器模块使用说明
-
+# 修正！！！！
+这里应该是TIM4CH3，并且应该注明使用的是PD14串口！！
 ## 模块简介
 bsp_buzzer 模块提供了对蜂鸣器硬件的控制功能，基于 STM32 的定时器 PWM 输出实现。该模块不仅支持基础的蜂鸣器开关控制，还实现了完整的音符播放和音乐演奏功能，可用于各种声音提示和音乐播放场景。
 
@@ -209,7 +210,8 @@ void example_function(void) {
     // 创建并初始化配置结构体
     Buzzer_Init_Config_s buzzer_config;
     buzzer_config.htim = &htim4;
-    buzzer_config.channel = TIM_CHANNEL_1;
+    buzzer_config.channel = TIM_CHANNEL_3;
+    //CGH修正：这里应该是通道三！！！！！！！！！！！！！！
     
     // 第1步：注册蜂鸣器实例
     my_buzzer = buzzer_register(&buzzer_config);

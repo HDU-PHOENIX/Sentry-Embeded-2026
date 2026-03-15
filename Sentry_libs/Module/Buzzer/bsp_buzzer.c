@@ -10,7 +10,7 @@
 
 #include "bsp_buzzer.h"
 #include "main.h"
-#include "FreeRTOS.h"
+#include "cmsis_os.h"
 #include <string.h>
 
 #define BEAT_DELAY_TIME    500        // 一拍持续时间(ms)
@@ -28,11 +28,6 @@ BuzzerInstance_s *buzzer_register(Buzzer_Init_Config_s *config)
     
     buzzer->htim = config->htim;
     buzzer->channel = config->channel;
-
-    if(buzzer == NULL){
-        vPortFree(buzzer);// 释放空间
-        return NULL;
-    }
     
     return buzzer;
 }
@@ -67,21 +62,32 @@ void buzzer_off(BuzzerInstance_s *buzzer)
  */
 static void buzzer_delay(float time)
 {
-    HAL_Delay(time * BEAT_DELAY_TIME);
+    osDelay(time * BEAT_DELAY_TIME);
 }
 
 void buzzer_play_frequency(BuzzerInstance_s *buzzer, uint32_t frequency, float time, uint16_t vol)
 {
+    if (frequency == 0)
+    {
+        buzzer_off(buzzer);
+        buzzer_delay(time);
+        return;
+    }
+
     uint32_t arr_psc = (uint32_t)(TIMER_CLOCK_FREQ / frequency);
     uint16_t psc = arr_psc / 65535;
     uint16_t arr = arr_psc / (psc + 1) - 1;
 
     __HAL_TIM_SET_AUTORELOAD(buzzer->htim, arr);
     __HAL_TIM_SET_PRESCALER(buzzer->htim, psc);
-    __HAL_TIM_SetCompare(buzzer->htim, buzzer->channel, vol);
+    
+    // 使用 50% 占空比以获得最佳音质，这里的 vol 被视作 0-1000 的比例
+    uint16_t pulse = (uint32_t)(arr + 1) * vol / 2000;
+    __HAL_TIM_SetCompare(buzzer->htim, buzzer->channel, pulse);
 
-    HAL_Delay(time * BEAT_DELAY_TIME);
+    buzzer_delay(time * 0.9f); // 留出 10% 的时间作为音符间隙
     buzzer_off(buzzer);
+    buzzer_delay(time * 0.1f);
 }
 
 void buzzer_play_note(BuzzerInstance_s *buzzer, uint16_t note, uint16_t octave, float time, uint16_t vol)
@@ -98,16 +104,7 @@ void buzzer_play_note(BuzzerInstance_s *buzzer, uint16_t note, uint16_t octave, 
     }
     
     float target_freq = NOTE_FREQ[note - 1] * (1 << octave);
-    uint32_t arr_psc = (uint32_t)(TIMER_CLOCK_FREQ / target_freq);
-    uint16_t psc = arr_psc / 65535;
-    uint16_t arr = arr_psc / (psc + 1) - 1;
-    
-    __HAL_TIM_SET_AUTORELOAD(buzzer->htim, arr);
-    __HAL_TIM_SET_PRESCALER(buzzer->htim, psc);
-    __HAL_TIM_SetCompare(buzzer->htim, buzzer->channel, vol);
-    
-    HAL_Delay(time * BEAT_DELAY_TIME);
-    buzzer_off(buzzer);
+    buzzer_play_frequency(buzzer, (uint32_t)target_freq, time, vol);
 }
 
 void buzzer_play_sheet(BuzzerInstance_s *buzzer, float (*sheet)[3], uint16_t len, uint16_t vol)

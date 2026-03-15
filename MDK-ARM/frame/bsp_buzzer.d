@@ -1,6 +1,5 @@
-frame/app_ins_task.o: ..\Task\app_ins_task.c ..\Task\app_ins_task.h \
-  ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
-  ..\Sentry_libs\Bsp\I2c\bsp_iic.h ..\Core\Inc\i2c.h ..\Core\Inc\main.h \
+frame/bsp_buzzer.o: ..\Sentry_libs\Module\Buzzer\bsp_buzzer.c \
+  ..\Sentry_libs\Module\Buzzer\bsp_buzzer.h ..\Core\Inc\main.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h \
@@ -32,7 +31,7 @@ frame/app_ins_task.o: ..\Task\app_ins_task.c ..\Task\app_ins_task.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
-  ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h ..\Core\Inc\gpio.h \
+  ..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   ..\Core\Inc\FreeRTOSConfig.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\projdefs.h \
@@ -42,19 +41,7 @@ frame/app_ins_task.o: ..\Task\app_ins_task.c ..\Task\app_ins_task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\list.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\timers.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
-  ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \
-  ..\Drivers\CMSIS\Include\cmsis_compiler.h \
-  ..\Sentry_libs\Algorithm\Madgwick\MadgwickAHRS.h \
-  ..\Sentry_libs\Algorithm\Fliters\alg_fliter.h \
-  ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
-  ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
-  ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
-  ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Core\Inc\spi.h \
-  ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h \
-  ..\Sentry_libs\Module\Buzzer\bsp_buzzer.h \
-  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h

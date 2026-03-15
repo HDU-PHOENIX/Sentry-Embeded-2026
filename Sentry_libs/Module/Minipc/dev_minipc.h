@@ -102,7 +102,10 @@ typedef struct {
     uint8_t find_bool;         // 2 是否追踪
     float yaw;                 // 3 - 6 偏航角
     float pitch;               // 7 - 10 俯仰角
-    uint8_t reserved[20];      // 11 - 30 预留空位（填充0）
+    float vel_yaw;             // 11 - 14 偏航前馈速度
+    float vel_pitch;           // 15 - 18 俯仰前馈速度
+    uint8_t shoot_bool;          // 19 是否发射
+    uint8_t reserved[11];       // 20 - 30 预留空位
     char end;                  // 31 帧尾，取 'e'
 } Computer_Rx_Message_t;
 
@@ -124,11 +127,10 @@ typedef struct {
     uint8_t find_bool;         // 2 是否追踪
     float yaw;                 // 3 - 6 偏航角
     float pitch;               // 7 - 10 俯仰角
-    float accel_yaw;               // 11 - 14 前馈加速度
-    float accel_pitch;           // 15 - 18 偏航前馈加速度
-    float vel_yaw;               // 19 - 22 偏航前馈速度
-    float vel_pitch;           // 23 - 26 俯仰前馈速度
-    uint8_t reserved[4];      // 27 - 30 预留空位（填充0）
+    float vel_yaw;             // 11 - 14 偏航前馈速度
+    float vel_pitch;           // 15 - 18 俯仰前馈速度
+    float shoot_bool;          // 19 - 22 是否发射
+    uint8_t reserved[8];       // 23 - 30 预留空位
     char end;                  // 31 帧尾，取 'e'
 } exp_aim_package;
 

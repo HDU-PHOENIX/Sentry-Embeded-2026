@@ -92,7 +92,7 @@ FusionAhrsSettings settings = {
 
 Buzzer_Init_Config_s buzzer_config = {
     .htim = &htim4,          // 使用TIM4
-    .channel = TIM_CHANNEL_1, // 通道1
+    .channel = TIM_CHANNEL_3, // 通道3
 };
 
 
@@ -118,10 +118,25 @@ static float last_alpha_filtered[3] = {0.0f, 0.0f, 0.0f};
 static const float alpha_lpf_tau = 0.02f; // alpha LPF 时间常数 (s)
 static const float omega_thresh = 0.5f;   // 当 |ω| < 阈值时不补偿 (rad/s)
 
+// ==== INS 任务使用的大量缓存与状态变量（移至全局以节省任务栈空间） ====
+static MovingAvgFilter_t *accel_moving_filters[3];    // 加速度计滑动平均滤波器
+static MovingAvgFilter_t *gyro_moving_filters[3];     // 陀螺仪滑动平均滤波器
+static NotchFilter_t *accel_notch_171_filters[3];     // 加速度计171Hz陷波
+static NotchFilter_t *accel_notch_367_filters[3];     // 加速度计367Hz陷波
+static NotchFilter_t *gyro_notch_171_filters[3];      // 陀螺仪171Hz陷波
 
+static float32_t filtered_accel[3] = {0};      // 滤波后的加速度数据
+static float32_t filtered_gyro[3] = {0};       // 滤波后的陀螺仪数据
+static float32_t notch_accel_171[3] = {0};     // 171Hz陷波后的加速度数据
+static float32_t notch_accel_367[3] = {0};     // 367Hz陷波后的加速度数据
+static float32_t notch_gyro_171[3] = {0};      // 171Hz陷波后的陀螺仪数据
 
+static float temperature = 0.0f;               // 温度数据
+static float32_t current_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f}; // 当前四元数
+static float32_t origin_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};  // 初始四元数
+static uint8_t ins_initialized = 0;           // INS初始化标志
 
-
+// ======================================================================
 
 /**
  * @brief 1khz运行的INS任务
@@ -177,13 +192,6 @@ void isttask(void const * argument)
         .sample_freq = 1000.0f         // 1000Hz采样频率
     };
     
-    // 只为加速度计和陀螺仪的XYZ轴创建滑动平均滤波器实例
-    MovingAvgFilter_t *accel_moving_filters[3];    // 加速度计滑动平均滤波器
-    MovingAvgFilter_t *gyro_moving_filters[3];     // 陀螺仪滑动平均滤波器
-    NotchFilter_t *accel_notch_171_filters[3];     // 加速度计171Hz陷波
-    NotchFilter_t *accel_notch_367_filters[3];     // 加速度计367Hz陷波
-    NotchFilter_t *gyro_notch_171_filters[3];      // 陀螺仪171Hz陷波
-
     // 注册滑动平均滤波器实例
     for (int i = 0; i < 3; i++) {
         accel_moving_filters[i] = MovingAvgFilter_Register(&filter_config);
@@ -209,29 +217,114 @@ void isttask(void const * argument)
         }
     }
     
-    // 姿态解算相关变量
-    float32_t filtered_accel[3] = {0};      // 滤波后的加速度数据
-    float32_t filtered_gyro[3] = {0};       // 滤波后的陀螺仪数据
-    float32_t notch_accel_171[3] = {0};     // 171Hz陷波后的加速度数据
-    float32_t notch_accel_367[3] = {0};     // 367Hz陷波后的加速度数据
-    float32_t notch_gyro_171[3] = {0};      // 171Hz陷波后的陀螺仪数据
-    
-    float temperature = 0.0f;               // 温度数据
-    float32_t current_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f}; // 当前四元数
-    float32_t origin_quaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};  // 初始四元数
-    uint8_t ins_initialized = 0;           // INS初始化标志
-    
-    
     // 初始化四元数（简化版，实际应用中需要更复杂的初始化）
 	madgwick_ahrs=pvPortMalloc(sizeof(MadgwickAHRS));
-    Quater_Init(origin_quaternion, 1); // 使用默认初始化
-  
-    ins_initialized = 1;
-    buzzer_play_note(buzzer, 1, 2, 1, 1000);
     
     // DWT计时变量
     uint32_t dwt_cnt_last = 0;
     float dt = 0.001f;  // 初始dt
+
+    // =================================================================================
+    // 姿态初始化及严格收敛检测阶段
+    // 在进入主循环前，要求机器保持静止 1.5 秒以验证零偏正确和姿态不发散
+    // 如果发散或被晃动，则蜂鸣器警报然后重新开始校准
+    // =================================================================================
+    uint8_t is_converged_and_stable = 0;
+    while (!is_converged_and_stable) {
+        // 重置算法状态并播报开始音
+        Quater_Init(origin_quaternion, 1);
+        buzzer_play_note(buzzer, 1, 3, 1, 300); // “滴”一声提示开始检测
+
+        uint32_t divergence_cnt = 0;
+        uint8_t is_moved = 0;
+        float test_start_yaw = 0.0f;
+        
+        dwt_cnt_last = DWT->CYCCNT;
+
+        // 临时运行 1.5秒（1500次）观察是否收敛
+        for (int i = 0; i < 1500; i++) {
+            dt = Dwt_GetDeltaT(&dwt_cnt_last);
+            if (dt > 0.01f || dt <= 0.0f) dt = 0.001f;
+
+            if (bmi088_test != NULL) {
+                BMI088_Read(bmi088_test);
+                
+                // 必要的滤波推演
+                for (int k = 0; k < 3; k++) {
+                    NotchFilter_Process(accel_notch_171_filters[k], bmi088_test->accel[k], &notch_accel_171[k]);
+                    NotchFilter_Process(accel_notch_367_filters[k], notch_accel_171[k], &notch_accel_367[k]);
+                    MovingAvgFilter_Process(accel_moving_filters[k], notch_accel_367[k], &filtered_accel[k]);
+                }
+
+                FusionVector raw_gyro = {bmi088_test->gyro[0], bmi088_test->gyro[1], bmi088_test->gyro[2]};
+                FusionVector raw_accel = {filtered_accel[0]/9.80665f, filtered_accel[1]/9.80665f, filtered_accel[2]/9.80665f};
+                
+                // 动态偏置学习与减除
+#if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
+                raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro, raw_accel); 
+#else
+                raw_gyro = FusionOffsetUpdate(&fusion_offset, raw_gyro); 
+#endif
+
+                for (int k = 0; k < 3; k++) {
+                    NotchFilter_Process(gyro_notch_171_filters[k], raw_gyro.array[k], &notch_gyro_171[k]);
+                    MovingAvgFilter_Process(gyro_moving_filters[k], notch_gyro_171[k], &filtered_gyro[k]);
+                }
+
+                FusionVector fusion_gyro = {filtered_gyro[0], filtered_gyro[1], filtered_gyro[2]};
+                FusionAhrsUpdateNoMagnetometer(&fusion_ahrs, fusion_gyro, raw_accel, dt);
+                
+                // ------------------ 状态校验逻辑 ------------------
+                // 1. 判断是否真的保持了静止
+                float gyro_norm = sqrtf(filtered_gyro[0]*filtered_gyro[0] + filtered_gyro[1]*filtered_gyro[1] + filtered_gyro[2]*filtered_gyro[2]);
+                if (gyro_norm > 0.05f) { // 角速度超过约 2.8°/s
+                    is_moved = 1;
+                }
+
+                // 获取姿态
+                FusionQuaternion fq = FusionAhrsGetQuaternion(&fusion_ahrs);
+                FusionEuler fe = FusionQuaternionToEulerRad(fq);
+                
+                // 2. 前500ms(高增益期)作为收敛铺垫，第500ms抓取基准Yaw
+                if (i == 500) {
+                    test_start_yaw = fe.angle.yaw;
+                } 
+                // 3. 500ms~1500ms(正常增益期)观察长期漂移与重力耦合
+                else if (i > 500) {
+                    float yaw_diff = fabsf(fe.angle.yaw - test_start_yaw);
+                    if (yaw_diff > PI) yaw_diff = 2.0f * PI - yaw_diff;
+                    if (yaw_diff > 0.05f) { // 连续漂移角度超过阈值
+                        divergence_cnt++;
+                    }
+                    
+                    FusionVector gravity = FusionAhrsGetGravity(&fusion_ahrs);
+                    float accel_norm = sqrtf(raw_accel.axis.x*raw_accel.axis.x + raw_accel.axis.y*raw_accel.axis.y + raw_accel.axis.z*raw_accel.axis.z);
+                    if (accel_norm > 0.1f) {
+                        float gravity_dot = (raw_accel.axis.x * gravity.axis.x + raw_accel.axis.y * gravity.axis.y + raw_accel.axis.z * gravity.axis.z) / accel_norm;
+                        if (gravity_dot < 0.966f) { // 实际重力和估算重力夹角大于 15 度
+                            divergence_cnt++;
+                        }
+                    }
+                }
+            }
+            osDelay(1);
+        }
+
+        // 判定结果
+        if (is_moved || divergence_cnt > 100) { // 允许容忍小范围或极短暂的误判(100ms)
+            // 校准失败或发散，报警重试！
+            buzzer_play_note(buzzer, 3, 4, 1, 500); // 警报！
+            osDelay(1000); 
+        } else {
+            // 收敛且未发散，正式通过
+            is_converged_and_stable = 1;
+            buzzer_play_note(buzzer, 1, 2, 1, 1000); // 长音表示过关
+        }
+    }
+    // =================================================================================
+
+    ins_initialized = 1;
+    
     static float lasttime = 0;
     uint8_t flag=1;
     // 初始化DWT计数器
@@ -431,7 +524,8 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
         float32_t g0[3] = {0,0,0};
         float32_t g1[3] = {0,0,0};
         
-        
+        // 已通过FusionOffset引入动态零偏学习，静态采集零偏易受车辆晃动污染，在此注释掉
+        /*
         for(uint8_t i = 0; i < 50; i++){  // 从100改为50次
             BMI088_Read(bmi088_test);
             
@@ -455,10 +549,10 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
 
         for (uint8_t i = 0; i < 3; ++i){
             g1[i] /= 50;  // 对应平均值除数
-
             g0[i] /= 50;
             Gyro_Offset[i] /= 100; //陀螺仪零偏
         }
+        */
 
 //    if(calculate_quaternion_from_gravity(g0,g1,origin_quater)<0){//此处即完成四元数初始化
 //      //处理失败情况
@@ -474,9 +568,11 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
     FusionAhrsInitialise(&fusion_ahrs);
     FusionAhrsSetSettings(&fusion_ahrs, &settings);
     FusionOffsetInitialise(&fusion_offset, 1000); // 1000Hz 动态校准
-    fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
-    fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
-    fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
+    
+    // 注释该处赋值，完全交由动态标定来收敛，防止误引入人为摇晃误差
+    // fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
+    // fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
+    // fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
     
     FusionQuaternion init_q = {
         .element = {origin_quater[0], origin_quater[1], origin_quater[2], origin_quater[3]}

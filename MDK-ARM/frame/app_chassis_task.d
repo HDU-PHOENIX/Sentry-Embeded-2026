@@ -81,4 +81,5 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\Sentry_libs\Algorithm\Madgwick\Fusion_AHRS.h \
   ..\Sentry_libs\Module\BMI088\dev_bmi088.h \
   ..\Sentry_libs\Bsp\SPI\bsp_spi.h ..\Core\Inc\spi.h \
-  ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h
+  ..\Sentry_libs\Bsp\PWM\bsp_pwm.h ..\Core\Inc\tim.h \
+  ..\Sentry_libs\Module\Buzzer\bsp_buzzer.h

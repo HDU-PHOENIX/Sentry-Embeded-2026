@@ -539,6 +539,7 @@ void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampl
     offset->timeout = TIMEOUT * sampleRate;  // Calculate timeout count
     offset->timer = 0;                       // Reset timer
     offset->gyroscopeOffset = FUSION_VECTOR_ZERO; // Reset bias estimate
+    offset->gyroscopeLpf = FUSION_VECTOR_ZERO;    // Reset stationary detector input
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     offset->gyroMean = FUSION_VECTOR_ZERO;
     offset->gyroAbsDev = FUSION_VECTOR_ZERO;
@@ -560,6 +561,10 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
 #endif
     // Subtract current bias estimate first
     gyroscope = FusionVectorSubtract(gyroscope, offset->gyroscopeOffset);
+
+    offset->gyroscopeLpf = FusionVectorAdd(
+        FusionVectorMultiplyScalar(gyroscope, FUSION_OFFSET_STATIONARY_LPF_ALPHA),
+        FusionVectorMultiplyScalar(offset->gyroscopeLpf, 1.0f - FUSION_OFFSET_STATIONARY_LPF_ALPHA));
 
 #if FUSION_OFFSET_STRICT_STATIONARY_DETECTION
     const float alpha = FUSION_OFFSET_STATIONARY_ALPHA;
@@ -603,10 +608,10 @@ FusionVector FusionOffsetUpdate(FusionOffset *const offset, FusionVector gyrosco
         return gyroscope;
     }
 #else
-    // Reset timer if gyroscope data exceeds threshold
-    if ((fabsf(gyroscope.axis.x) > THRESHOLD) || 
-       (fabsf(gyroscope.axis.y) > THRESHOLD) || 
-       (fabsf(gyroscope.axis.z) > THRESHOLD)) {
+    // Use low-pass filtered gyro only for stationary detection to suppress noise spikes.
+    if ((fabsf(offset->gyroscopeLpf.axis.x) > THRESHOLD) || 
+       (fabsf(offset->gyroscopeLpf.axis.y) > THRESHOLD) || 
+       (fabsf(offset->gyroscopeLpf.axis.z) > THRESHOLD)) {
 #if FUSION_OFFSET_TIMER_DECAY_ON_MOTION
         if (offset->timer > FUSION_OFFSET_TIMER_MOTION_PENALTY) {
             offset->timer -= FUSION_OFFSET_TIMER_MOTION_PENALTY;
