@@ -49,15 +49,8 @@ frame/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\USB_DEVICE\App\usb_device.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_def.h \
   ..\USB_DEVICE\Target\usbd_conf.h ..\Core\Inc\gpio.h \
-  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h ..\Task\app_gimbal_task.h \
-  ..\..\Sentry-Embeded-2026\robot_config.h \
-  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
+  ..\Sentry_libs\Bsp\DWT\bsp_dwt.h ..\Sentry_libs\Bsp\Log\bsp_log.h \
+  ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
   ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
-  ..\Sentry_libs\Module\Dr16\dev_dr16.h \
-  ..\Sentry_libs\Bsp\Uart\bsp_uart.h \
-  ..\Sentry_libs\Module\Motor\Dm\dev_motor_dm.h \
   ..\Sentry_libs\Bsp\Can\bsp_can.h \
-  ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
-  ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h \
-  ..\Sentry_libs\Module\Com_System\Com_System.h \
-  ..\Sentry_libs\Module\Com_System\Queue.h
+  ..\..\Sentry-Embeded-2026\robot_config.h
