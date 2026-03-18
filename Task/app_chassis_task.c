@@ -58,35 +58,22 @@ float target_up_pitch=0.0f;
 uint8_t rune_flag=0;//打符开关
 uint8_t minipc_mode=0;//0自瞄，1打符
 uint8_t control_mode=RC_MODE;//默认遥控器模式
-uint16_t max_torque=14000;
+uint16_t max_torque=7000;
 
 #define TRIGGER_STEP_ANGLE (0.7f * BULLET_ANGLE)
 #define TRIGGER_FIRE_PERIOD_S 0.033f
 #define TRIGGER_JAM_REBOUND_ANGLE (2.0f * BULLET_ANGLE)
-#define TRIGGER_JAM_REBOUND_DURATION_S 0.030f
-#define TRIGGER_JAM_TORQUE_HYSTERESIS 1200
-#define TRIGGER_OVERSPEED_RATIO 1.30f
-#define TRIGGER_OVERSPEED_TARGET_MIN_RPM 50.0f
-// 置1启用卡弹退弹逻辑，置0可快速关闭退弹仅保留正常拨弹
-#define TRIGGER_JAM_REBOUND_ENABLE 0
+#define TRIGGER_JAM_REBOUND_DURATION_MS 1000  // 退弹持续时间 (ms)
+#define TRIGGER_JAM_TORQUE_THRESHOLD 9000     // 判定卡弹的转矩电流阈值
+#define TRIGGER_JAM_REBOUND_ENABLE 1          // 启用卡弹退弹逻辑
 
 typedef struct {
-  float base_position;
-  int32_t shot_index;
-  float shot_timer_s;
-  float jam_rebound_timer_s;
-  uint8_t shoot_last;
-  uint8_t jam_latched;
-} TriggerTargetGenerator_s;
+  uint32_t jam_start_tick;   // 卡弹起始时间
+  uint32_t rebound_start_tick; // 开始退弹的时间
+  bool is_rebounding;        // 是否正在退弹
+} TriggerJamState_s;
 
-static TriggerTargetGenerator_s trigger_gen = {
-  .base_position = 0.0f,
-  .shot_index = 0,
-  .shot_timer_s = 0.0f,
-  .jam_rebound_timer_s = 0.0f,
-  .shoot_last = 0,
-  .jam_latched = 0,
-};
+static TriggerJamState_s trigger_jam = {0};
 
 static float WrapAnglePi(float angle) {
   angle = fmodf(angle + PI, 2.0f * PI);
@@ -96,30 +83,8 @@ static float WrapAnglePi(float angle) {
   return angle - PI;
 }
 
-static void Trigger_ClearIntermediateValues(void) {
-  trigger_gen.base_position = 0.0f;
-  trigger_gen.shot_index = 0;
-  trigger_gen.shot_timer_s = 0.0f;
-  trigger_gen.jam_rebound_timer_s = 0.0f;
-  trigger_gen.shoot_last = 0;
-  trigger_gen.jam_latched = 0;
-  lasttime = 0;
-}
-
-static void TriggerGenerator_ResetAtCurrent(DjiMotorInstance_s *trigger) {
-  if (trigger == NULL) {
-    return;
-  }
-  trigger_gen.base_position = WrapAnglePi(trigger->message.out_position);
-  trigger_gen.shot_index = 0;
-  trigger_gen.shot_timer_s = 0.0f;
-  trigger_gen.jam_rebound_timer_s = 0.0f;
-  trigger_gen.jam_latched = 0;
-}
-
-static float TriggerGenerator_Target(void) {
-  float target = trigger_gen.base_position + ((float)trigger_gen.shot_index) * TRIGGER_STEP_ANGLE;
-  return WrapAnglePi(target);
+static void Trigger_ResetState(void) {
+  memset(&trigger_jam, 0, sizeof(trigger_jam));
 }
 //配置
 static ChassisInitConfig_s Chassis_config={
@@ -354,13 +319,13 @@ static  DjiMotorInitConfig_s Trigger_Config = {
         .out_max = 4000.0f,                 // 输出限幅(速度环输入)
     },
     .velocity_pid_config = {
-        .kp = 60.0f,                       // 速度环比例系数
-        .ki = 0.001f,                        // 速度环积分系数
+        .kp = 120.0f,                       // 速度环比例系数
+        .ki = 0.00f,                        // 速度环积分系数
         .kd = 0.0f,                        // 速度环微分系数
         .kf = 0.0f,                        // 前馈系数
         .angle_max = 0,                 // 角度最大值(限幅用，为0则不限幅)
         .i_max = 500.0f,                  // 积分限幅
-        .out_max = 5000.0f,                // 输出限幅(电流输出)
+        .out_max = 8000.0f,                // 输出限幅(电流输出)
     }
 };
 
@@ -431,45 +396,69 @@ static bool Trigger_Control(DjiMotorInstance_s *trigger, uint8_t shoot_bool) {
     if (trigger == NULL) {
         return false;
     }
+    static float last_output = 0.0f;
+    last_output = trigger->output;
 
     // 对速度反馈进行低通滤波，减少噪声干扰
     float filtered_velocity = 0.0f;
     LowpassFilter_Process(Trigger_In_LPF, trigger->message.out_velocity, &filtered_velocity);
 
-    // 非阻塞暂停逻辑：如果处于暂停期，强制输出 0
-    if (trigger_pause_tick > 0) {
-        if (HAL_GetTick() - trigger_pause_tick < 500) { // 暂停 500ms
-            trigger->target_velocity = 0.0f;
-            trigger->output = 0.0f;
-            Pid_Disable(trigger->velocity_pid);
-            return false;
+    uint32_t current_tick = HAL_GetTick();
+
+    // 1. 卡弹检测逻辑
+    if (shoot_bool && !trigger_jam.is_rebounding) {
+        // 如果目标速度很大但实际速度很小，且电流很大，判定为卡弹
+        if (fabsf(trigger->target_velocity) > 10.0f && fabsf(filtered_velocity) < 5.0f && 
+          (trigger->message.torque_current > TRIGGER_JAM_TORQUE_THRESHOLD ||
+           trigger->message.torque_current < -TRIGGER_JAM_TORQUE_THRESHOLD)) {
+            if (trigger_jam.jam_start_tick == 0) {
+                trigger_jam.jam_start_tick = current_tick;
+            } else if (current_tick - trigger_jam.jam_start_tick > 200) { // 持续200ms
+                // 触发退弹
+                trigger_jam.is_rebounding = true;
+                trigger_jam.rebound_start_tick = current_tick;
+                Log_Error("Trigger Jammed! Rebounding...");
+            }
         } else {
-            trigger_pause_tick = 0; // 恢复
+            trigger_jam.jam_start_tick = 0;
         }
     }
 
-    if (shoot_bool == 1) {
+    // 2. 状态机逻辑
+    if (trigger_jam.is_rebounding) {
+        if (current_tick - trigger_jam.rebound_start_tick < TRIGGER_JAM_REBOUND_DURATION_MS) {
+            trigger->target_velocity = -target_tr; // 反转速度进行退弹
+        } else {
+            trigger_jam.is_rebounding = false;
+            trigger_jam.jam_start_tick = 0;
+            
+        }
+    } else if (shoot_bool == 1) {
         trigger->target_velocity = target_tr;
+    } else {
+        trigger->target_velocity = 0.0f;
+    }
+
+    // 使能/关闭 PID
+    if (shoot_bool || trigger_jam.is_rebounding) {
         Pid_Enable(trigger->velocity_pid);
     } else {
         Pid_Disable(trigger->velocity_pid);
-        trigger->target_velocity = 0.0f;
     }
 
     // 计算 PID 输出
     float raw_output = Pid_Calculate(trigger->velocity_pid, trigger->target_velocity, filtered_velocity);
-    
-    // 对 PID 输出进行滤波，防止阶跃
-    LowpassFilter_Process(Trigger_Out_LPF, raw_output, &trigger->output);
-
-    // 监测输出电流是否过载
-    if (trigger->output > 9000.0f || trigger->output < -9000.0f) {
-        Log_Error("Trigger Output Overload! Pausing motor for 500ms...");
-        trigger_pause_tick = HAL_GetTick(); // 记录起始时间
-        trigger->output = 0.0f;
-        trigger->target_velocity = 0.0f;
-        Pid_Disable(trigger->velocity_pid);
+   
+    // 阶跃抑制：如果单次增量过大，则限制增量，防止电机电流突变
+    const float max_step = 2000.0f; 
+    if (raw_output - last_output > max_step) {
+        raw_output = last_output + max_step;
+    } else if (raw_output - last_output < -max_step) {
+        raw_output = last_output - max_step;
     }
+
+    // 对抑制后的 PID 输出进行低通滤波，进一步平滑
+    LowpassFilter_Process(Trigger_Out_LPF, raw_output, &trigger->output);
 
     return true;
 }
@@ -505,10 +494,8 @@ void StartChassisTask(void const * argument)
 				Log_Error("Trigger Register Failed!");
 		}
   if (Trigger != NULL) {
-    // 初始化目标角度为当前角度
-    Trigger->target_position = Trigger->message.out_position;
     Trigger->target_velocity = 0.0f;
-    TriggerGenerator_ResetAtCurrent(Trigger);
+    Trigger_ResetState();
     Pid_Disable(Trigger->angle_pid);
   }
   board_instance= board_init(&board_config);
@@ -524,7 +511,7 @@ void StartChassisTask(void const * argument)
     };
     Trigger_In_LPF = LowpassFilter_Register(&trigger_filter_config);
     
-    trigger_filter_config.cutoff_freq = 50.0f; // 输出滤波可以稍微宽一点，减少延迟
+    trigger_filter_config.cutoff_freq = 30.0f; // 输出滤波可以稍微宽一点，减少延迟
     Trigger_Out_LPF = LowpassFilter_Register(&trigger_filter_config);
 		 while (Quater.ins_ready!=1)
    {
@@ -694,9 +681,7 @@ void StartChassisTask(void const * argument)
 
          target_tr=0.0f;
         Pid_Disable(Trigger->angle_pid);
-        trigger_gen.shoot_last = 0;
-        TriggerGenerator_ResetAtCurrent(Trigger);
-        Trigger->target_position = Trigger->message.out_position;
+        Trigger_ResetState();
         Trigger->output=0.0f;
         Motor_Dji_Transmit(Trigger);
 				break;
@@ -707,8 +692,8 @@ void StartChassisTask(void const * argument)
 				Chassis_Enable(Chassis);
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_ENABLE);
 				Motor_Dm_Transmit(Down_yaw);
-        Trigger->target_position = Trigger->message.out_position;
-        Pid_Enable(Trigger->angle_pid);
+        Trigger_ResetState();
+        // Pid_Enable(Trigger->angle_pid); // 速度控制不需要使能位置环
 				
                 // 修正2: 切换模式时，将目标设为当前IMU角度，实现平滑“锁头”
                 target_position = Quater.yaw; 
@@ -727,9 +712,7 @@ void StartChassisTask(void const * argument)
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
-        trigger_gen.shoot_last = 0;
-        TriggerGenerator_ResetAtCurrent(Trigger);
-        Trigger->target_position = Trigger->message.out_position;
+        Trigger_ResetState();
         Trigger->output = 0.0f;
         Motor_Dji_Transmit(Trigger);
         
@@ -748,7 +731,7 @@ void StartChassisTask(void const * argument)
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
-				Pid_Enable(Trigger->angle_pid);                
+				// Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
         if(!Trigger_Control(Trigger, shoot_bool)){
@@ -808,9 +791,7 @@ void StartChassisTask(void const * argument)
 				Motor_Dm_Transmit(Down_yaw);
 				
         Pid_Disable(Trigger->angle_pid);
-        trigger_gen.shoot_last = 0;
-        TriggerGenerator_ResetAtCurrent(Trigger);
-        Trigger->target_position = Trigger->message.out_position;
+        Trigger_ResetState();
         target_tr=0.0f;
         Trigger->output=0.0f;
         Motor_Dji_Transmit(Trigger);
@@ -836,12 +817,7 @@ void StartChassisTask(void const * argument)
         if(target_position<-PI-0.1f) target_position=-PI;
         target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
         
-				//Down_yaw->target_velocity=Pid_Calculate(Down_yaw->angle_pid,Down_yaw->target_position,QEKF_INS.Yaw);
-				//Motor_Dm_Control(Down_yaw,Pid_Calculate(Down_yaw->angle_pid,Down_yaw->target_position,QEKF_INS.Yaw*3.1415/360));
-				//Motor_Dm_Control(Down_yaw,target_position);
-				//test_output=Down_yaw->output;
         test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
-				//Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,Down_yaw->output);
         Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
 
@@ -849,7 +825,7 @@ void StartChassisTask(void const * argument)
         target_tr=0.0f;
         Trigger->output=0.0f;
 				Pid_Disable(Trigger->angle_pid);
-        Trigger->target_position = Trigger->message.out_position;
+        Trigger_ResetState();
         Motor_Dji_Transmit(Trigger);
 				break;
     default:

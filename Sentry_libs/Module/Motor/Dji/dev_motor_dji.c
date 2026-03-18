@@ -5,11 +5,8 @@
  *  @date 2025-07-04
  */
 #include "dev_motor_dji.h"
-#include <math.h>
 #include "robot_config.h"
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+
 
 static void Motor_Dji_Decode(CanInstance_s *can_instance);
 static uint8_t idx; 
@@ -105,13 +102,13 @@ static void Motor_Dji_Decode(CanInstance_s *can_instance){
     double total_rad = (double)motor->message.total_angle * DJI_ECD_ANGLE_COEF / motor->reduction_ratio;
     
     // 使用 fmod 对 2PI 取模，结果范围是 (-2PI, 2PI)
-    motor->message.out_position = (float)fmod(total_rad, 2.0 * PI);
+    motor->message.out_position = (float)fmod(total_rad, 2.0 * M_PI);
 
     // 5. 将范围调整到 (-PI, PI]
-    if (motor->message.out_position > PI) {
-        motor->message.out_position -= 2.0f * PI;
-    } else if (motor->message.out_position <= -PI) {
-        motor->message.out_position += 2.0f * PI;
+    if (motor->message.out_position > M_PI) {
+        motor->message.out_position -= 2.0f * M_PI;
+    } else if (motor->message.out_position <= -M_PI) {
+        motor->message.out_position += 2.0f * M_PI;
     }
 }
 

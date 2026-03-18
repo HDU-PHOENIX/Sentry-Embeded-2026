@@ -50,8 +50,6 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
   ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.h \
-  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
-  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
   ..\Sentry_libs\Module\Minipc\dev_minipc.h \
   ..\Sentry_libs\Module\Com_System\Com_System.h \
   ..\Sentry_libs\Module\Com_System\Queue.h \
@@ -62,6 +60,8 @@ frame/app_chassis_task.o: ..\Task\app_chassis_task.c \
   ..\USB_DEVICE\Target\usbd_conf.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
+  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
+  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h \
   ..\Sentry_libs\Module\Dr16\dev_dr16.h \
   ..\Sentry_libs\Bsp\Uart\bsp_uart.h ..\Core\Inc\usart.h \
   ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.h \

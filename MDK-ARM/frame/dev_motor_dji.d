@@ -40,6 +40,4 @@ frame/dev_motor_dji.o: ..\Sentry_libs\Module\Motor\Dji\dev_motor_dji.c \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
-  ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
-  ..\Sentry_libs\Bsp\Log\bsp_log.h ..\Sentry_libs\Bsp\Log\SEGGER_RTT.h \
-  ..\Sentry_libs\Bsp\Log\SEGGER_RTT_Conf.h
+  ..\Sentry_libs\Algorithm\Pid\alg_pid.h

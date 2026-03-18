@@ -14,10 +14,16 @@
 #include "bsp_fdcan.h"
 #endif
 #include "alg_pid.h"
+#ifdef USER_LOG
 #include "bsp_log.h"
+#endif
 #include <stdbool.h>
-
-#define PI 3.14159265358979323846 // 圆周率要换位置
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
 #define DJI_MOTOR_MAX_CNT 12 // DJI电机最大数量
 #define DJI_ECD_ANGLE_COEF 0.00076699 //编码器值转换为弧度系数
 #define DJI_ECD_ANGLE_MAX  8192       
