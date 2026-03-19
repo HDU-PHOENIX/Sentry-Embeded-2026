@@ -25,7 +25,7 @@
 
 #include "app_command_task.h"
 #include "app_ins_task.h"
-
+#include "bsp_buzzer.h"
 
 //宏定义
 #define PC_MODE 1

@@ -11,6 +11,7 @@
 #include "alg_fliter.h"
 #include "app_command_task.h"
 #include "app_ins_task.h"
+#include "dev_dr16.h"
 #include "dev_motor_dji.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -22,6 +23,7 @@
 //实例声明
 ChassisInstance_s *Chassis;
 DmMotorInstance_s *Down_yaw;
+extern BuzzerInstance_s *buzzer;
 DjiMotorInstance_s *Trigger;
 DjiMotorInstance_s *Up_yaw;
 Subscriber *CH_Subs;
@@ -600,6 +602,13 @@ void StartChassisTask(void const * argument)
     #ifdef SHOOT_DEBUG
     control_mode=SHOOT_MODE;
     #endif 
+    if(CH_Receive_s->dr16_handle.wheel<-400){
+       buzzer_play_note(buzzer, 1, 1, 1, 300); // “滴”一声提示开始检测
+             buzzer_play_note(buzzer, 2, 0, 1, 300); // “滴”一声提示开始检测
+       buzzer_play_note(buzzer, 3, 1, 1, 300); // “滴”一声提示开始检测
+      
+      
+    }
     //测试代码结束
     switch (control_mode)
     {
