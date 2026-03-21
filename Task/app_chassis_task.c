@@ -52,8 +52,8 @@ float target_position=0.0f,test_speed=0.0,test_position=0.0,target_speed=0.0,tes
 float target_tr=40.0;
 float test_vel_tr=0.0,test_output_tr=0.0,test_pos_tr=0.0f;
 uint16_t lasttime=0;
-//float speed1=0.0,speed2=0.0,speed3=0.0,speed4=0.0;
-//float target1=0.0,target2=0.0,target3=0.0,target4=0.0;
+float speed1=0.0,speed2=0.0,speed3=0.0,speed4=0.0;
+float target1=0.0,target2=0.0,target3=0.0,target4=0.0;
 float target_up_position=0.0f;//暂时的逻辑，一定要记得改回来！！！！！(又记，可能是改回来了吧)
 float target_up_pitch=0.0f;
 #endif
@@ -91,7 +91,7 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = 2.32890654f,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = 2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
@@ -144,8 +144,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 110.0f,
-      .ki = 4.0f,
+      .kp = 100.0f,
+      .ki = 15.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -164,8 +164,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 110.0f,
-      .ki = 4.0f,
+      .kp = 0.0f,
+      .ki = 0.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -183,8 +183,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 110.0f,
-      .ki = 4.0f,
+      .kp = 100.0f,
+      .ki = 15.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -203,8 +203,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 110.0f,
-      .ki = 4.0f,
+      .kp = 0.0f,
+      .ki = 0.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -287,13 +287,13 @@ static DjiMotorInitConfig_s Up_config = {
 //        .out_max = 2000.0,
 //    }
 		 .velocity_pid_config = {
-        .kp = 1.0f,
-        .ki = 0.0f,
+        .kp = 1.7f,
+        .ki = 0.0015f,
         .kd = 0.0f,
         .kf = 0.0f,
         .angle_max = 0,
-        .i_max = 1000.0,
-        .out_max = 2000.0,
+        .i_max = 5.0,
+        .out_max = 10.0,
 		 }
 };
 //拨弹盘配置
@@ -557,13 +557,13 @@ void StartChassisTask(void const * argument)
 		test_speed=Down_yaw->message.out_velocity;
     test_pos_tr=Trigger->message.out_position;
     uint16_t last_wheel=CH_Receive_s->dr16_handle.wheel;
-//    speed1=Chassis->chassis_motor[0]->message.out_velocity;
+    speed1=Chassis->chassis_motor[0]->message.out_velocity;
 //    speed2=Chassis->chassis_motor[1]->message.out_velocity;
-//    speed3=Chassis->chassis_motor[2]->message.out_velocity;
+    speed3=Chassis->chassis_motor[2]->message.out_velocity;
 //    speed4=Chassis->chassis_motor[3]->message.out_velocity;
-//		target1=Chassis->chassis_motor[0]->target_velocity;
+		target1=Chassis->chassis_motor[0]->target_velocity;
 //		target2=Chassis->chassis_motor[1]->target_velocity;
-//		target3=Chassis->chassis_motor[2]->target_velocity;
+		target3=Chassis->chassis_motor[2]->target_velocity;
 //		target4=Chassis->chassis_motor[3]->target_velocity;
 		test_position=Down_yaw->message.out_position;//Chassis->chassis_motor[0]->message.out_position;
 		// target_speed=Down_yaw->target_velocity;//Chassis->chassis_motor[0]->target_velocity;
@@ -660,7 +660,7 @@ void StartChassisTask(void const * argument)
         /* code */
 				//ch2：x，ch3：y
         //Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
-		    Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
+		    Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
 				Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         //摇杆漂移死区
         if(abs(CH_Receive_s->dr16_handle.ch2)<15){
