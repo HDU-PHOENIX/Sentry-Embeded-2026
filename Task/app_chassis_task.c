@@ -269,8 +269,9 @@ static DjiMotorInitConfig_s Up_config = {
         .kd_int  = 0.0f,     // [调试设定] 要发送给电机的Kd值 (仅MIT模式)
     },
     .angle_pid_config = {
-        .kp = 8.0f,//1.0f,//8.0f,
+        .kp = 9.0f,//1.0f,//8.0f,
         .ki = 0.0f,
+        .dead_zone = 0.003f,
         .kd = 0.0f,
         .kf = 0.0f,
         .angle_max = 2.0f * PI,
@@ -287,9 +288,9 @@ static DjiMotorInitConfig_s Up_config = {
 //        .out_max = 2000.0,
 //    }
 		 .velocity_pid_config = {
-        .kp = 1.7f,
-        .ki = 0.0015f,
-        .kd = 0.0f,
+        .kp = 2.0f,
+        .ki = 0.04f,
+        .kd = 0.5f,
         .kf = 0.0f,
         .angle_max = 0,
         .i_max = 5.0,

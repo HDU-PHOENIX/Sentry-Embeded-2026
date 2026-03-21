@@ -113,6 +113,8 @@ const uint16_t CRC16_Table[256] =
  * @return
  */
 const uint16_t Crc_ccitt_byte(uint16_t crc, const uint8_t c)
+
+
 {
 	return (crc >> 8) ^ crc_ccitt_table[(crc ^ c) & 0xff];
 }
