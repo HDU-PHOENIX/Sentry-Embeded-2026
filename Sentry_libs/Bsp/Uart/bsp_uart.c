@@ -208,3 +208,22 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     Uart_RxIDLECallback(huart, Size);
 }
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+    for (uint8_t i = 0; i < id; i++) {
+            if (uart_instance[i]->uart_handle == huart) {
+
+            if (uart_instance[i]->mode == UART_IDLE_MODE) {
+                HAL_UARTEx_ReceiveToIdle_DMA(huart, 
+                                             uart_instance[i]->rx_buff, 
+                                             UART_RX_BUFF_LEN);
+                __HAL_DMA_DISABLE_IT(huart->hdmarx, DMA_IT_HT);
+            } else if (uart_instance[i]->mode == UART_DMA_MODE) {
+                HAL_UART_Receive_DMA(huart, 
+                                     uart_instance[i]->rx_buff, 
+                                     uart_instance[i]->rx_len);
+            }
+            break;
+        }
+    }
+}
