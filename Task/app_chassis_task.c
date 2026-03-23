@@ -91,19 +91,19 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = 2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = -3.13531351,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.26176f,
 		},
-    .Gyroscope_Speed = 0.4f,  // 设置小陀螺旋转速度 (rad/s)
+    .Gyroscope_Speed = 0.0f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
       .kd = 0.0f,
       .angle_max = 2.0f * PI,
-			.dead_zone = 0.15f,
+			.dead_zone = 0.01f,
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
 		},
@@ -164,8 +164,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 0.0f,
-      .ki = 0.0f,
+      .kp = 100.0f,
+      .ki = 15.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -203,8 +203,8 @@ static ChassisInitConfig_s Chassis_config={
     },
     .reduction_ratio = 19.0f,
     .velocity_pid_config={
-      .kp = 0.0f,
-      .ki = 0.0f,
+      .kp = 100.0f,
+      .ki = 15.0f,
       .kd = 0.0f,
       .i_max = 1800.0f,
       .out_max = 8192.0f,
@@ -660,8 +660,8 @@ void StartChassisTask(void const * argument)
     case RC_MODE:
         /* code */
 				//ch2：x，ch3：y
-        //Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
-		    Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
+        Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+		   // Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
 				Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         //摇杆漂移死区
         if(abs(CH_Receive_s->dr16_handle.ch2)<15){
@@ -830,7 +830,7 @@ void StartChassisTask(void const * argument)
         test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
         Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
-
+        
 
         target_tr=0.0f;
         Trigger->output=0.0f;
