@@ -52,6 +52,8 @@ float target_position=0.0f,test_speed=0.0,test_position=0.0,target_speed=0.0,tes
 float target_tr=40.0;
 float test_vel_tr=0.0,test_output_tr=0.0,test_pos_tr=0.0f;
 uint16_t lasttime=0;
+static int16_t trigger_forward_lasttime = 0;
+static int16_t trigger_reverse_lasttime = 0;
 float speed1=0.0,speed2=0.0,speed3=0.0,speed4=0.0;
 float target1=0.0,target2=0.0,target3=0.0,target4=0.0;
 float target_up_position=0.0f;//暂时的逻辑，一定要记得改回来！！！！！(又记，可能是改回来了吧)
@@ -61,21 +63,9 @@ uint8_t rune_flag=0;//打符开关
 uint8_t minipc_mode=0;//0自瞄，1打符
 uint8_t control_mode=RC_MODE;//默认遥控器模式
 uint16_t max_torque=7000;
-
+#define MAX_TORQUE 7000
 #define TRIGGER_STEP_ANGLE (0.7f * BULLET_ANGLE)
 #define TRIGGER_FIRE_PERIOD_S 0.033f
-#define TRIGGER_JAM_REBOUND_ANGLE (2.0f * BULLET_ANGLE)
-#define TRIGGER_JAM_REBOUND_DURATION_MS 1000  // 退弹持续时间 (ms)
-#define TRIGGER_JAM_TORQUE_THRESHOLD 9000     // 判定卡弹的转矩电流阈值
-#define TRIGGER_JAM_REBOUND_ENABLE 1          // 启用卡弹退弹逻辑
-
-typedef struct {
-  uint32_t jam_start_tick;   // 卡弹起始时间
-  uint32_t rebound_start_tick; // 开始退弹的时间
-  bool is_rebounding;        // 是否正在退弹
-} TriggerJamState_s;
-
-static TriggerJamState_s trigger_jam = {0};
 
 static float WrapAnglePi(float angle) {
   angle = fmodf(angle + PI, 2.0f * PI);
@@ -86,7 +76,8 @@ static float WrapAnglePi(float angle) {
 }
 
 static void Trigger_ResetState(void) {
-  memset(&trigger_jam, 0, sizeof(trigger_jam));
+  trigger_forward_lasttime = 0;
+  trigger_reverse_lasttime = 0;
 }
 //配置
 static ChassisInitConfig_s Chassis_config={
@@ -321,14 +312,13 @@ static  DjiMotorInitConfig_s Trigger_Config = {
         .i_max = 100.0f,                   // 积分限幅
         .out_max = 4000.0f,                 // 输出限幅(速度环输入)
     },
-    .velocity_pid_config = {
-        .kp = 120.0f,                       // 速度环比例系数
-        .ki = 0.00f,                        // 速度环积分系数
-        .kd = 0.0f,                        // 速度环微分系数
-        .kf = 0.0f,                        // 前馈系数
-        .angle_max = 0,                 // 角度最大值(限幅用，为0则不限幅)
-        .i_max = 500.0f,                  // 积分限幅
-        .out_max = 8000.0f,                // 输出限幅(电流输出)
+   .velocity_pid_config = {
+        .kp = 30.0f,                       // 速度环比例系数
+        .ki = 0.1f,                        // 速度环积分系数
+				.i_variable_min = 40,
+				.i_variable_max = 40,
+        .i_max = 5000.0f,                  // 积分限幅
+        .out_max = 10000.0f,                // 输出限幅(电流输出)
     }
 };
 
@@ -395,75 +385,66 @@ static void Chassis_Enable(ChassisInstance_s *chassis){
 
 static uint32_t trigger_pause_tick = 0;
 
-static bool Trigger_Control(DjiMotorInstance_s *trigger, uint8_t shoot_bool) {
-    if (trigger == NULL) {
-        return false;
+
+void Trigger_Control(DjiMotorInstance_s *motor, float speed)
+{
+  // 检测正向卡弹（转矩超过阈值）
+  if (speed > 0.0f)
+  {
+    if (motor->message.torque_current > MAX_TORQUE)
+    {
+      trigger_forward_lasttime++;
     }
-    static float last_output = 0.0f;
-    last_output = trigger->output;
-
-    // 对速度反馈进行低通滤波，减少噪声干扰
-    float filtered_velocity = 0.0f;
-    LowpassFilter_Process(Trigger_In_LPF, trigger->message.out_velocity, &filtered_velocity);
-
-    uint32_t current_tick = HAL_GetTick();
-
-    // 1. 卡弹检测逻辑
-    if (shoot_bool && !trigger_jam.is_rebounding) {
-        // 如果目标速度很大但实际速度很小，且电流很大，判定为卡弹
-        if (fabsf(trigger->target_velocity) > 10.0f && fabsf(filtered_velocity) < 5.0f && 
-          (trigger->message.torque_current > TRIGGER_JAM_TORQUE_THRESHOLD ||
-           trigger->message.torque_current < -TRIGGER_JAM_TORQUE_THRESHOLD)) {
-            if (trigger_jam.jam_start_tick == 0) {
-                trigger_jam.jam_start_tick = current_tick;
-            } else if (current_tick - trigger_jam.jam_start_tick > 200) { // 持续200ms
-                // 触发退弹
-                trigger_jam.is_rebounding = true;
-                trigger_jam.rebound_start_tick = current_tick;
-                Log_Error("Trigger Jammed! Rebounding...");
-            }
-        } else {
-            trigger_jam.jam_start_tick = 0;
-        }
+    else if (trigger_forward_lasttime > 0)
+    {
+      trigger_forward_lasttime--;
     }
 
-    // 2. 状态机逻辑
-    if (trigger_jam.is_rebounding) {
-        if (current_tick - trigger_jam.rebound_start_tick < TRIGGER_JAM_REBOUND_DURATION_MS) {
-            trigger->target_velocity = -target_tr; // 反转速度进行退弹
-        } else {
-            trigger_jam.is_rebounding = false;
-            trigger_jam.jam_start_tick = 0;
-            
-        }
-    } else if (shoot_bool == 1) {
-        trigger->target_velocity = target_tr;
-    } else {
-        trigger->target_velocity = 0.0f;
+    trigger_reverse_lasttime = 0;
+
+    // 连续超压2000ms则反向退弹
+    if (trigger_forward_lasttime > 2000)
+    {
+      speed = -80.0f;  // 反向退弹
+      trigger_forward_lasttime = 0;  // 重置计数
+    }
+  }
+  // 检测反向卡弹（反向转矩超过阈值）
+  else if (speed < 0.0f)
+  {
+    if (motor->message.torque_current < -MAX_TORQUE)
+    {
+      trigger_reverse_lasttime++;
+    }
+    else if (trigger_reverse_lasttime > 0)
+    {
+      trigger_reverse_lasttime--;
     }
 
-    // 使能/关闭 PID
-    if (shoot_bool || trigger_jam.is_rebounding) {
-        Pid_Enable(trigger->velocity_pid);
-    } else {
-        Pid_Disable(trigger->velocity_pid);
+    trigger_forward_lasttime = 0;
+
+    // 连续超压2000ms则停止退弹
+    if (trigger_reverse_lasttime > 2000)
+    {
+      speed = 0.0f;  // 停止
+      trigger_reverse_lasttime = 0;  // 重置计数
     }
-
-    // 计算 PID 输出
-    float raw_output = Pid_Calculate(trigger->velocity_pid, trigger->target_velocity, filtered_velocity);
-   
-    // 阶跃抑制：如果单次增量过大，则限制增量，防止电机电流突变
-    const float max_step = 2000.0f; 
-    if (raw_output - last_output > max_step) {
-        raw_output = last_output + max_step;
-    } else if (raw_output - last_output < -max_step) {
-        raw_output = last_output - max_step;
+  }
+  // 停止状态下逐步消除计数
+  else
+  {
+    if (trigger_forward_lasttime > 0)
+    {
+      trigger_forward_lasttime--;
     }
+    if (trigger_reverse_lasttime > 0)
+    {
+      trigger_reverse_lasttime--;
+    }
+  }
 
-    // 对抑制后的 PID 输出进行低通滤波，进一步平滑
-    LowpassFilter_Process(Trigger_Out_LPF, raw_output, &trigger->output);
-
-    return true;
+  // 关键修正：设置电机目标速度
+  motor->target_velocity = speed;
 }
 
 
@@ -641,9 +622,14 @@ void StartChassisTask(void const * argument)
 
         target_position=Quater.yaw;
         //防止疯车用的
+        if(shoot_bool){
+        Trigger_Control(Trigger, 80);
+        }else{
+          Trigger_Control(Trigger, 0);
 
-        Trigger_Control(Trigger, shoot_bool);
-          // Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
+        }
+          Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
+				
           Motor_Dji_Transmit(Trigger);
         
 
@@ -744,11 +730,12 @@ void StartChassisTask(void const * argument)
 				// Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
-        if(!Trigger_Control(Trigger, shoot_bool)){
+        Trigger_Control(Trigger, 80);
           // Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
           Motor_Dji_Transmit(Trigger);
-        }
-//                if(Trigger->message.torque_current>max_torque||Trigger->message.torque_current<-max_torque){
+        
+
+          //                if(Trigger->message.torque_current>max_torque||Trigger->message.torque_current<-max_torque){
 //                    lasttime++;
 //                    if(lasttime>100){
 //                    Trigger->output=0.0;
