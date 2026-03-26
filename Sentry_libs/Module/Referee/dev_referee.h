@@ -3,9 +3,9 @@
  * @author Ma HuaCheng
  * @brief 裁判系统通信模块
  * @version 0.2
- * @details 提供裁判系统数据的接收与解析功能(该代码基于RoboMaster裁判系统串口协议V1.1.0 2025.12 进行开发)
+ * @details 提供裁判系统数据的接收与解析功能(该代码基于RoboMaster裁判系统串口协议V1.2.0 2026.2 进行开发)
  * @date 2025-10-10
- * @update 2026-2-7
+ * @update 2026-2-11
  * @copyright  Copyright (c) 2026 HDU—PHOENIX
  * @todo
  */
@@ -88,11 +88,11 @@ typedef struct _packed {
     radar_mark_data_t ext_radar_mark_data;
     sentry_info_t ext_sentry_info;
     radar_info_t ext_radar_info;
-
+    custom_client_robot_data_t ext_custom_client_robot_data_t;
     map_command_t ext_map_command;
     custom_robot_data_t ext_custom_robot_data;
     robot_custom_data_t ext_robot_custom_data;
-    remote_control_t ext_remote_control;
+
 
     //TODO: 0x301机器人交互帧需要特殊处理,下面是子协议的变量
     //0x301机器人交互帧子协议
@@ -144,6 +144,7 @@ typedef struct {
     uint16_t Referee_SelfClient_ID; //发送者机器人对应的客户端ID
     uint32_t custom_robot_update_time ;
     uint32_t cnt;
+    uint32_t rx_freq;
 } RefereeInstance_s;
 
 //裁判系统接收解包状态机
@@ -332,5 +333,9 @@ bool Referee_Send_Robot_Msg_To_Controller(RefereeInstance_s *ref_instance,uint8_
  */
 bool Referee_Send_Robot_Msg_To_Custom_Client(RefereeInstance_s *ref_instance,uint8_t *data, uint16_t length);
 
-
+/**
+ * @brief 清除裁判系统绑定的串口错误(包括FrameError,OverRunError,NoiseError)
+ * @param ref_instance 裁判系统实例
+ */
+void Referee_Clear_Uart_Error(RefereeInstance_s *ref_instance);
 #endif //DEV_REFEREE_H

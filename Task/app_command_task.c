@@ -5,6 +5,7 @@
  * @version V1.0.0
  */
 #include "app_command_task.h"
+#include "dev_referee.h"
 
 Dr16Instance_s *dr16_instance;
 MiniPC_Instance *minipc_instance;
@@ -22,8 +23,8 @@ RefereeData_t RefreeData;
 
 RefereeInitConfig_s referee_config = {
     .topic_name = "referee",
-    .uart_handle = &huart1,
-    .mode = UART_IDLE_MODE,
+    .uart_handle = &huart6,
+    .mode = UART_IT_MODE,
 };
 
 
@@ -112,7 +113,12 @@ void StartCommandTask(void const * argument)
   {
 		Publish_Message(Command_publisher, dr16_instance);
     mode=Mode_Change(dr16_instance);
-    
+    RefreeData.robot_id=Referee_Get_Robot_ID(ref_instance);
+		RefreeData.power_limit=Referee_Get_Power_Limit(ref_instance);
+    RefreeData.current_HP= ref_instance->origin_data.ext_robot_status.current_HP;
+   
+    RefreeData.projectile_17mm=ref_instance->origin_data.ext_projectile_allowance.projectile_allowance_17mm;
+		Referee_Clear_Uart_Error(ref_instance);
 		
     osDelay(2);
   }

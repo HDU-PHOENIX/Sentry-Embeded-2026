@@ -3,9 +3,9 @@
  * @author Ma HuaCheng
  * @brief 裁判系统通信模块协议界定
  * @version 0.2
- * @details 提供裁判系统基本的命令与协议界定(该代码基于RoboMaster裁判系统串口协议V1.1.0 2025.12 进行开发)
+ * @details 提供裁判系统基本的命令与协议界定(该代码基于RoboMaster裁判系统串口协议V1.2.0 2026.2 进行开发)
  * @date 2025-10-10
- * @update 2026-2-7
+ * @update 2026-2-11
  * @copyright  Copyright (c) 2026 HDU—PHOENIX
  * @todo
  */
@@ -16,7 +16,7 @@
 #define _packed __attribute__((packed))
 #endif
 
-
+#include "stdint.h"
 typedef enum {
     Robot_ID_Red_Hero         = 1,  //红方英雄
     Robot_ID_Red_Engineer     = 2,  //红方工程
@@ -75,16 +75,16 @@ typedef enum
     LIDAR_INFO_CMD_ID                 = 0x020E,  //雷达自主决策信息同步 常规链路 数据长度:1 1Hz 雷达可接收
 
 
-    STUDENT_INTERACTIVE_DATA_CMD_ID   = 0x0301,  //机器人交互数据 常规链路 数据长度:127 发送方触发,最大30Hz
+    STUDENT_INTERACTIVE_DATA_CMD_ID   = 0x0301,  //机器人交互数据 常规链路 数据长度:118 发送方触发,最大30Hz
     CUSTOM_CONTROLLER_DATA_CMD_ID     = 0x0302,  //自定义控制器与机器人交互数据 图传链路 数据长度:30 发送方触发,最大30Hz 自定义控制器对应客户端绑定机器人接收
     ROBOT_COMMAND_CMD_ID              = 0x0303,  //小地图下发信息标识 常规链路 数据长度:15 选手端触发发送 选手端选择的机器人接收
-    KEYBOARD_MOUSE_DATA_CMD_ID        = 0x0304,  //键鼠数据 图传链路 数据长度:12 30Hz 选手端图传绑定的机器人接收
     CLIENT_MAP_COMMAND_CMD_ID         = 0x0305,  //小地图接收雷达信息标识 常规链路 数据长度:24 上限5Hz 所有选手端可接收
-    CLIENT_CUSTOM_CONTROLLER_DATA_CMD_ID = 0x0306, //自定义控制器与选手端交互数据  数据长度:8 发送方触发,最大30Hz 自定义控制器对应选手端接收
+    CLIENT_CUSTOM_CONTROLLER_DATA_CMD_ID = 0x0306, //自定义控制器与选手端交互数据(使用自定义控制器模拟键鼠)  数据长度:8 发送方触发,最大30Hz 自定义控制器对应选手端接收
     CLIENT_MAP_PATH_DATA_CMD_ID       = 0x0307,  //选手端小地图接受路径数据 常规链路 数据长度:103 最大1Hz 哨兵选手客户端可接收
     CLIENT_ROBOT_INFO_CMD_ID          = 0x0308,  //选手端小地图接受机器人信息 常规链路 数据长度:34 最大3Hz 所有选手端可接收
     CUSTOM_CONTROLLER_RECEIVED_DATA_CMD_ID = 0x0309, //自定义控制器接收机器人数据 图传链路 数据长度:30 最大10Hz 自定义控制器接收
-    ROBOT_CUSTOM_CLIENT_DATA_CMD_ID   = 0x310,   //机器人发送给自定义客户端的数据 图传链路 数据长度:150 最大50Hz 自定义客户端接收
+    ROBOT_CUSTOM_CLIENT_DATA_CMD_ID   = 0x310,   //机器人发送给自定义客户端的数据 图传链路 数据长度:300 最大50Hz 自定义客户端接收
+    CUSTOM_CLIENT_ROBOT_DATA_CMD_ID   = 0x0311,  //自定义客户端发送给机器人的数据 图传链路 数据长度:30 75Hz 对应机器人接收
     SET_VIDEO_TRANSMIT_CHANNEL_CMD_ID = 0x0F01,  //设置图传出图信道 图传链路 数据长度: 发1收1
     QUERY_VIDEO_TRANSMIT_CHANNEL_CMD_ID = 0xF02, //查询当前出图信道 图传链路 数据长度: 发0收1 最大2Hz
     //剩下几个雷达无线链路的数据由于下位机不用，所以不做定义
@@ -187,7 +187,7 @@ typedef struct _packed
 typedef struct _packed
 {   //Command 0x0204  机器人增益
     uint8_t recovery_buff;
-    uint8_t cooling_buff;
+    uint16_t cooling_buff;
     uint8_t defence_buff;
     uint8_t vulnerability_buff;
     uint16_t attack_buff;
@@ -369,16 +369,17 @@ typedef struct _packed
     uint16_t cmd_source;
 }map_command_t;
 
-typedef struct _packed
-{  //Command 0x0304  键鼠数据
-    int16_t mouse_x;
-    int16_t mouse_y;
-    int16_t mouse_z;
-    int8_t left_button_down;
-    int8_t right_button_down;
-    uint16_t keyboard_value;
-    uint16_t reserved;
-}remote_control_t;
+//Deprecated API
+// typedef struct _packed
+// {  //Command 0x0304  键鼠数据
+//     int16_t mouse_x;
+//     int16_t mouse_y;
+//     int16_t mouse_z;
+//     int8_t left_button_down;
+//     int8_t right_button_down;
+//     uint16_t keyboard_value;
+//     uint16_t reserved;
+// }remote_control_t;
 
 //选手端接收数据
 typedef struct _packed
@@ -391,8 +392,8 @@ typedef struct _packed
     uint16_t infantry_3_position_y;
     uint16_t infantry_4_position_x;
     uint16_t infantry_4_position_y;
-    uint16_t infantry_5_position_x;
-    uint16_t infantry_5_position_y;
+    uint16_t reserved1;
+    uint16_t reserved2;
     uint16_t sentry_position_x;
     uint16_t sentry_position_y;
 } map_robot_data_t;
@@ -431,8 +432,13 @@ typedef struct _packed
 
 typedef struct _packed
 {   //Command 0x0310  机器人向自定义客户端发送数据
-    uint8_t  data[30];
+    uint8_t  data[300];
 }robot_custom_data_2_t;
+
+typedef struct _packed
+{   //Command 0x0311  自定义客户端发送给机器人数据
+    uint8_t  data[30];
+}custom_client_robot_data_t;
 
 
 #endif //DEV_REFEREE_PROTOCOL_H

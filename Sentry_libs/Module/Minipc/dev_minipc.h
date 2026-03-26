@@ -86,6 +86,7 @@ typedef enum {
     USB_MSG_OP_FB_TX = 0xB9,        // 操作反馈
     USB_MSG_HIT_FB_TX = 0xBA,       // 受击反馈
     USB_MSG_LAUNCH_TX = 0xBB,       // 发射状态
+    USB_MSG_SENTRY_STATUS_TX = 0xBE,       // 传感器数据
     #endif
     // 特殊值
     USB_MSG_UNKNOWN = 0xFF,          // 未知消息类型

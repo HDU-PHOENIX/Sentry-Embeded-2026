@@ -11,6 +11,7 @@
 #include "dev_board_communicate.h"
 
 #include "bsp_log.h"
+#include <stdint.h>
 
 #define PC_MODE 1
 #define RC_MODE 2
@@ -26,9 +27,13 @@ typedef struct  {
     uint8_t color;
     uint8_t robot_id;
     uint16_t client_id;
+		uint16_t power_limit;
     bool data_ready;
+    uint16_t current_HP;      // 当前血量
+    uint16_t projectile_17mm; // 17mm剩余弹量
 }RefereeData_t;
 
 
+//RefereeData_t RefreeData;
 
 #endif // APP_COMMAND_TASK_H

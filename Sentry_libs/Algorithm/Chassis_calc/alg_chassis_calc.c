@@ -215,11 +215,87 @@ static float Find_Angle(ChassisInstance_s *Chassis)
     return err;
 }
 
-/*
+/**
  * @brief 底盘功率限制函数 (未实现)
  * @note 预留功能，用于防止底盘超功率
  * @date 2025-07-03
  */
+static bool Chassis_Power_Limit(ChassisInstance_s* Chassis, float power_buffer)
+{
+    if (Chassis == NULL || Chassis->Chassis_power_limit <= 0) {
+        return false;
+    }
+
+    float power_max = Pid_Calculate(Chassis->Chassis_power_limit_pid_config, 30, power_buffer) + Chassis->Chassis_power_limit;
+    float total_steering_power = 0.0f;
+    float motor_target_power[8] = {0};
+        float steering_scale = 1.0f;
+    // 舵组功率限制,只有填写了舵向功率分配系数才有用
+    if (Chassis->omni_steering_message.Steering_Ratio != 0) {
+        for (int i = 4; i < 8; i++) {
+            float x = Chassis->chassis_motor[i]->message.torque_current;
+            float y = Chassis->chassis_motor[i]->message.rotor_velocity;
+            Chassis->motor_power[i] = 1.421e-5f * x * y
+                + Chassis->motor_loss_config[i].K1 * x * x
+                + Chassis->motor_loss_config[i].K2 * y * y
+                + Chassis->motor_loss_config[i].Ka;
+            total_steering_power += Chassis->motor_power[i];
+        }
+        steering_scale = Chassis->omni_steering_message.Steering_Ratio * power_max / total_steering_power;
+        if (steering_scale <= 1.0f && steering_scale >= 0.0f) {
+            for (int i = 4; i < 8; i++) {
+                motor_target_power[i] = steering_scale * Chassis->motor_power[i];
+                float a = Chassis->motor_loss_config[i].K1;
+                float b = 1.421e-5f * Chassis->chassis_motor[i]->message.rotor_velocity;
+                float c = Chassis->motor_loss_config[i].K2 * Chassis->chassis_motor[i]->message.rotor_velocity * Chassis->chassis_motor[i]->message.rotor_velocity
+                        + Chassis->motor_loss_config[i].Ka - motor_target_power[i];
+                 if (b * b - 4 * a * c > 0.0f) {
+                float target_torque1 = (-b + sqrtf(b * b - 4 * a * c)) / (2 * a);
+                float target_torque2 = (-b - sqrtf(b * b - 4 * a * c)) / (2 * a);
+                if (target_torque1 * Chassis->chassis_motor[i]->message.torque_current > 0) {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+                } else {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                }
+            }
+            }
+        }
+    }
+
+    // 轮组功率限制
+    float total_wheel_power = 0.0f;
+    for (int i = 0; i < 4; i++) {
+        float x = Chassis->chassis_motor[i]->message.torque_current;
+        float y = Chassis->chassis_motor[i]->message.rotor_velocity;
+        Chassis->motor_power[i] = 1.996e-6f * x * y
+            + Chassis->motor_loss_config[i].K1 * x * x
+            + Chassis->motor_loss_config[i].K2 * y * y
+            + Chassis->motor_loss_config[i].Ka;
+        total_wheel_power += Chassis->motor_power[i];
+    }
+
+    float wheel_scale = (power_max - steering_scale * total_steering_power) / total_wheel_power;
+    if (wheel_scale <= 1.0f && wheel_scale >= 0.0f) {
+        for (int i = 0; i < 4; i++) {
+            motor_target_power[i] = wheel_scale * Chassis->motor_power[i];
+            float a = Chassis->motor_loss_config[i].K1;
+            float b = 1.996e-6f * Chassis->chassis_motor[i]->message.rotor_velocity;
+            float c = Chassis->motor_loss_config[i].K2 * Chassis->chassis_motor[i]->message.rotor_velocity * Chassis->chassis_motor[i]->message.rotor_velocity
+                    + Chassis->motor_loss_config[i].Ka - motor_target_power[i];
+            if (b * b - 4 * a * c > 0.0f){
+                float target_torque1 = (-b + sqrtf(b * b - 4 * a * c)) / (2 * a);
+                float target_torque2 = (-b - sqrtf(b * b - 4 * a * c)) / (2 * a);
+                if (target_torque1 * Chassis->chassis_motor[i]->message.torque_current > 0) {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+                } else {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                }
+            }
+        }
+    }
+    return true;
+}
+
  
 /**
  * @brief 底盘运动控制主函数
@@ -260,7 +336,7 @@ bool Chassis_Control(ChassisInstance_s *Chassis)
         Motor_Dji_Control(Chassis->chassis_motor[i], Chassis->out_speed[i]);
     }
     // 5. 发送CAN命令 (通过第一个电机实例)
-   // Chassis_Power_Limit(Chassis,60);//功率限制函数(未实现)
+    Chassis_Power_Limit(Chassis,60);//功率限制函数(未实现)
     Motor_Dji_Transmit(Chassis->chassis_motor[0]);
     if(Chassis->type == Steering_Wheel)
     {
@@ -270,9 +346,9 @@ bool Chassis_Control(ChassisInstance_s *Chassis)
     }
     }
 
-    Chassis_Apply_Power_Control(Chassis);
+   // Chassis_Power_Limit(Chassis,30);
 
-    Motor_Dji_Transmit(Chassis->chassis_motor[0]);
+    //Motor_Dji_Transmit(Chassis->chassis_motor[0]);
     if(Chassis->type == Steering_Wheel)
     {
         Motor_Dji_Transmit(Chassis->chassis_motor[4]);

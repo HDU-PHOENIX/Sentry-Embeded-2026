@@ -3,9 +3,9 @@
  * @author Ma HuaCheng
  * @brief 裁判系统通信模块
  * @version 0.2
- * @details 提供裁判系统数据的接收与解析功能(该代码基于RoboMaster裁判系统串口协议V1.1.0 2025.12 进行开发)
+ * @details 提供裁判系统数据的接收与解析功能(该代码基于RoboMaster裁判系统串口协议V1.2.0 2026.2 进行开发)
  * @date 2025-10-10
- * @update 2026-2-7
+ * @update 2026-2-11
  * @copyright  Copyright (c) 2026 HDU—PHOENIX
  * @todo
  */
@@ -28,10 +28,12 @@ Referee_unpack_data_s unpack_data_buffer; // 当前解包实时存储的数据
 frame_header_t unpack_frame_header; //解包时存储当前帧头
 uint8_t referee_tx_buffer[137]; //最长可发送包长度 5+2+127+2+1
 
-
+static TickType_t last_freq_calc_time = 0;  // 上次频率计算时间
+static uint32_t last_cnt = 0;
+uint16_t vt03_cnt = 0;
 
 //流式解包函数(因为裁判系统每帧长度不一且可能发生粘包需要流式解包)
-void Referee_Uart_Handle_One_Byte(RefereeInstance_s* instance, uint8_t byte)
+bool Referee_Uart_Handle_One_Byte(RefereeInstance_s* instance, uint8_t byte)
 {
     switch (status)
     {
@@ -43,7 +45,10 @@ void Referee_Uart_Handle_One_Byte(RefereeInstance_s* instance, uint8_t byte)
         }
         else
         {
+             Log_Debug("Get unexpected data %02X , index = %d ", byte , unpack_data_buffer.index);
             unpack_data_buffer.index = 0;
+            unpack_data_buffer.data_len = 0;
+
         }
         break;
 
@@ -99,25 +104,33 @@ void Referee_Uart_Handle_One_Byte(RefereeInstance_s* instance, uint8_t byte)
 
     case STEP_DATA_CRC16:
         {
-            if (unpack_data_buffer.index < (REF_HEADER_CRC_CMDID_LEN + unpack_data_buffer.data_len))
+        unpack_data_buffer.protocol_packet[unpack_data_buffer.index++] = byte; // 先存入
+        if (unpack_data_buffer.index >= (REF_HEADER_CRC_CMDID_LEN + unpack_data_buffer.data_len))
+        {
+            // 一帧完整结束，状态机与缓存区刷新
+            status = STEP_HEADER_SOF;
+            unpack_data_buffer.index = 0;
+            if (CRC16_Verify(unpack_data_buffer.protocol_packet, REF_HEADER_CRC_CMDID_LEN + unpack_data_buffer.data_len))
             {
-                unpack_data_buffer.protocol_packet[unpack_data_buffer.index++] = byte;
+                Referee_Decode_unpack_data(instance, unpack_data_buffer.protocol_packet);
+                instance->cnt++;
+
+                TickType_t current_time = xTaskGetTickCount();
+                TickType_t time_diff = current_time - last_freq_calc_time;
+                if (time_diff >= pdMS_TO_TICKS(1000)) {
+                    uint32_t cnt_diff = instance->cnt - last_cnt;
+                    instance->rx_freq = (cnt_diff * configTICK_RATE_HZ) / time_diff;
+                    last_freq_calc_time = current_time;
+                    last_cnt = instance->cnt;
+                }
+                return 1;
             }
             else
             {
-                //一帧完整结束，状态机与缓存区刷新
-                status = STEP_HEADER_SOF;
-                unpack_data_buffer.index = 0;
-                //解析并存入指定结构体
-                //TODO: CRC16校验
-                if (CRC16_Verify(unpack_data_buffer.protocol_packet, REF_HEADER_CRC_CMDID_LEN+unpack_data_buffer.data_len))
-                {
-                    Referee_Decode_unpack_data(instance,unpack_data_buffer.protocol_packet);
-                    instance->cnt++;
-                }
-
+                Log_Error("Referee data CRC16 error");
             }
-            break;
+        }
+        break;
         }
     default:
         {
@@ -127,6 +140,7 @@ void Referee_Uart_Handle_One_Byte(RefereeInstance_s* instance, uint8_t byte)
         }
         break;
     }
+    return 0;
 }
 
 //中断模式回调
@@ -149,6 +163,7 @@ static void Referee_Uart_DMA_Callback(UartInstance_s* instance)
     HAL_UARTEx_ReceiveToIdle_DMA(instance->uart_handle,ref_rx_Buffer[active_rx_buff],REF_DOUBLE_RX_BUFFER_SIZE);
     __HAL_DMA_DISABLE_IT(instance->uart_handle->hdmarx, DMA_IT_HT);
 
+    // Log_Debug("Callback Trigger, rx_size = %d", instance->rx_size);
     //消费数据
     //如果长度=21则检验是否为vt03数据
     if (instance->rx_size ==21)
@@ -158,16 +173,44 @@ static void Referee_Uart_DMA_Callback(UartInstance_s* instance)
         {
            if (CRC16_Verify(ref_rx_Buffer[ready_rx_buff],21))
            {
-                memcpy(&((RefereeInstance_s*)instance->id)->vt03_data,ref_rx_Buffer[ready_rx_buff],21);
+               memcpy(&((RefereeInstance_s*)instance->id)->vt03_data,ref_rx_Buffer[ready_rx_buff],21);
                Log("Get VT03 msg");
+               vt03_cnt++;
                return;
            }
         }
     }
-    //如果不是则正常处理数据
-    for (int i =0; i < instance->rx_size; i++) {
-        Referee_Uart_Handle_One_Byte(((RefereeInstance_s*)instance->id),ref_rx_Buffer[ready_rx_buff][i]);
+
+    //如果长度不是21但帧头是vt03则检查vt03后面有没有粘包裁判系统数据
+    if (ref_rx_Buffer[ready_rx_buff][0] == 0xA9 && ref_rx_Buffer[ready_rx_buff][1] == 0x53) {
+        if (instance->rx_size >21 && ref_rx_Buffer[ready_rx_buff][21] == REF_HEADER_SOF) {
+            for (int i = 21; i < instance->rx_size; i++){
+                Referee_Uart_Handle_One_Byte(((RefereeInstance_s*)instance->id),ref_rx_Buffer[ready_rx_buff][i]);
+            }
+        }
+        return;
     }
+
+    //如果当前rxbuffer首字节是帧头则重置状态机
+    if (ref_rx_Buffer[ready_rx_buff][0] == REF_HEADER_SOF ) {
+        status = STEP_HEADER_SOF;
+        unpack_data_buffer.index = 0;
+        unpack_data_buffer.data_len = 0;
+    }
+
+    for (int i =0; i < instance->rx_size; i++) {
+        // Log_Debug("Processing data %02X , i = %d",ref_rx_Buffer[ready_rx_buff][i], i);
+        //收到完整一帧若后续粘包了vt03消息过滤掉
+        if (Referee_Uart_Handle_One_Byte(((RefereeInstance_s*)instance->id),ref_rx_Buffer[ready_rx_buff][i]) == 1)
+        {
+            if (i+2 < instance->rx_size && ref_rx_Buffer[ready_rx_buff][i+1] == 0xA9 && ref_rx_Buffer[ready_rx_buff][i+2] == 0x53)
+            {
+                Log_Warning("Get VT03 msg in the end of referee data");
+                return;
+            }
+        }
+    }
+    // Log_Debug("callback finished, rx_size = %d", instance->rx_size);  // 确认循环完整执行
 }
 
 
@@ -255,8 +298,8 @@ void Referee_Decode_unpack_data(RefereeInstance_s* ref_instance, const uint8_t* 
     case CUSTOM_CONTROLLER_RECEIVED_DATA_CMD_ID: memcpy(&(ref_instance->origin_data.ext_robot_custom_data), data + index,sizeof(custom_robot_data_t));
         Log("client get robot data");
         break;
-    case KEYBOARD_MOUSE_DATA_CMD_ID: memcpy(&(ref_instance->origin_data.ext_remote_control), data + index, sizeof(remote_control_t));
-        Log("client get remote_control");
+    case CUSTOM_CLIENT_ROBOT_DATA_CMD_ID: memcpy(&(ref_instance->origin_data.ext_custom_client_robot_data_t), data + index, sizeof(custom_client_robot_data_t));
+        Log("Get data from custom client");
         break;
     default:
         Log("Get unknown cmd id %d",unpack_data_buffer.cmd_id);
@@ -320,6 +363,7 @@ RefereeInstance_s* Referee_Register(const RefereeInitConfig_s* config)
 
     instance->topic_name = config->topic_name;
     instance->cnt = 0;
+    instance->rx_freq = 0;
     instance->Referee_Data_TF = false;
     instance->custom_robot_update_time  = 0;
     Referee_Data_Init(instance);
@@ -458,7 +502,34 @@ bool Referee_Send_Robot_Msg_To_Custom_Client(RefereeInstance_s *ref_instance,uin
     return Referee_Send_Msg(ref_instance, ROBOT_CUSTOM_CLIENT_DATA_CMD_ID, length, robot_custom_client_msg_cnt++, data);
 }
 
+void Referee_Clear_Uart_Error(RefereeInstance_s *ref_instance)
+{
+    if (ref_instance==NULL || ref_instance->uart_instance->uart_handle==NULL)
+    {
+        Log_Error("Referee instance null or uart handler null");
+        return;
+    }
 
+    if (ref_instance->uart_instance->uart_handle->ErrorCode & HAL_UART_ERROR_ORE) {
+        __HAL_UART_CLEAR_OREFLAG(ref_instance->uart_instance->uart_handle); // 清除ORE错误标志
+        // 重新启动DMA接收
+        HAL_UART_Receive_DMA(ref_instance->uart_instance->uart_handle, ref_instance->uart_instance->rx_buff, 1);
+    }
+
+    if (ref_instance->uart_instance->uart_handle->ErrorCode & HAL_UART_ERROR_FE) {
+        __HAL_UART_CLEAR_FEFLAG(ref_instance->uart_instance->uart_handle); // 清除ORE错误标志
+
+        // 重新启动DMA接收
+        HAL_UART_Receive_DMA(ref_instance->uart_instance->uart_handle, ref_instance->uart_instance->rx_buff, 1);
+    }
+
+    if (ref_instance->uart_instance->uart_handle->ErrorCode & HAL_UART_ERROR_NE) {
+        __HAL_UART_CLEAR_NEFLAG(ref_instance->uart_instance->uart_handle); // 清除ORE错误标志
+
+        // 重新启动DMA接收
+        HAL_UART_Receive_DMA(ref_instance->uart_instance->uart_handle, ref_instance->uart_instance->rx_buff, 1);
+    }
+}
 
 
 
@@ -500,3 +571,5 @@ bool RefereeCircularBuffer_IsEmpty(const RefereeCircularBuffer_t *cb) {
 size_t RefereeCircularBuffer_Available(const RefereeCircularBuffer_t *cb) {
     return cb->count;
 }
+
+

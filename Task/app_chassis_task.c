@@ -12,6 +12,7 @@
 #include "app_command_task.h"
 #include "app_ins_task.h"
 #include "dev_dr16.h"
+#include "dev_minipc.h"
 #include "dev_motor_dji.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,6 +25,8 @@
 ChassisInstance_s *Chassis;
 DmMotorInstance_s *Down_yaw;
 extern BuzzerInstance_s *buzzer;
+  
+extern RefereeData_t RefreeData;
 DjiMotorInstance_s *Trigger;
 DjiMotorInstance_s *Up_yaw;
 Subscriber *CH_Subs;
@@ -31,6 +34,8 @@ Dr16Instance_s* CH_Receive_s;
 MiniPC_Instance *MiniPC;
 MiniPC_Instance *MiniPC_SelfAim;
 MiniPC_Instance *MiniPC_ExpAim;
+MiniPC_Instance *MiniPC_SentryStatus;
+
 board_instance_t *board_instance;
 gimbal_follow_instance_s* GimbalFollow_Instance;
 LowpassFilter_t *Trigger_In_LPF;
@@ -62,8 +67,8 @@ float target_up_pitch=0.0f;
 uint8_t rune_flag=0;//打符开关
 uint8_t minipc_mode=0;//0自瞄，1打符
 uint8_t control_mode=RC_MODE;//默认遥控器模式
-uint16_t max_torque=7000;
-#define MAX_TORQUE 7000
+uint16_t max_torque=5500;
+#define MAX_TORQUE 5500
 #define TRIGGER_STEP_ANGLE (0.7f * BULLET_ANGLE)
 #define TRIGGER_FIRE_PERIOD_S 0.033f
 
@@ -82,13 +87,14 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = -3.13531351,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = 3.1726079,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.26176f,
 		},
-    .Gyroscope_Speed = 0.0f,  // 设置小陀螺旋转速度 (rad/s)
+		.Chassis_power_limit = 80.0f,
+    .Gyroscope_Speed = 0.0f,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
@@ -200,6 +206,26 @@ static ChassisInitConfig_s Chassis_config={
       .i_max = 1800.0f,
       .out_max = 8192.0f,
     }
+  },
+  .motor_loss_config[0] = {
+     .K1 =  1.3755676572327828e-06,
+     .K2 = 4.1193284449977046e-07,
+     .Ka = 5.454877040789132
+  },
+  .motor_loss_config[1] = {
+     .K1 =  1.3755676572327828e-06,
+     .K2 = 4.1193284449977046e-07,
+     .Ka = 5.454877040789132
+  },
+  .motor_loss_config[2] = {
+     .K1 =  1.3755676572327828e-06,
+     .K2 = 4.1193284449977046e-07,
+     .Ka = 5.454877040789132
+  },
+  .motor_loss_config[3] = {
+     .K1 =  1.3755676572327828e-06,
+     .K2 = 4.1193284449977046e-07,
+     .Ka = 5.454877040789132
   }
 	};
 
@@ -338,7 +364,15 @@ MiniPC_Config SelfAim_config = {
 MiniPC_Config ExpAim_config={
 	  .callback = NULL,
 	  .message_type = USB_MSG_EXP_AIM_RX,
-		.Send_message_type = USB_MSG_EXP_AIM_TX
+		.Send_message_type =   USB_MSG_GAME_INFO_TX,    // 比赛信息
+
+
+};
+
+MiniPC_Config Sentry_Status_config={
+	  .callback = NULL,
+	  .message_type = USB_MSG_GAME_RX,
+		.Send_message_type = USB_MSG_SENTRY_STATUS_TX
 
 };
 
@@ -389,6 +423,18 @@ static uint32_t trigger_pause_tick = 0;
 void Trigger_Control(DjiMotorInstance_s *motor, float speed)
 {
   // 检测正向卡弹（转矩超过阈值）
+  if(speed==0){
+    motor->velocity_pid->p_out=0.0f;
+    motor->velocity_pid->i_out=0.0f;
+    motor->velocity_pid->d_out=0.0f;
+    motor->output=0.0f;
+    motor->velocity_pid->is_enabled=0;
+    return; 
+
+  }else{
+    motor->velocity_pid->is_enabled=1;
+  }
+  
   if (speed > 0.0f)
   {
     if (motor->message.torque_current > MAX_TORQUE)
@@ -463,7 +509,8 @@ void StartChassisTask(void const * argument)
   MiniPC = Minipc_Register(&miniPC_config);
 	MiniPC_SelfAim = Minipc_Register(&SelfAim_config);	
 	MiniPC_ExpAim = Minipc_Register(&ExpAim_config);
-    if (MiniPC == NULL||MiniPC_SelfAim==NULL||MiniPC_SelfAim==NULL) {
+  MiniPC_SentryStatus = Minipc_Register(&Sentry_Status_config);
+    if (MiniPC == NULL||MiniPC_SelfAim==NULL||MiniPC_SelfAim==NULL||MiniPC_SentryStatus==NULL) {
         Log_Error("MiniPC Register Failed!");
     }
 		
@@ -514,7 +561,7 @@ void StartChassisTask(void const * argument)
                         &enemy_color,&minipc_mode,
                         &rune_flag,&Down_yaw->message.out_position);//这里可能引入悬空指针，但是似乎没影响程序运行，后面再管。
 		
-    
+    Minipc_ConfigSentryStatusTx(MiniPC_SentryStatus, &RefreeData.current_HP, &RefreeData.projectile_17mm);
       
      //施工中，可能需要修改板间通信，我现在写的太烂了拓展性很差                   
     //Minipc_ConfigExpAimTx(MiniPC_SelfAim,)
@@ -647,7 +694,7 @@ void StartChassisTask(void const * argument)
         /* code */
 				//ch2：x，ch3：y
         Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
-		   // Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
+		    //Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
 				Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         //摇杆漂移死区
         if(abs(CH_Receive_s->dr16_handle.ch2)<15){
