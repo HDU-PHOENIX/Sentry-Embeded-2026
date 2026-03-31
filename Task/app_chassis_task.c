@@ -65,6 +65,9 @@ float target_up_position=0.0f;//暂时的逻辑，一定要记得改回来！！
 float target_up_pitch=0.0f;
 #endif
 uint8_t rune_flag=0;//打符开关
+uint16_t usb_timeout_cnt=0;//USB通信超时计数器
+extern uint16_t usb_cnt;//接收计数器
+extern uint8_t rc2pc_mode;//如果为1则触发保护逻辑
 uint8_t minipc_mode=0;//0自瞄，1打符
 uint8_t control_mode=RC_MODE;//默认遥控器模式
 uint16_t max_torque=5500;
@@ -87,20 +90,20 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = 3.1726079,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = -0.767289639,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.26176f,
 		},
-		.Chassis_power_limit = 80.0f,
-    .Gyroscope_Speed = 0.0f,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
+		.Chassis_power_limit = 100.0f,
+    .Gyroscope_Speed = 4.0f,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
       .kd = 0.0f,
       .angle_max = 2.0f * PI,
-			.dead_zone = 0.01f,
+			.dead_zone = 0.03f,
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
 		},
@@ -437,7 +440,7 @@ void Trigger_Control(DjiMotorInstance_s *motor, float speed)
   
   if (speed > 0.0f)
   {
-    if (motor->message.torque_current > MAX_TORQUE)
+    if (motor->message.torque_current > MAX_TORQUE && fabs(speed - motor->message.rotor_velocity) > 50.0f)
     {
       trigger_forward_lasttime++;
     }
@@ -451,14 +454,14 @@ void Trigger_Control(DjiMotorInstance_s *motor, float speed)
     // 连续超压2000ms则反向退弹
     if (trigger_forward_lasttime > 2000)
     {
-      speed = -80.0f;  // 反向退弹
+      speed = -40.0f;  // 反向退弹
       trigger_forward_lasttime = 0;  // 重置计数
     }
   }
   // 检测反向卡弹（反向转矩超过阈值）
   else if (speed < 0.0f)
   {
-    if (motor->message.torque_current < -MAX_TORQUE)
+    if (motor->message.torque_current < -MAX_TORQUE && fabs(speed - motor->message.rotor_velocity) > 50.0f)
     {
       trigger_reverse_lasttime++;
     }
@@ -578,6 +581,7 @@ void StartChassisTask(void const * argument)
    {
        osDelay(10);
    }
+   static uint16_t last_usb_cnt=0;
    //等待IMU初始化完成，确保姿态数据有效后再进入主循环
   for(;;)
   {
@@ -609,7 +613,7 @@ void StartChassisTask(void const * argument)
 
     if(CH_Receive_s->dr16_handle.wheel>400||MiniPC_SelfAim->message.norm_aim_pack.shoot_bool==0x31){
       shoot_bool=1;
-
+      
     }else{
       shoot_bool=0;
     }
@@ -621,6 +625,7 @@ void StartChassisTask(void const * argument)
       if(send_flag==0){
         send_flag=1;
       }else{
+      last_usb_cnt=usb_cnt;//两个周期更新一次引入延时
       board_send_message(board_instance,target_up_position,Quater.yaw ,target_up_pitch, combined_state_global, find_bool);
       send_flag=0;
       }
@@ -638,10 +643,17 @@ void StartChassisTask(void const * argument)
       
       
     }
+   
+    
     //测试代码结束
     switch (control_mode)
     {
     case PC_MODE:
+        if(rc2pc_mode==1){
+          
+          target_position=Quater.yaw;
+          //设置目标值为当前值避免疯转
+        }
   				target_tr=40.0f;
         
         // Chassis->gimbal_yaw_angle
@@ -649,25 +661,45 @@ void StartChassisTask(void const * argument)
         target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
         target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
 
-        Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
+        Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
         Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         Chassis->Chassis_speed.Vx=MiniPC->message.ch_pack.x_speed;
         Chassis->Chassis_speed.Vy=MiniPC->message.ch_pack.y_speed;
         // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
+        if(usb_cnt-last_usb_cnt<2){
+      usb_timeout_cnt++;
+      if(usb_timeout_cnt>1000){
+        //500ms没有收到数据则认为USB通信异常，进入保护逻辑
+        Chassis->Chassis_speed.Vx=0.0f;
+        Chassis->Chassis_speed.Vy=0.0f;
+        Chassis->Chassis_speed.Vw=0.0f;
+				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+        usb_timeout_cnt=0;
+      }else{
+				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_ENABLE);
+			}
+
+    }
         Chassis_Control(Chassis);
         //临时逻辑
-        target_position=MiniPC->message.ch_pack.yaw;
+		
+        target_position+=MiniPC->message.ch_pack.yaw;
         target_position=target_position>PI?target_position-2*PI:target_position;
         target_position=target_position<-PI?target_position+2*PI:target_position;
         target_position=target_position>PI+0.1f?PI:target_position;
         target_position=target_position<-PI-0.1f?-PI:target_position;
+		
         
-        Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+        //Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+		 target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+		test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+		Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
         Pid_Disable(Trigger->angle_pid);
 
 
         target_position=Quater.yaw;
+		
         //防止疯车用的
         if(shoot_bool){
         Trigger_Control(Trigger, 80);
@@ -675,9 +707,9 @@ void StartChassisTask(void const * argument)
           Trigger_Control(Trigger, 0);
 
         }
-          Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
+         Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
 				
-          Motor_Dji_Transmit(Trigger);
+          Motor_Dji_Transmit(Trigger); 
         
 
 
@@ -751,10 +783,11 @@ void StartChassisTask(void const * argument)
         Pid_Disable(Trigger->angle_pid);
 				Chassis_Change_Mode(Chassis,CHASSIS_NORMAL);
         Chassis_Disable(Chassis);
-				
+				Motor_Dji_Transmit(Chassis->chassis_motor[0]);
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
 				Chassis->Chassis_speed.Vw=0.0f;
+				
         Trigger_ResetState();
         Trigger->output = 0.0f;
         Motor_Dji_Transmit(Trigger);
@@ -777,7 +810,7 @@ void StartChassisTask(void const * argument)
 				// Pid_Enable(Trigger->angle_pid);                
                 // 修正: 射击模式下大Yaw无力，需同步目标值防止切回RC时跳变
                 target_position = Quater.yaw;
-        Trigger_Control(Trigger, 80);
+        Trigger_Control(Trigger, 40);
           // Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
           Motor_Dji_Transmit(Trigger);
         

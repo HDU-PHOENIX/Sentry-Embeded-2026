@@ -229,11 +229,12 @@ static bool Chassis_Power_Limit(ChassisInstance_s* Chassis, float power_buffer)
     float power_max = Pid_Calculate(Chassis->Chassis_power_limit_pid_config, 30, power_buffer) + Chassis->Chassis_power_limit;
     float total_steering_power = 0.0f;
     float motor_target_power[8] = {0};
-        float steering_scale = 1.0f;
-    // 舵组功率限制,只有填写了舵向功率分配系数才有用
-    if (Chassis->omni_steering_message.Steering_Ratio != 0) {
+    float steering_scale = 1.0f;
+
+    // 舵组功率限制
+    if (Chassis->omni_steering_message.Steering_Ratio > 0.0f) {
         for (int i = 4; i < 8; i++) {
-            float x = Chassis->chassis_motor[i]->message.torque_current;
+            float x = Chassis->chassis_motor[i]->output;
             float y = Chassis->chassis_motor[i]->message.rotor_velocity;
             Chassis->motor_power[i] = 1.421e-5f * x * y
                 + Chassis->motor_loss_config[i].K1 * x * x
@@ -241,31 +242,58 @@ static bool Chassis_Power_Limit(ChassisInstance_s* Chassis, float power_buffer)
                 + Chassis->motor_loss_config[i].Ka;
             total_steering_power += Chassis->motor_power[i];
         }
-        steering_scale = Chassis->omni_steering_message.Steering_Ratio * power_max / total_steering_power;
-        if (steering_scale <= 1.0f && steering_scale >= 0.0f) {
+        
+        // 分母保护并计算期望比例
+        if (total_steering_power > 0.001f) {
+            steering_scale = Chassis->omni_steering_message.Steering_Ratio * power_max / total_steering_power;
+        } else {
+            // 分母为0（或极小）说明未吃功率，赋予大于1的值跳过截断逻辑
+            steering_scale = 10.0f; 
+        }
+        
+        // 只有当算出来的比例小于 1.0 时（确实超功率了），才重新计算二次方程，覆盖并截断之前控制算法写好的电流
+        if (steering_scale < 1.0f && steering_scale >= 0.0f) {
             for (int i = 4; i < 8; i++) {
                 motor_target_power[i] = steering_scale * Chassis->motor_power[i];
                 float a = Chassis->motor_loss_config[i].K1;
                 float b = 1.421e-5f * Chassis->chassis_motor[i]->message.rotor_velocity;
                 float c = Chassis->motor_loss_config[i].K2 * Chassis->chassis_motor[i]->message.rotor_velocity * Chassis->chassis_motor[i]->message.rotor_velocity
                         + Chassis->motor_loss_config[i].Ka - motor_target_power[i];
-                 if (b * b - 4 * a * c > 0.0f) {
-                float target_torque1 = (-b + sqrtf(b * b - 4 * a * c)) / (2 * a);
-                float target_torque2 = (-b - sqrtf(b * b - 4 * a * c)) / (2 * a);
-                if (target_torque1 * Chassis->chassis_motor[i]->message.torque_current > 0) {
-                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+                
+                if (a == 0.0f) {
+                    if (b != 0.0f) {
+                        Motor_Dji_SetCurrent(Chassis->chassis_motor[i], -c / b);
+                    } else {
+                        Motor_Dji_SetCurrent(Chassis->chassis_motor[i], 0.0f);
+                    }
                 } else {
-                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                    float discriminant = b * b - 4.0f * a * c;
+                    if (discriminant < 0.0f) {
+                        Motor_Dji_SetCurrent(Chassis->chassis_motor[i], 0.0f); 
+                    } else {
+                        float sqrt_d = sqrtf(discriminant);
+                        float target_torque1 = (-b + sqrt_d) / (2.0f * a);
+                        float target_torque2 = (-b - sqrt_d) / (2.0f * a);
+                        if (target_torque1 * Chassis->chassis_motor[i]->output > 0.0f) {
+                            Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+                        } else {
+                            Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                        }
+                    }
                 }
             }
-            }
+        }
+        
+        // 把实际用于当前舵组计算的比例限制在 1.0 内，以保证能将未用满的舵向配额顺利移交给后续的轮组
+        if (steering_scale > 1.0f) {
+            steering_scale = 1.0f;
         }
     }
 
     // 轮组功率限制
     float total_wheel_power = 0.0f;
     for (int i = 0; i < 4; i++) {
-        float x = Chassis->chassis_motor[i]->message.torque_current;
+        float x = Chassis->chassis_motor[i]->output; 
         float y = Chassis->chassis_motor[i]->message.rotor_velocity;
         Chassis->motor_power[i] = 1.996e-6f * x * y
             + Chassis->motor_loss_config[i].K1 * x * x
@@ -274,21 +302,41 @@ static bool Chassis_Power_Limit(ChassisInstance_s* Chassis, float power_buffer)
         total_wheel_power += Chassis->motor_power[i];
     }
 
-    float wheel_scale = (power_max - steering_scale * total_steering_power) / total_wheel_power;
-    if (wheel_scale <= 1.0f && wheel_scale >= 0.0f) {
+    float wheel_scale = 1.0f;
+    if (total_wheel_power > 0.001f) {
+        wheel_scale = (power_max - steering_scale * total_steering_power) / total_wheel_power;
+    } else {
+        wheel_scale = 10.0f;
+    }
+    
+    // 同样，不超过最大功率限制则跳过计算，不做修改，直接保留原有基于外环PID生成的底盘推进期望输出
+    if (wheel_scale < 1.0f && wheel_scale >= 0.0f) {
         for (int i = 0; i < 4; i++) {
             motor_target_power[i] = wheel_scale * Chassis->motor_power[i];
             float a = Chassis->motor_loss_config[i].K1;
             float b = 1.996e-6f * Chassis->chassis_motor[i]->message.rotor_velocity;
             float c = Chassis->motor_loss_config[i].K2 * Chassis->chassis_motor[i]->message.rotor_velocity * Chassis->chassis_motor[i]->message.rotor_velocity
                     + Chassis->motor_loss_config[i].Ka - motor_target_power[i];
-            if (b * b - 4 * a * c > 0.0f){
-                float target_torque1 = (-b + sqrtf(b * b - 4 * a * c)) / (2 * a);
-                float target_torque2 = (-b - sqrtf(b * b - 4 * a * c)) / (2 * a);
-                if (target_torque1 * Chassis->chassis_motor[i]->message.torque_current > 0) {
-                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+            
+            if (a == 0.0f) {
+                if (b != 0.0f) {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], -c / b);
                 } else {
-                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], 0.0f);
+                }
+            } else {
+                float discriminant = b * b - 4.0f * a * c;
+                if (discriminant < 0.0f) {
+                    Motor_Dji_SetCurrent(Chassis->chassis_motor[i], 0.0f);
+                } else {
+                    float sqrt_d = sqrtf(discriminant);
+                    float target_torque1 = (-b + sqrt_d) / (2.0f * a);
+                    float target_torque2 = (-b - sqrt_d) / (2.0f * a);
+                    if (target_torque1 * Chassis->chassis_motor[i]->output > 0.0f) {
+                        Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque1);
+                    } else {
+                        Motor_Dji_SetCurrent(Chassis->chassis_motor[i], target_torque2);
+                    }
                 }
             }
         }
@@ -336,7 +384,7 @@ bool Chassis_Control(ChassisInstance_s *Chassis)
         Motor_Dji_Control(Chassis->chassis_motor[i], Chassis->out_speed[i]);
     }
     // 5. 发送CAN命令 (通过第一个电机实例)
-    Chassis_Power_Limit(Chassis,60);//功率限制函数(未实现)
+    Chassis_Power_Limit(Chassis,30);//功率限制函数(未实现)
     Motor_Dji_Transmit(Chassis->chassis_motor[0]);
     if(Chassis->type == Steering_Wheel)
     {

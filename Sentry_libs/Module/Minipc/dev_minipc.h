@@ -499,7 +499,7 @@ void Minipc_UpdateInstanceData(MiniPC_Instance* instance);
 MiniPC_Instance* Minipc_Register(MiniPC_Config* config);
 void USB_Data_Received_Callback(uint8_t* buf, uint32_t len);
 void Data_Processing(void);
-
+int8_t USB_CDC_Hook_Callback(uint8_t* Buf, uint32_t *Len);
 
 
 // 恢复默认对齐方式

@@ -17,11 +17,12 @@
  * 数据填入缓冲区→触发中断，转移到环形缓冲区→主动读取数据，转移到结构体→消息中心
  */
 #include "dev_minipc.h"
+#include <stdint.h>
 
 #define USB_RX_BUFFER_SIZE 32//64个字节，2个完整包
 #define USB_MAX_INSTANCE 8//允许的最多实例数量
-
-
+uint16_t usb_cnt=0;//接收计数器
+extern uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
 //环形缓冲区,有数据到达会自动储存到这个缓冲区内
 
@@ -38,6 +39,19 @@ static uint8_t USB_Instance_Count = 255;//当前USB实例数量
 // 在文件顶部声明（修改变量类型）
 static message_union* packet_pointer = NULL;  // 指针类型
 MiniPC_Instance* minipc_instances[USB_MAX_INSTANCE] = {NULL};
+extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
+
+
+//做了个钩子函数，替换掉原来的USB接收回调函数，这样就能解耦了
+void Minipc_HookInit(){
+    //替换USB接收回调函数为我们自己的函数
+ USBD_Interface_fops_FS.Receive =  USB_CDC_Hook_Callback;
+
+}
+
+
+
+
 
 /**
  * @brief 注册MiniPC实例
@@ -156,7 +170,9 @@ void USB_Data_Received_Callback(uint8_t* buf, uint32_t len) {
     if(buf == NULL || len == 0) {
         return;
     }
-    
+   
+    usb_cnt++;
+    usb_cnt=usb_cnt>65535?0:usb_cnt;
     for(uint32_t i = 0; i < len; i++) {
         if(usb_rx_ring_buffer.count < USB_RX_BUFFER_SIZE) {
             usb_rx_ring_buffer.buffer[usb_rx_ring_buffer.head] = buf[i];
@@ -169,6 +185,22 @@ void USB_Data_Received_Callback(uint8_t* buf, uint32_t len) {
         }
     }
     Data_Processing();
+}
+
+int8_t USB_CDC_Hook_Callback(uint8_t* Buf, uint32_t *Len)
+{
+  /* USER CODE BEGIN 6 */
+  
+  // 如果有数据且回调函数已注册，则调用回调
+  if(*Len > 0 ) {
+    USB_Data_Received_Callback(Buf, *Len);
+  }
+  
+  // 重新设置接收缓冲区，准备下次接收
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  return (USBD_OK);
+  /* USER CODE END 6 */
 }
 /**
  * @brief 处理接收到的USB数据
@@ -235,6 +267,7 @@ void Data_Processing(void) {
  * @param rune 符文标志
  * @note 如果不是哨兵，可以直接使用这个
  */
+ //这个取名不太好主要是某个姓丁的飞机电控（笑）留下的遗产，我接手这个库完全是处于意外....就留着警示后人吧
 void Computer_Tx(float yaw, float pitch, uint8_t color, uint8_t mode, uint8_t rune) {
     Computer_Tx_Message_t packet;//最好改个名字,发送也可以使用union
 

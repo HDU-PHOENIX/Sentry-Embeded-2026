@@ -6,12 +6,14 @@
  */
 #include "app_command_task.h"
 #include "dev_referee.h"
+#include <stdint.h>
 
 Dr16Instance_s *dr16_instance;
 MiniPC_Instance *minipc_instance;
 MiniPC_Instance *minipc_blue_hp_instance;
 MiniPC_Instance *minipc_sentry_status_instance;
 Publisher *Command_publisher;
+uint8_t rc2pc_mode=0;//如果为1则触发保护逻辑
 RefereeInstance_s* ref_instance;
 
 //变量
@@ -45,6 +47,7 @@ uint8_t Mode_Change(Dr16Instance_s *dr16){
   {
     case 0x11: // s1=1 (上), s2=1 (上)
       mode = last_mode==DISABLE_MODE?TRANS_MODE:PC_MODE;
+      if(last_mode==RC_MODE){rc2pc_mode=1;}else{rc2pc_mode=0;}
 			return mode;
       break;
     

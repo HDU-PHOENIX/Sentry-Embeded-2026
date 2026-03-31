@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Wed Mar 25 21:18:29 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Tue Mar 31 12:27:22 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1140 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2757,7 +2757,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Minipc_UpdateAllInstances
 </UL>
 
-<P><STRONG><a name="[250]"></a>Mode_Change</STRONG> (Thumb, 462 bytes, Stack size 16 bytes, app_command_task.o(.text.Mode_Change))
+<P><STRONG><a name="[250]"></a>Mode_Change</STRONG> (Thumb, 506 bytes, Stack size 16 bytes, app_command_task.o(.text.Mode_Change))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = Mode_Change
 </UL>
 <BR>[Called By]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
@@ -3173,7 +3173,7 @@ Global Symbols
 <LI><a href="#[c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_AccelWrite
 </UL>
 
-<P><STRONG><a name="[8f]"></a>StartChassisTask</STRONG> (Thumb, 4912 bytes, Stack size 376 bytes, app_chassis_task.o(.text.StartChassisTask))
+<P><STRONG><a name="[8f]"></a>StartChassisTask</STRONG> (Thumb, 5208 bytes, Stack size 376 bytes, app_chassis_task.o(.text.StartChassisTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1088 + Unknown Stack Size
 <LI>Call Chain = StartChassisTask &rArr; Chassis_Register &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
@@ -3221,7 +3221,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_Chassis_task)
 </UL>
-<P><STRONG><a name="[90]"></a>StartCommandTask</STRONG> (Thumb, 262 bytes, Stack size 32 bytes, app_command_task.o(.text.StartCommandTask))
+<P><STRONG><a name="[90]"></a>StartCommandTask</STRONG> (Thumb, 272 bytes, Stack size 32 bytes, app_command_task.o(.text.StartCommandTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 576 + Unknown Stack Size
 <LI>Call Chain = StartCommandTask &rArr; Referee_Register &rArr; Daemon_Register &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
@@ -3315,8 +3315,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1cf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_ConfigChannel
 </UL>
 
-<P><STRONG><a name="[24c]"></a>Trigger_Control</STRONG> (Thumb, 432 bytes, Stack size 8 bytes, app_chassis_task.o(.text.Trigger_Control))
-<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = Trigger_Control
+<P><STRONG><a name="[24c]"></a>Trigger_Control</STRONG> (Thumb, 576 bytes, Stack size 16 bytes, app_chassis_task.o(.text.Trigger_Control))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = Trigger_Control &rArr; __aeabi_f2d
+</UL>
+<BR>[Calls]<UL><LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
+<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dcmple
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartChassisTask
 </UL>
@@ -3896,7 +3899,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[19c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_PCD_Init
 </UL>
 
-<P><STRONG><a name="[83]"></a>USB_Data_Received_Callback</STRONG> (Thumb, 112 bytes, Stack size 24 bytes, dev_minipc.o(.text.USB_Data_Received_Callback))
+<P><STRONG><a name="[83]"></a>USB_Data_Received_Callback</STRONG> (Thumb, 168 bytes, Stack size 24 bytes, dev_minipc.o(.text.USB_Data_Received_Callback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 520 + Unknown Stack Size
 <LI>Call Chain = USB_Data_Received_Callback &rArr; Data_Processing &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
@@ -5189,6 +5192,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Chassis_IK_Calc
 <LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartChassisTask
+<LI><a href="#[24c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Trigger_Control
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Decode
 <LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Calculate
 </UL>
@@ -5232,6 +5236,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_dcmple
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartChassisTask
+<LI><a href="#[24c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Trigger_Control
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Decode
 </UL>
 
@@ -6472,8 +6477,8 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Chassis_Control
 </UL>
 
-<P><STRONG><a name="[f3]"></a>Chassis_Power_Limit</STRONG> (Thumb, 1500 bytes, Stack size 176 bytes, alg_chassis_calc.o(.text.Chassis_Power_Limit))
-<BR><BR>[Stack]<UL><LI>Max Depth = 272<LI>Call Chain = Chassis_Power_Limit &rArr; Pid_Calculate &rArr; __aeabi_ddiv
+<P><STRONG><a name="[f3]"></a>Chassis_Power_Limit</STRONG> (Thumb, 1676 bytes, Stack size 168 bytes, alg_chassis_calc.o(.text.Chassis_Power_Limit))
+<BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = Chassis_Power_Limit &rArr; Pid_Calculate &rArr; __aeabi_ddiv
 </UL>
 <BR>[Calls]<UL><LI><a href="#[101]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_SetCurrent
 <LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Calculate
