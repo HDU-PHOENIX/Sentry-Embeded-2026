@@ -6,6 +6,7 @@
  * @version V1.0.0
  */
 #include "app_chassis_task.h"
+#include "robot_config.h"
 #include "alg_chassis_calc.h"
 #include "alg_pid.h"
 #include "alg_fliter.h"
@@ -36,10 +37,17 @@ MiniPC_Instance *MiniPC_SelfAim;
 MiniPC_Instance *MiniPC_ExpAim;
 MiniPC_Instance *MiniPC_SentryStatus;
 
+
+
 board_instance_t *board_instance;
 gimbal_follow_instance_s* GimbalFollow_Instance;
+
+
 LowpassFilter_t *Trigger_In_LPF;
 LowpassFilter_t *Trigger_Out_LPF;
+MovingAvgFilter_t* PC_target_pos_averg;
+
+
 //extern QEKF_INS_t QEKF_INS; 
 uint8_t enemy_color =1;//暂时的逻辑
 uint8_t shoot_bool=0;
@@ -97,7 +105,7 @@ static ChassisInitConfig_s Chassis_config={
 	  .chassis_radius= 0.26176f,
 		},
 		.Chassis_power_limit = 100.0f,
-    .Gyroscope_Speed = 4.0f,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
+    .Gyroscope_Speed = SCROPE_SPEED,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
@@ -351,7 +359,10 @@ static  DjiMotorInitConfig_s Trigger_Config = {
     }
 };
 
+FilterInitConfig_t Averg_config={
+    .filter_size = 10, // 滑动平均窗口大小
 
+};
 
 MiniPC_Config miniPC_config = {
     .callback = NULL,
@@ -366,8 +377,8 @@ MiniPC_Config SelfAim_config = {
 };
 MiniPC_Config ExpAim_config={
 	  .callback = NULL,
-	  .message_type = USB_MSG_EXP_AIM_RX,
-		.Send_message_type =   USB_MSG_GAME_INFO_TX,    // 比赛信息
+	  .message_type = USB_MSG_MODULE_RX,
+		.Send_message_type = USB_MSG_GAME_INFO_TX,    // 比赛信息
 
 
 };
@@ -379,6 +390,7 @@ MiniPC_Config Sentry_Status_config={
 
 };
 
+
 board_config_t board_config = {
     .board_id = 1,
     .can_config = {
@@ -389,6 +401,7 @@ board_config_t board_config = {
     },
     .message_type = DOWN2UP_MESSAGE_TYPE, // down2up_message_t
 };
+
 
 gimbal_follow_config_s GimbalFollow_config = {
     .up_origin = 0.0f, // 云台偏航零点角度
@@ -411,6 +424,7 @@ static void Chassis_Disable(ChassisInstance_s *chassis){
 	}
 	
 }
+
 //这里要用引用传参否则会复制结构体，很浪费资源
 static void Chassis_Enable(ChassisInstance_s *chassis){
 	for(uint8_t i=0;i<4;i++){
@@ -536,6 +550,10 @@ void StartChassisTask(void const * argument)
     if (board_instance == NULL) {
         Log_Error("Board Register Failed!");
     }
+  PC_target_pos_averg=MovingAvgFilter_Register(&Averg_config); // 创建一个窗口大小为10的移动平均滤波器
+  if (PC_target_pos_averg == NULL) {
+        Log_Error("Moving Average Filter Register Failed!");
+    }
   GimbalFollow_config.up_angle_ptr = &Up_yaw->message.out_position;
   GimbalFollow_Instance = GimbalFollow_Register(&GimbalFollow_config);
       // 初始化拨弹盘滤波器
@@ -543,6 +561,7 @@ void StartChassisTask(void const * argument)
         .cutoff_freq = 30.0f,   // 截止频率 30Hz
         .sample_freq = 1000.0f  // 采样频率 1000Hz (任务周期 1ms)
     };
+		
     Trigger_In_LPF = LowpassFilter_Register(&trigger_filter_config);
     
     trigger_filter_config.cutoff_freq = 30.0f; // 输出滤波可以稍微宽一点，减少延迟
@@ -560,12 +579,15 @@ void StartChassisTask(void const * argument)
 			osDelay(1);
 		}
 		#endif
+		
 		Minipc_ConfigAimTx(MiniPC,&board_instance->received_up_yaw_pos,&board_instance->received_up_pitch_pos,
                         &enemy_color,&minipc_mode,
                         &rune_flag,&Down_yaw->message.out_position);//这里可能引入悬空指针，但是似乎没影响程序运行，后面再管。
 		
     Minipc_ConfigSentryStatusTx(MiniPC_SentryStatus, &RefreeData.current_HP, &RefreeData.projectile_17mm);
+    
       
+    Minipc_ConfigGameInfoTx(MiniPC_ExpAim, &enemy_color, &RefreeData.game_progress, &RefreeData.remain_time, &RefreeData.gold_coin);
      //施工中，可能需要修改板间通信，我现在写的太烂了拓展性很差                   
     //Minipc_ConfigExpAimTx(MiniPC_SelfAim,)
     
@@ -590,15 +612,15 @@ void StartChassisTask(void const * argument)
 		test_speed=Down_yaw->message.out_velocity;
     test_pos_tr=Trigger->message.out_position;
     uint16_t last_wheel=CH_Receive_s->dr16_handle.wheel;
-    speed1=Chassis->chassis_motor[0]->message.out_velocity;
+    //speed1=Chassis->chassis_motor[0]->message.out_velocity;
 //    speed2=Chassis->chassis_motor[1]->message.out_velocity;
-    speed3=Chassis->chassis_motor[2]->message.out_velocity;
+    //speed3=Chassis->chassis_motor[2]->message.out_velocity;
 //    speed4=Chassis->chassis_motor[3]->message.out_velocity;
-		target1=Chassis->chassis_motor[0]->target_velocity;
+		//target1=Chassis->chassis_motor[0]->target_velocity;
 //		target2=Chassis->chassis_motor[1]->target_velocity;
-		target3=Chassis->chassis_motor[2]->target_velocity;
+		//target3=Chassis->chassis_motor[2]->target_velocity;
 //		target4=Chassis->chassis_motor[3]->target_velocity;
-		test_position=Down_yaw->message.out_position;//Chassis->chassis_motor[0]->message.out_position;
+		//test_position=Down_yaw->message.out_position;//Chassis->chassis_motor[0]->message.out_position;
 		// target_speed=Down_yaw->target_velocity;//Chassis->chassis_motor[0]->target_velocity;
 		dt2 = Dwt_GetDeltaT(&dwt2_cnt_last);
 			test_vel_tr=Trigger->message.out_velocity;
@@ -660,14 +682,25 @@ void StartChassisTask(void const * argument)
         //后面这里加个自动打弹逻辑
         target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
         target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
+        if(MiniPC_ExpAim->message.mod_pack.content==0x31){
+          //为1则小陀螺
+          Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
+          
+					if(Up_yaw!=NULL&&MiniPC->message.norm_aim_pack.find_bool==0x31){
+             Follow_Calculate(GimbalFollow_Instance);
+           }
+        }else{
 
-        Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+					//否则进入自瞄控制模式，完全由自瞄决定位置。
+           Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+				  
+        }
         Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
         Chassis->Chassis_speed.Vx=MiniPC->message.ch_pack.x_speed;
         Chassis->Chassis_speed.Vy=MiniPC->message.ch_pack.y_speed;
         // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
         if(usb_cnt-last_usb_cnt<2){
-      usb_timeout_cnt++;
+		      usb_timeout_cnt++;
       if(usb_timeout_cnt>1000){
         //500ms没有收到数据则认为USB通信异常，进入保护逻辑
         Chassis->Chassis_speed.Vx=0.0f;
@@ -688,7 +721,7 @@ void StartChassisTask(void const * argument)
         target_position=target_position<-PI?target_position+2*PI:target_position;
         target_position=target_position>PI+0.1f?PI:target_position;
         target_position=target_position<-PI-0.1f?-PI:target_position;
-		
+        MovingAvgFilter_Process(PC_target_pos_averg,target_position,&target_position);
         
         //Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
 		 target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
@@ -702,7 +735,7 @@ void StartChassisTask(void const * argument)
 		
         //防止疯车用的
         if(shoot_bool){
-        Trigger_Control(Trigger, 80);
+        Trigger_Control(Trigger, TRIGGER_SPEED);
         }else{
           Trigger_Control(Trigger, 0);
 

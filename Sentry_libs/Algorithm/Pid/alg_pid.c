@@ -30,8 +30,8 @@ PidInstance_s *Pid_Register(PidInitConfig_s *config)
     }
     pid_instance->out_max = config->out_max;
     pid_instance->dead_zone = config->dead_zone;
-    if (config->i_variable_max == 0 || config->i_variable_min > config->i_variable_max){
-        // 没有变速积分
+    if (config->i_variable_min > config->i_variable_max){
+        // 没有变速积分，仅有积分分离
         pid_instance->i_variable_min = config->i_variable_min;
         pid_instance->i_variable_max = config->i_variable_min;
     }
@@ -87,7 +87,13 @@ float Pid_Calculate(PidInstance_s *pid, float target, float now)
     // 判断死区
     if (fabsf(pid->err[0]) < pid->dead_zone){
         pid->err[0] = 0.0f;
+    }else if (pid->err[0] > 0.0f && fabsf(pid->err[0]) > pid->dead_zone){
+        pid->err[0] -= pid->dead_zone;
     }
+    else if (pid->err[0] < 0.0f && fabsf(pid->err[0]) > pid->dead_zone){
+        pid->err[0] += pid->dead_zone;
+    }
+
     // 计算比例项
     pid->p_out = pid->kp * pid->err[0];
     // 计算积分项
@@ -101,6 +107,7 @@ float Pid_Calculate(PidInstance_s *pid, float target, float now)
     }
     else if (fabsf(pid->err[0]) >= pid->i_variable_max){
         i_speed_ratio = 0;
+        pid->i_out = 0; // 超出变速积分上限时清零积分项
     }
     pid->i_out += pid->ki * pid->err[0] * i_speed_ratio;
     // 积分限幅

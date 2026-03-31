@@ -445,12 +445,13 @@ void Minipc_ConfigGameInfoTx(MiniPC_Instance* instance, uint8_t* enemy_color, ui
     instance->data_source.game_info.stage_remain_time = remain_time;
     instance->data_source.game_info.remaining_gold_coin = gold_coin;
 }
+    
 
 /**
  * @brief 配置哨兵状态发送数据源
  */
 void Minipc_ConfigSentryStatusTx(MiniPC_Instance* instance, uint16_t* current_hp, uint16_t* projectile_17mm) {
-    if (instance == NULL || instance->Send_Message_Type != USB_MSG_LAUNCH_TX) {  // 假设哨兵状态用LAUNCH_TX或其他，需要确认
+    if (instance == NULL || instance->Send_Message_Type != USB_MSG_SENTRY_STATUS_TX) {  // 假设哨兵状态用LAUNCH_TX或其他，需要确认
 #ifdef DEBUG
         Log_Error("Error: Invalid instance for SENTRY_STATUS_TX");
 #endif
@@ -573,6 +574,14 @@ void Minipc_UpdateInstanceData(MiniPC_Instance* instance) {
             if (src->game_progress != NULL) msg->game_progress = *(src->game_progress);
             if (src->stage_remain_time != NULL) msg->stage_remain_time = *(src->stage_remain_time);
             if (src->remaining_gold_coin != NULL) msg->remaining_gold_coin = *(src->remaining_gold_coin);
+            break;
+        }
+        case USB_MSG_SENTRY_STATUS_TX: {
+             Sentry_Status_Tx_Package_t* msg = &send_buffer->sentry_status;
+            USB_DataSource_Sentry_Status_t* src = &instance->data_source.sentry_status;
+            
+            if (src->current_HP != NULL) msg->current_HP = *(src->current_HP);
+            if (src->projectile_17mm != NULL) msg->projectile_17mm = *(src->projectile_17mm);
             break;
         }
         #endif

@@ -31,6 +31,9 @@ typedef struct  {
     bool data_ready;
     uint16_t current_HP;      // 当前血量
     uint16_t projectile_17mm; // 17mm剩余弹量
+    uint8_t game_progress;    // 游戏进度
+    uint16_t remain_time;     // 剩余时间
+    uint16_t gold_coin;       // 金币数量
 }RefereeData_t;
 
 

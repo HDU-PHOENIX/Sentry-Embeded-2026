@@ -13,8 +13,8 @@ typedef struct{
     float out_max;                   //输出限幅
     float dead_zone;                 //死区
     float angle_max;                 //角度限幅
-    float i_variable_min;            //变速积分下限,,设0时值与i_variable_min相同
-    float i_variable_max;            //变速积分上限,设0时值与i_variable_min相同
+    float i_variable_min;            //变速积分下限,可以只设此值来实现积分分离
+    float i_variable_max;            //变速积分上限
     uint8_t d_first;                 //微分先行开关
     float target[2];                 //两次设定值
     float now[2];                    //两次实际值

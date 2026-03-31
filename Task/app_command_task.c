@@ -119,7 +119,9 @@ void StartCommandTask(void const * argument)
     RefreeData.robot_id=Referee_Get_Robot_ID(ref_instance);
 		RefreeData.power_limit=Referee_Get_Power_Limit(ref_instance);
     RefreeData.current_HP= ref_instance->origin_data.ext_robot_status.current_HP;
-   
+   RefreeData.game_progress=ref_instance->origin_data.ext_game_status.game_progress;
+   RefreeData.remain_time=ref_instance->origin_data.ext_game_status.stage_remaining_time;
+   //RefreeData.gold_coin=ref_instance->origin_data.
     RefreeData.projectile_17mm=ref_instance->origin_data.ext_projectile_allowance.projectile_allowance_17mm;
 		Referee_Clear_Uart_Error(ref_instance);
 		
