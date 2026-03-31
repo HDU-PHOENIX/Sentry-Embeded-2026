@@ -19,21 +19,15 @@ extern uint8_t gimbal_ready_flag;
 extern board_instance_t *board_instance;
 #define DEBUG
 #ifdef DEBUG
-float test_speed_tr=0.0;
-float target_speed_tr=10.0;
-float test_position_tr=0.0;
 float target_wheel_speed=0.0;
-float test_output_tr=0.0;
 float test_speed_left=0.0f;
+float test_speed_right=0.0f;
 uint8_t test_flag=1;
 #endif
-//拨弹盘原点
-float pos_target_tr=FIRE_ORIGIN;
+
 //变量声明
 extern ShooterState_t Shooter_State;
 extern ShooterState_t Shooter_State_last;
-//float target_speed=0.0;//后续改为上位机提供
-//float trigger_position=0.0;
 
 LowpassFilter_t *right_wheel_vel_filter = NULL;
 FilterInitConfig_t right_wheel_filter_config;
@@ -70,8 +64,8 @@ static  DjiMotorInitConfig_s Left_Config = {
         .out_max = 400.0,                 // 输出限幅(速度环输入)
     },
     .velocity_pid_config = {
-        .kp = 50.0,                       // 速度环比例系数
-        .ki = 1.0,                        // 速度环积分系数
+        .kp = 20.0,                       // 速度环比例系数
+        .ki = 0.0,                        // 速度环积分系数
         .kd = 0.0,                        // 速度环微分系数
         .kf = 0.0,                        // 前馈系数
         .angle_max = 0,                 // 角度最大值(限幅用，为0则不限幅)
@@ -102,8 +96,8 @@ static  DjiMotorInitConfig_s Right_Config = {
         .out_max = 400.0,                 // 输出限幅(速度环输入)
     },
     .velocity_pid_config = {
-        .kp = 50.0,                       // 速度环比例系数
-        .ki = 1.0,                        // 速度环积分系数
+        .kp = 20.0,                       // 速度环比例系数
+        .ki = 0.0,                        // 速度环积分系数
         .kd = 0.0,                        // 速度环微分系数
         .kf = 0.0,                        // 前馈系数
         .angle_max = 0,                 // 角度最大值(限幅用，为0则不限幅)
@@ -260,19 +254,7 @@ void StartShooterTask(void const * argument)
       case SHOOTER_TEST:
         //测试模式，直接控制任何一个电机
 			
-		//	Pid_Enable(Left_Wheel->velocity_pid);
-      //  Pid_Enable(Right_Wheel->velocity_pid);
-				if(test_flag==1){
-//					pos_target_tr+=0.001;
-//					pos_target_tr=pos_target_tr>HALF_RANGE?pos_target_tr-2*HALF_RANGE:pos_target_tr;
-//					pos_target_tr=pos_target_tr<-HALF_RANGE?pos_target_tr+2*HALF_RANGE:pos_target_tr;
-					pos_target_tr=target_speed_tr;	
-				}
-				//Pid_Disable(Left_Wheel->velocity_pid);
-        //Pid_Disable(Right_Wheel->velocity_pid);
-				target_wheel_speed=-5500.0f;
-      //  Motor_Dji_Control(Trigger,pos_target_tr);
-			//	Motor_Dji_Transmit(Trigger);
+				target_wheel_speed=-WHEEL_SPEED;//-6666.0f;
         break;
 			default:
       Pid_Disable(Left_Wheel->velocity_pid);
@@ -283,6 +265,7 @@ void StartShooterTask(void const * argument)
 		
 		
 		test_speed_left=Left_Wheel->message.out_velocity;
+		test_speed_right=Right_Wheel->message.out_velocity;
 		float test_left;
 
     LowpassFilter_Process(right_wheel_vel_filter, Right_Wheel->message.out_velocity, &filtered_right_vel);
@@ -295,7 +278,7 @@ void StartShooterTask(void const * argument)
 
 
 		//Motor_Dji_Control(Left_Wheel,filtered_right_vel);
-		Motor_Dji_Control(Left_Wheel,-filtered_right_vel);
+		Motor_Dji_Control(Left_Wheel,-target_wheel_speed);
 		Motor_Dji_Transmit(Right_Wheel);  
        
      

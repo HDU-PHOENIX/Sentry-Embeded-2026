@@ -120,7 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>6</Name>
+          <Name>?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -168,7 +168,7 @@
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Up_yaw,0x0A</ItemText>
+          <ItemText>Up_yaw,0x10</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
@@ -396,6 +396,16 @@
           <count>27</count>
           <WinNumber>2</WinNumber>
           <ItemText>temp_pid</ItemText>
+        </Ww>
+        <Ww>
+          <count>28</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>Left_Wheel</ItemText>
+        </Ww>
+        <Ww>
+          <count>29</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>Right_Wheel</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>

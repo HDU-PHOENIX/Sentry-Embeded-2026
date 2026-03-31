@@ -7,11 +7,13 @@
 #include "app_gimbal_task.h"
 #define DEBUG
 #define IMU
+//#define AIM_DEBUG
 
 
 #define YAW_ORIGIN 0.0f
 //#define G_FEED_TEST
 #define GIMBAL_SWITCH_UT
+#define AIM_DEBUG
 //实例声明
 //此处做了修改，现在完全不关心下云台电机
  #define TEST_MODE_SOFT_KP
@@ -78,17 +80,17 @@ static DmMotorInitConfig_s pitch_config = {
 		#ifdef IMU
 		.angle_pid_config = {
 			
-        .kp = 17.0f,
+        .kp = 26.0f,
         .ki = 0.0015f,
-        .kd = 0.06f,
+        .kd = 0.5f,
         .kf = 0.0f,
         .angle_max = 2.0f * PI,
         .i_max = 100.0,
         .out_max = 400.0,
     },
     .velocity_pid_config = {
-        .kp = 0.5f,
-        .ki = 0.0f,
+        .kp = 0.75f,
+        .ki = 0.00f,
         .kd = 0.06f,
         .kf = 0.0f,
         .angle_max = 0,
@@ -419,8 +421,15 @@ void StartGimbalTask(void const * argument)
 
     Log("Gimbal ready\r\n");
     static uint8_t last_gimbal_mode = IMU_MODE;
-        static ReversingRampState_s pc_yaw_scan_ramp_state = {0};
-        static ReversingRampState_s test_encoder_yaw_ramp_state = {0};
+    static ReversingRampState_s pc_yaw_scan_ramp_state = {0};
+    static ReversingRampState_s test_encoder_yaw_ramp_state = {0};
+    static uint8_t pc_find_initialized = 0;
+    static uint8_t pc_find_last_raw_mode = IMU_MODE;
+    static uint8_t pc_find_filtered_mode = IMU_MODE;
+    static uint16_t pc_find_same_cnt = 0;
+    static uint32_t pc_find_last_mode_switch_tick = 0;
+    const uint16_t pc_find_debounce_ticks = 300; // 约30ms
+    const uint32_t pc_find_min_mode_hold_ms = 3000; // 模式最小保持时间
   for(;;)
   {
 		#ifdef DEBUG
@@ -438,6 +447,7 @@ void StartGimbalTask(void const * argument)
 			//Pid_Disable(pitch->velocity_pid);
 		#endif
         ControlMode=board_instance->received_control_mode;
+        find_bool = board_instance->received_shoot_bool;
 
         //把发送频率降低一点
         if(send_flag==0){
@@ -448,23 +458,67 @@ void StartGimbalTask(void const * argument)
         }   
 				uint8_t last_ControlMode=ControlMode;
         ControlMode=mode;
+                if (ControlMode != PC_MODE) {
+                        pc_find_initialized = 0;
+                }
 		switch (ControlMode) {
 			case PC_MODE:
-        //   target_up_position=board_instance->received_target_up_yaw;
-        //这个逻辑最好加个检查稳定性，比如延时多少，否则find_bool抖动会导致云台抖动
-		// 	    target_position=board_instance->received_target_up_pitch;
-				//同样有fallthough
-             if(board_instance->received_find_bool == 0){
-                // 在 -1.0 到 1.0 弧度之间往复扫描
-                // 参数：范围, 总步数, 步进间隔(ms), 到达端点停顿时间(ms)
+            {
+#ifndef AIM_DEBUG
+                uint32_t now_tick = osKernelSysTick();
+                uint8_t requested_mode = (board_instance->received_shoot_bool == 0) ? ENCODER_MODE : IMU_MODE;
+
+                // 首次进入PC模式时先落在IMU基态，后续仅0稳定后再切ENCODER。
+                if (!pc_find_initialized) {
+                    pc_find_initialized = 1;
+                    // 进入PC后先固定在IMU基态，避免0在首次进入时绕过防抖直接切到ENCODER。
+                    pc_find_last_raw_mode = IMU_MODE;
+                    pc_find_filtered_mode = IMU_MODE;
+                    pc_find_same_cnt = 0;
+                    pc_find_last_mode_switch_tick = now_tick;
+                }
                 
-                gimbal_mode=ENCODER_MODE;//切换到相对坐标的，进行扫描
-                target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200, &pc_yaw_scan_ramp_state);
-                // break; // 此处不应break，否则不执行下面的控制逻辑导致云台不动
-            } else {
-                gimbal_mode=IMU_MODE;
-                target_up_position=board_instance->received_target_up_yaw;
-                target_position=board_instance->received_target_up_pitch;
+                // 切换策略：仅在find_bool==0时做防抖并切到ENCODER；find_bool==1立即回IMU。
+                if (requested_mode == IMU_MODE) {
+                    if (pc_find_filtered_mode != IMU_MODE) {
+                        pc_find_filtered_mode = IMU_MODE;
+                        pc_find_last_mode_switch_tick = now_tick;
+                    }
+                    pc_find_last_raw_mode = IMU_MODE;
+                    pc_find_same_cnt = 0;
+                } else {
+                    if (pc_find_last_raw_mode == ENCODER_MODE) {
+                        if (pc_find_same_cnt < 0xFFFF) {
+                            pc_find_same_cnt++;
+                        }
+                    } else {
+                        pc_find_last_raw_mode = ENCODER_MODE;
+                        pc_find_same_cnt = 0;
+                    }
+
+                    if (pc_find_filtered_mode != ENCODER_MODE
+                        && pc_find_same_cnt >= pc_find_debounce_ticks
+                        && (now_tick - pc_find_last_mode_switch_tick) >= pc_find_min_mode_hold_ms) {
+                        pc_find_filtered_mode = ENCODER_MODE;
+                        pc_find_last_mode_switch_tick = now_tick;
+                    }
+                }
+
+                gimbal_mode = pc_find_filtered_mode;
+
+                if (gimbal_mode == ENCODER_MODE) {
+                    // 在 -1.0 到 1.0 弧度之间往复扫描
+                    // 参数：范围, 总步数, 步进间隔(ms), 到达端点停顿时间(ms)
+                    target_up_position = GenerateReversingRamp(-1.0f, 1.0f, 2000, 10, 200, &pc_yaw_scan_ramp_state);
+                } else {
+                    target_up_position = board_instance->received_target_up_yaw;
+                    target_position = board_instance->received_target_up_pitch;
+                }
+#else
+                gimbal_mode = IMU_MODE;
+                target_up_position = board_instance->received_target_up_yaw;
+                target_position = board_instance->received_target_up_pitch;
+#endif
             }
             // fallthrough
 			case SHOOT_MODE:
@@ -640,20 +694,30 @@ void StartGimbalTask(void const * argument)
                 {
                     uint8_t requested_mode = (virtual_find_bool == 0) ? ENCODER_MODE : IMU_MODE;
 
-                    if (requested_mode == test_last_raw_mode) {
-                        if (test_same_cnt < 0xFFFF) {
-                            test_same_cnt++;
+                    // 与PC_MODE一致：仅0稳定后进ENCODER；1立即回IMU。
+                    if (requested_mode == IMU_MODE) {
+                        if (test_filtered_mode != IMU_MODE) {
+                            test_filtered_mode = IMU_MODE;
+                            test_last_mode_switch_tick = now_tick;
                         }
-                    } else {
-                        test_last_raw_mode = requested_mode;
+                        test_last_raw_mode = IMU_MODE;
                         test_same_cnt = 0;
-                    }
+                    } else {
+                        if (test_last_raw_mode == ENCODER_MODE) {
+                            if (test_same_cnt < 0xFFFF) {
+                                test_same_cnt++;
+                            }
+                        } else {
+                            test_last_raw_mode = ENCODER_MODE;
+                            test_same_cnt = 0;
+                        }
 
-                    if (requested_mode != test_filtered_mode
-                        && test_same_cnt >= test_debounce_ticks
-                        && (now_tick - test_last_mode_switch_tick) >= test_min_mode_hold_ms) {
-                        test_filtered_mode = requested_mode;
-                        test_last_mode_switch_tick = now_tick;
+                        if (test_filtered_mode != ENCODER_MODE
+                            && test_same_cnt >= test_debounce_ticks
+                            && (now_tick - test_last_mode_switch_tick) >= test_min_mode_hold_ms) {
+                            test_filtered_mode = ENCODER_MODE;
+                            test_last_mode_switch_tick = now_tick;
+                        }
                     }
                 }
 

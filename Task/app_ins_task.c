@@ -557,34 +557,34 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
         float32_t g1[3] = {0,0,0};
         
         
-        for(uint8_t i = 0; i < 50; i++){  // 从100改为50次
-            BMI088_Read(bmi088_test);
+        // for(uint8_t i = 0; i < 50; i++){  // 从100改为50次
+        //     BMI088_Read(bmi088_test);
             
-            g0[0] += bmi088_test->accel[0];
-            g0[1] += bmi088_test->accel[1];
-            g0[2] += bmi088_test->accel[2];
-            Gyro_Offset[0] += bmi088_test->gyro[0];
-            Gyro_Offset[1] += bmi088_test->gyro[1];
-            Gyro_Offset[2] += bmi088_test->gyro[2];
-            osDelay(5);  
+        //     g0[0] += bmi088_test->accel[0];
+        //     g0[1] += bmi088_test->accel[1];
+        //     g0[2] += bmi088_test->accel[2];
+        //     Gyro_Offset[0] += bmi088_test->gyro[0];
+        //     Gyro_Offset[1] += bmi088_test->gyro[1];
+        //     Gyro_Offset[2] += bmi088_test->gyro[2];
+        //     osDelay(5);  
             
-            BMI088_Read(bmi088_test);
-            Gyro_Offset[0] += bmi088_test->gyro[0];
-            Gyro_Offset[1] += bmi088_test->gyro[1];
-            Gyro_Offset[2] += bmi088_test->gyro[2];
-            g1[0] += bmi088_test->accel[0];
-            g1[1] += bmi088_test->accel[1];
-            g1[2] += bmi088_test->accel[2];
-            osDelay(2);  
-        }
+        //     BMI088_Read(bmi088_test);
+        //     Gyro_Offset[0] += bmi088_test->gyro[0];
+        //     Gyro_Offset[1] += bmi088_test->gyro[1];
+        //     Gyro_Offset[2] += bmi088_test->gyro[2];
+        //     g1[0] += bmi088_test->accel[0];
+        //     g1[1] += bmi088_test->accel[1];
+        //     g1[2] += bmi088_test->accel[2];
+        //     osDelay(2);  
+        // }
 
-        for (uint8_t i = 0; i < 3; ++i){
+        /*for (uint8_t i = 0; i < 3; ++i){
             g1[i] /= 50;  // 对应平均值除数
 
             g0[i] /= 50;
             Gyro_Offset[i] /= 100; //陀螺仪零偏
             offset_gyro_lpf[i] = Gyro_Offset[i];
-        }
+        }*/
 
     if(calculate_quaternion_from_gravity(g0,g1,origin_quater)<0){//此处即完成四元数初始化
       //处理失败情况
@@ -600,9 +600,9 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
     FusionAhrsInitialise(&fusion_ahrs);
     FusionAhrsSetSettings(&fusion_ahrs, &settings);
     FusionOffsetInitialise(&fusion_offset, 1000); // 1000Hz 动态校准
-    fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
-    fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
-    fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
+    // fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
+    // fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
+    // fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
     
     FusionQuaternion init_q = {
         .element = {origin_quater[0], origin_quater[1], origin_quater[2], origin_quater[3]}
@@ -652,9 +652,9 @@ uint8_t Quater_Init(float* origin_quater, uint8_t check) {
         FusionAhrsInitialise(&fusion_ahrs);
         FusionAhrsSetSettings(&fusion_ahrs, &settings);
         FusionOffsetInitialise(&fusion_offset, 1000); // 保证非check路径也正确初始化动态校准
-        fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
-        fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
-        fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
+        // fusion_offset.gyroscopeOffset.axis.x = Gyro_Offset[0];
+        // fusion_offset.gyroscopeOffset.axis.y = Gyro_Offset[1];
+        // fusion_offset.gyroscopeOffset.axis.z = Gyro_Offset[2];
     }
     
     return 1;

@@ -4,6 +4,8 @@
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 
+#include "robot_config.h"
+
 #include "app_command_task.h"
 #include "app_gimbal_task.h"
 

@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sun Mar  8 16:56:30 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Mon Mar 30 02:23:55 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1244 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -586,8 +586,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[bd]"></a>__aeabi_memcpy</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memcpy_v6.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteBlocking
-<LI><a href="#[201]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteNoCheck
+<BR><BR>[Called By]<UL><LI><a href="#[201]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteBlocking
+<LI><a href="#[200]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteNoCheck
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_Transmit
 <LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Can_Register
 <LI><a href="#[12c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USER_CAN_RxFifo0MsgPendingCallback
@@ -638,9 +638,9 @@ Global Symbols
 
 <P><STRONG><a name="[ce]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config
-<LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
+<LI><a href="#[1fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
 <LI><a href="#[7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;USBD_CDC_Init
-<LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
+<LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
 <LI><a href="#[1ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NotchFilter_Register
 <LI><a href="#[cc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Bmi088_Register
 <LI><a href="#[1da]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Register
@@ -893,8 +893,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_ReadGyroData
 <LI><a href="#[c9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_ReadAccelData
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
+<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
 <P><STRONG><a name="[c9]"></a>BMI088_ReadAccelData</STRONG> (Thumb, 148 bytes, Stack size 40 bytes, dev_bmi088.o(.text.BMI088_ReadAccelData))
@@ -999,7 +998,7 @@ Global Symbols
 <LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 </UL>
-<BR>[Called By]<UL><LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
+<BR>[Called By]<UL><LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
 <LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Register
 <LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_DM_Register
 </UL>
@@ -1148,7 +1147,7 @@ Global Symbols
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsInitialise
 </UL>
 
-<P><STRONG><a name="[1fc]"></a>FusionAhrsSetQuaternion</STRONG> (Thumb, 46 bytes, Stack size 20 bytes, fusion_ahrs.o(.text.FusionAhrsSetQuaternion))
+<P><STRONG><a name="[1fb]"></a>FusionAhrsSetQuaternion</STRONG> (Thumb, 46 bytes, Stack size 20 bytes, fusion_ahrs.o(.text.FusionAhrsSetQuaternion))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = FusionAhrsSetQuaternion
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
@@ -1194,7 +1193,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
-<P><STRONG><a name="[1fb]"></a>FusionOffsetInitialise</STRONG> (Thumb, 96 bytes, Stack size 32 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
+<P><STRONG><a name="[1fa]"></a>FusionOffsetInitialise</STRONG> (Thumb, 96 bytes, Stack size 32 bytes, fusion_ahrs.o(.text.FusionOffsetInitialise))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = FusionOffsetInitialise
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
@@ -1509,9 +1508,9 @@ Global Symbols
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitReceiveCplt
 <LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAReceiveCplt
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitCplt
-<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
-<LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
-<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
+<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
 <LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_Start
 <LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_DMA_Abort
 </UL>
@@ -1912,15 +1911,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config
 </UL>
 
-<P><STRONG><a name="[208]"></a>HAL_SPI_ErrorCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_ErrorCallback))
+<P><STRONG><a name="[207]"></a>HAL_SPI_ErrorCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_ErrorCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = HAL_SPI_ErrorCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitReceiveCplt
 <LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAReceiveCplt
 <LI><a href="#[78]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAError
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitCplt
-<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
-<LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
 </UL>
 
 <P><STRONG><a name="[18b]"></a>HAL_SPI_Init</STRONG> (Thumb, 258 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_Init))
@@ -1946,11 +1945,11 @@ Global Symbols
 <LI><a href="#[18e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
 </UL>
 <BR>[Called By]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAReceiveCplt
-<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 <LI><a href="#[195]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxRxCpltCallback
 </UL>
 
-<P><STRONG><a name="[20b]"></a>HAL_SPI_RxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_RxHalfCpltCallback))
+<P><STRONG><a name="[20a]"></a>HAL_SPI_RxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_RxHalfCpltCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = HAL_SPI_RxHalfCpltCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAHalfReceiveCplt
@@ -1982,7 +1981,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_TransRecv
 </UL>
 
-<P><STRONG><a name="[210]"></a>HAL_SPI_TransmitReceive_IT</STRONG> (Thumb, 338 bytes, Stack size 28 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT))
+<P><STRONG><a name="[20f]"></a>HAL_SPI_TransmitReceive_IT</STRONG> (Thumb, 338 bytes, Stack size 28 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = HAL_SPI_TransmitReceive_IT
 </UL>
 <BR>[Called By]<UL><LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_TransRecv
@@ -1996,20 +1995,20 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_Transmit
 </UL>
 
-<P><STRONG><a name="[211]"></a>HAL_SPI_Transmit_IT</STRONG> (Thumb, 282 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_IT))
+<P><STRONG><a name="[210]"></a>HAL_SPI_Transmit_IT</STRONG> (Thumb, 282 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_IT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = HAL_SPI_Transmit_IT
 </UL>
 <BR>[Called By]<UL><LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_Transmit
 </UL>
 
-<P><STRONG><a name="[20a]"></a>HAL_SPI_TxCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxCpltCallback))
+<P><STRONG><a name="[209]"></a>HAL_SPI_TxCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxCpltCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = HAL_SPI_TxCpltCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitCplt
-<LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
 </UL>
 
-<P><STRONG><a name="[20c]"></a>HAL_SPI_TxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxHalfCpltCallback))
+<P><STRONG><a name="[20b]"></a>HAL_SPI_TxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxHalfCpltCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = HAL_SPI_TxHalfCpltCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAHalfTransmitCplt
@@ -2021,10 +2020,10 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_RxCpltCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitReceiveCplt
-<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 </UL>
 
-<P><STRONG><a name="[20d]"></a>HAL_SPI_TxRxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxRxHalfCpltCallback))
+<P><STRONG><a name="[20c]"></a>HAL_SPI_TxRxHalfCpltCallback</STRONG> (Thumb, 8 bytes, Stack size 4 bytes, stm32f4xx_hal_spi.o(.text.HAL_SPI_TxRxHalfCpltCallback))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = HAL_SPI_TxRxHalfCpltCallback
 </UL>
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAHalfTransmitReceiveCplt
@@ -2457,7 +2456,7 @@ Global Symbols
 <P><STRONG><a name="[1a]"></a>MemManage_Handler</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, stm32f4xx_it.o(.text.MemManage_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f407xx.o(RESET)
 </UL>
-<P><STRONG><a name="[213]"></a>Mode_Change</STRONG> (Thumb, 382 bytes, Stack size 8 bytes, app_command_task.o(.text.Mode_Change))
+<P><STRONG><a name="[212]"></a>Mode_Change</STRONG> (Thumb, 382 bytes, Stack size 8 bytes, app_command_task.o(.text.Mode_Change))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = Mode_Change
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
@@ -2664,20 +2663,17 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pwm_Register
 </UL>
 
-<P><STRONG><a name="[1f8]"></a>Quater_Init</STRONG> (Thumb, 756 bytes, Stack size 88 bytes, app_ins_task.o(.text.Quater_Init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 368 + Unknown Stack Size
-<LI>Call Chain = Quater_Init &rArr; BMI088_Read &rArr; BMI088_ReadAccelData &rArr; BMI088_AccelRead &rArr; Spi_TransRecv &rArr; HAL_SPI_TransmitReceive &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
+<P><STRONG><a name="[1f8]"></a>Quater_Init</STRONG> (Thumb, 272 bytes, Stack size 64 bytes, app_ins_task.o(.text.Quater_Init))
+<BR><BR>[Stack]<UL><LI>Max Depth = 280<LI>Call Chain = Quater_Init &rArr; calculate_quaternion_from_gravity &rArr; calculate_norm &rArr; __hardfp_sqrtf &rArr; __set_errno
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
-<LI><a href="#[17a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
+<BR>[Calls]<UL><LI><a href="#[17a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvPortMalloc
-<LI><a href="#[1fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetQuaternion
-<LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionOffsetInitialise
+<LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetQuaternion
+<LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionOffsetInitialise
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsSetSettings
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsInitialise
 <LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MadgwickAHRS_init
-<LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
-<LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_Read
+<LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
@@ -2686,37 +2682,37 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 24 + Unknown Stack Size
 <LI>Call Chain = SEGGER_RTT_Init &rArr; _DoInit
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
+<BR>[Calls]<UL><LI><a href="#[1fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Log_Init
 </UL>
 
-<P><STRONG><a name="[1fe]"></a>SEGGER_RTT_Write</STRONG> (Thumb, 78 bytes, Stack size 32 bytes, segger_rtt.o(.text.SEGGER_RTT_Write))
+<P><STRONG><a name="[1fd]"></a>SEGGER_RTT_Write</STRONG> (Thumb, 78 bytes, Stack size 32 bytes, segger_rtt.o(.text.SEGGER_RTT_Write))
 <BR><BR>[Stack]<UL><LI>Max Depth = 128 + Unknown Stack Size
 <LI>Call Chain = SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
-<LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
+<BR>[Calls]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
+<LI><a href="#[1fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_DoInit
 </UL>
-<BR>[Called By]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
-<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
+<BR>[Called By]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
+<LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
 </UL>
 
-<P><STRONG><a name="[1ff]"></a>SEGGER_RTT_WriteNoLock</STRONG> (Thumb, 176 bytes, Stack size 48 bytes, segger_rtt.o(.text.SEGGER_RTT_WriteNoLock))
+<P><STRONG><a name="[1fe]"></a>SEGGER_RTT_WriteNoLock</STRONG> (Thumb, 176 bytes, Stack size 48 bytes, segger_rtt.o(.text.SEGGER_RTT_WriteNoLock))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteBlocking
-<LI><a href="#[201]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteNoCheck
-<LI><a href="#[200]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_GetAvailWriteSpace
+<BR>[Calls]<UL><LI><a href="#[201]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteBlocking
+<LI><a href="#[200]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_WriteNoCheck
+<LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_GetAvailWriteSpace
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
+<BR>[Called By]<UL><LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
 </UL>
 
 <P><STRONG><a name="[d8]"></a>SEGGER_RTT_printf</STRONG> (Thumb, 42 bytes, Stack size 32 bytes, segger_rtt_printf.o(.text.SEGGER_RTT_printf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 448 + Unknown Stack Size
 <LI>Call Chain = SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
+<BR>[Calls]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Log_Init
 <LI><a href="#[120]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_CAN_RxFifo1MsgPendingCallback
@@ -2731,14 +2727,14 @@ Global Symbols
 <LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
 </UL>
 
-<P><STRONG><a name="[203]"></a>SEGGER_RTT_vprintf</STRONG> (Thumb, 924 bytes, Stack size 152 bytes, segger_rtt_printf.o(.text.SEGGER_RTT_vprintf))
+<P><STRONG><a name="[202]"></a>SEGGER_RTT_vprintf</STRONG> (Thumb, 924 bytes, Stack size 152 bytes, segger_rtt_printf.o(.text.SEGGER_RTT_vprintf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 416 + Unknown Stack Size
 <LI>Call Chain = SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
-<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
-<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
-<LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
+<BR>[Calls]<UL><LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
+<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
+<LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
+<LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
 </UL>
 <BR>[Called By]<UL><LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_printf
 </UL>
@@ -2762,7 +2758,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[18f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 <LI><a href="#[193]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TransmitReceive_DMA
-<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TransmitReceive_IT
+<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TransmitReceive_IT
 <LI><a href="#[192]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TransmitReceive
 <LI><a href="#[18e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_ReadPin
 <LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
@@ -2776,7 +2772,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[18f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 <LI><a href="#[194]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_Transmit_DMA
-<LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_Transmit_IT
+<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_Transmit_IT
 <LI><a href="#[190]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_Transmit
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 </UL>
@@ -2788,9 +2784,9 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 680 + Unknown Stack Size
 <LI>Call Chain = StartCommandTask &rArr; board_init &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
-<LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
-<LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Mode_Change
+<BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
+<LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Mode_Change
 <LI><a href="#[1f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Publish_Message
 <LI><a href="#[e6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Create_Publisher
 </UL>
@@ -2799,16 +2795,16 @@ Global Symbols
 <P><STRONG><a name="[8f]"></a>StartDefaultTask</STRONG> (Thumb, 20 bytes, Stack size 16 bytes, freertos.o(.text.StartDefaultTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 248<LI>Call Chain = StartDefaultTask &rArr; MX_USB_DEVICE_Init &rArr; USBD_Init &rArr; USBD_LL_Init &rArr; HAL_PCD_Init &rArr; HAL_PCD_MspInit &rArr; HAL_NVIC_SetPriority &rArr; NVIC_EncodePriority
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[1d2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_USB_DEVICE_Init
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_defaultTask)
 </UL>
-<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 3568 bytes, Stack size 184 bytes, app_gimbal_task.o(.text.StartGimbalTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 840 + Unknown Stack Size
+<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 3612 bytes, Stack size 192 bytes, app_gimbal_task.o(.text.StartGimbalTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 848 + Unknown Stack Size
 <LI>Call Chain = StartGimbalTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_printf
 <LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osKernelSysTick
 <LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
@@ -2833,11 +2829,11 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_Gimbal_Task)
 </UL>
-<P><STRONG><a name="[8e]"></a>StartShooterTask</STRONG> (Thumb, 1036 bytes, Stack size 40 bytes, app_shooter_task.o(.text.StartShooterTask))
+<P><STRONG><a name="[8e]"></a>StartShooterTask</STRONG> (Thumb, 1012 bytes, Stack size 40 bytes, app_shooter_task.o(.text.StartShooterTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 696 + Unknown Stack Size
 <LI>Call Chain = StartShooterTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowpassFilter_Process
 <LI><a href="#[1c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowpassFilter_Register
 <LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
@@ -3644,26 +3640,26 @@ Global Symbols
 <P><STRONG><a name="[257]"></a>arm_dot_prod_f32</STRONG> (Thumb, 156 bytes, Stack size 16 bytes, arm_dot_prod_f32.o(.text.arm_dot_prod_f32))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = arm_dot_prod_f32
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
 <P><STRONG><a name="[25a]"></a>arm_power_f32</STRONG> (Thumb, 128 bytes, Stack size 8 bytes, arm_power_f32.o(.text.arm_power_f32))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = arm_power_f32
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
 <P><STRONG><a name="[256]"></a>arm_scale_f32</STRONG> (Thumb, 102 bytes, Stack size 0 bytes, arm_scale_f32.o(.text.arm_scale_f32))
-<BR><BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR><BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
 <P><STRONG><a name="[259]"></a>arm_sub_f32</STRONG> (Thumb, 142 bytes, Stack size 16 bytes, arm_sub_f32.o(.text.arm_sub_f32))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = arm_sub_f32
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
-<P><STRONG><a name="[212]"></a>board_init</STRONG> (Thumb, 138 bytes, Stack size 24 bytes, dev_board_communicate.o(.text.board_init))
+<P><STRONG><a name="[211]"></a>board_init</STRONG> (Thumb, 138 bytes, Stack size 24 bytes, dev_board_communicate.o(.text.board_init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 656 + Unknown Stack Size
 <LI>Call Chain = board_init &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
@@ -3689,10 +3685,10 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sqrtf
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
-<P><STRONG><a name="[1fa]"></a>calculate_quaternion_from_gravity</STRONG> (Thumb, 712 bytes, Stack size 160 bytes, app_ins_task.o(.text.calculate_quaternion_from_gravity))
+<P><STRONG><a name="[1f9]"></a>calculate_quaternion_from_gravity</STRONG> (Thumb, 712 bytes, Stack size 160 bytes, app_ins_task.o(.text.calculate_quaternion_from_gravity))
 <BR><BR>[Stack]<UL><LI>Max Depth = 216<LI>Call Chain = calculate_quaternion_from_gravity &rArr; calculate_norm &rArr; __hardfp_sqrtf &rArr; __set_errno
 </UL>
 <BR>[Calls]<UL><LI><a href="#[25a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;arm_power_f32
@@ -3718,7 +3714,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 1244 + Unknown Stack Size
 <LI>Call Chain = isttask &rArr; FusionAhrsUpdateNoMagnetometer &rArr; FusionAhrsUpdate &rArr; Feedback(FusionVector, FusionVector) &rArr; FusionVectorNormalise(FusionVector) &rArr; FusionVectorMagnitudeSquared(FusionVector) &rArr; FusionVectorHadamardProduct(FusionVector, FusionVector)
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[17a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
 <LI><a href="#[cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvPortMalloc
 <LI><a href="#[25d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FusionAhrsGetQuaternion
@@ -3768,7 +3764,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
 
-<P><STRONG><a name="[1f9]"></a>osDelay</STRONG> (Thumb, 40 bytes, Stack size 24 bytes, cmsis_os.o(.text.osDelay))
+<P><STRONG><a name="[213]"></a>osDelay</STRONG> (Thumb, 40 bytes, Stack size 24 bytes, cmsis_os.o(.text.osDelay))
 <BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick &rArr; vListInsertEnd
 </UL>
 <BR>[Calls]<UL><LI><a href="#[25f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
@@ -3776,7 +3772,6 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartDefaultTask
 <LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartShooterTask
-<LI><a href="#[1f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 <LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 <LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
 </UL>
@@ -3821,7 +3816,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[cf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Spi_Register
 <LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Can_Register
 <LI><a href="#[266]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskCreate
-<LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
+<LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_init
 <LI><a href="#[1f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Quater_Init
 <LI><a href="#[1c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowpassFilter_Register
 <LI><a href="#[1ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NotchFilter_Register
@@ -3986,7 +3981,7 @@ Global Symbols
 <LI><a href="#[286]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspendAll
 <LI><a href="#[267]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvAddCurrentTaskToDelayedList
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<BR>[Called By]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 </UL>
 
 <P><STRONG><a name="[29c]"></a>vTaskInternalSetTimeOutState</STRONG> (Thumb, 36 bytes, Stack size 4 bytes, tasks.o(.text.vTaskInternalSetTimeOutState))
@@ -4273,7 +4268,7 @@ Global Symbols
 <LI><a href="#[2a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__mathlib_flt_invalid
 <LI><a href="#[2a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__mathlib_flt_infnan
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<BR>[Called By]<UL><LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 </UL>
 
 <P><STRONG><a name="[109]"></a>__hardfp_asinf</STRONG> (Thumb, 258 bytes, Stack size 16 bytes, asinf.o(i.__hardfp_asinf))
@@ -4357,7 +4352,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__set_errno
 </UL>
 <BR>[Called By]<UL><LI><a href="#[255]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_norm
-<LI><a href="#[1fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
+<LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calculate_quaternion_from_gravity
 <LI><a href="#[c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BMI088_CalibrateOffset
 </UL>
 
@@ -4809,29 +4804,29 @@ Local Symbols
 <P><STRONG><a name="[191]"></a>SPI_EndRxTxTransaction</STRONG> (Thumb, 204 bytes, Stack size 32 bytes, stm32f4xx_hal_spi.o(.text.SPI_EndRxTxTransaction))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
+<BR>[Calls]<UL><LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
 </UL>
 <BR>[Called By]<UL><LI><a href="#[192]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TransmitReceive
 <LI><a href="#[190]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_Transmit
 <LI><a href="#[77]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitReceiveCplt
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMATransmitCplt
-<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
-<LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
 </UL>
 
-<P><STRONG><a name="[20f]"></a>SPI_WaitFlagStateUntilTimeout</STRONG> (Thumb, 300 bytes, Stack size 48 bytes, stm32f4xx_hal_spi.o(.text.SPI_WaitFlagStateUntilTimeout))
+<P><STRONG><a name="[20e]"></a>SPI_WaitFlagStateUntilTimeout</STRONG> (Thumb, 300 bytes, Stack size 48 bytes, stm32f4xx_hal_spi.o(.text.SPI_WaitFlagStateUntilTimeout))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = SPI_WaitFlagStateUntilTimeout
 </UL>
 <BR>[Calls]<UL><LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 </UL>
-<BR>[Called By]<UL><LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTransaction
+<BR>[Called By]<UL><LI><a href="#[20d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTransaction
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTxTransaction
 </UL>
 
-<P><STRONG><a name="[20e]"></a>SPI_EndRxTransaction</STRONG> (Thumb, 228 bytes, Stack size 32 bytes, stm32f4xx_hal_spi.o(.text.SPI_EndRxTransaction))
+<P><STRONG><a name="[20d]"></a>SPI_EndRxTransaction</STRONG> (Thumb, 228 bytes, Stack size 32 bytes, stm32f4xx_hal_spi.o(.text.SPI_EndRxTransaction))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = SPI_EndRxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
+<BR>[Calls]<UL><LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_WaitFlagStateUntilTimeout
 </UL>
 <BR>[Called By]<UL><LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_DMAReceiveCplt
 </UL>
@@ -4839,22 +4834,22 @@ Local Symbols
 <P><STRONG><a name="[7f]"></a>SPI_TxISR_16BIT</STRONG> (Thumb, 52 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_TxISR_16BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_TxISR_16BIT &rArr; SPI_CloseTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_IT)
 </UL>
 <P><STRONG><a name="[80]"></a>SPI_TxISR_8BIT</STRONG> (Thumb, 52 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_TxISR_8BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_TxISR_8BIT &rArr; SPI_CloseTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
+<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_IT)
 </UL>
-<P><STRONG><a name="[209]"></a>SPI_CloseTx_ISR</STRONG> (Thumb, 208 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_CloseTx_ISR))
+<P><STRONG><a name="[208]"></a>SPI_CloseTx_ISR</STRONG> (Thumb, 208 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_CloseTx_ISR))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = SPI_CloseTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxCpltCallback
-<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<BR>[Calls]<UL><LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxCpltCallback
+<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTxTransaction
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 </UL>
@@ -4865,35 +4860,35 @@ Local Symbols
 <P><STRONG><a name="[79]"></a>SPI_2linesRxISR_16BIT</STRONG> (Thumb, 76 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_2linesRxISR_16BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_2linesRxISR_16BIT &rArr; SPI_CloseRxTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT)
 </UL>
 <P><STRONG><a name="[7a]"></a>SPI_2linesTxISR_16BIT</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_2linesTxISR_16BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_2linesTxISR_16BIT &rArr; SPI_CloseRxTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT)
 </UL>
 <P><STRONG><a name="[7b]"></a>SPI_2linesRxISR_8BIT</STRONG> (Thumb, 76 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_2linesRxISR_8BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_2linesRxISR_8BIT &rArr; SPI_CloseRxTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT)
 </UL>
 <P><STRONG><a name="[7c]"></a>SPI_2linesTxISR_8BIT</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_2linesTxISR_8BIT))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = SPI_2linesTxISR_8BIT &rArr; SPI_CloseRxTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
+<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_CloseRxTx_ISR
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_IT)
 </UL>
-<P><STRONG><a name="[207]"></a>SPI_CloseRxTx_ISR</STRONG> (Thumb, 246 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_CloseRxTx_ISR))
+<P><STRONG><a name="[206]"></a>SPI_CloseRxTx_ISR</STRONG> (Thumb, 246 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_CloseRxTx_ISR))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = SPI_CloseRxTx_ISR &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTxTransaction
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[195]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxRxCpltCallback
@@ -4908,15 +4903,15 @@ Local Symbols
 <P><STRONG><a name="[7d]"></a>SPI_DMAHalfTransmitCplt</STRONG> (Thumb, 22 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMAHalfTransmitCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = SPI_DMAHalfTransmitCplt &rArr; HAL_SPI_TxHalfCpltCallback
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxHalfCpltCallback
+<BR>[Calls]<UL><LI><a href="#[20b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxHalfCpltCallback
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_DMA)
 </UL>
 <P><STRONG><a name="[7e]"></a>SPI_DMATransmitCplt</STRONG> (Thumb, 166 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMATransmitCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = SPI_DMATransmitCplt &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxCpltCallback
-<LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<BR>[Calls]<UL><LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxCpltCallback
+<LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTxTransaction
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 </UL>
@@ -4925,7 +4920,7 @@ Local Symbols
 <P><STRONG><a name="[78]"></a>SPI_DMAError</STRONG> (Thumb, 52 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMAError))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = SPI_DMAError &rArr; HAL_SPI_ErrorCallback
 </UL>
-<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
 </UL>
 <BR>[Address Reference Count : 2]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_Transmit_DMA)
 <LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_DMA)
@@ -4933,15 +4928,15 @@ Local Symbols
 <P><STRONG><a name="[74]"></a>SPI_DMAHalfReceiveCplt</STRONG> (Thumb, 22 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMAHalfReceiveCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = SPI_DMAHalfReceiveCplt &rArr; HAL_SPI_RxHalfCpltCallback
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_RxHalfCpltCallback
+<BR>[Calls]<UL><LI><a href="#[20a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_RxHalfCpltCallback
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_DMA)
 </UL>
 <P><STRONG><a name="[75]"></a>SPI_DMAReceiveCplt</STRONG> (Thumb, 162 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMAReceiveCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = SPI_DMAReceiveCplt &rArr; SPI_EndRxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
-<LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTransaction
+<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<LI><a href="#[20d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTransaction
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_RxCpltCallback
 </UL>
@@ -4950,14 +4945,14 @@ Local Symbols
 <P><STRONG><a name="[76]"></a>SPI_DMAHalfTransmitReceiveCplt</STRONG> (Thumb, 22 bytes, Stack size 16 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMAHalfTransmitReceiveCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = SPI_DMAHalfTransmitReceiveCplt &rArr; HAL_SPI_TxRxHalfCpltCallback
 </UL>
-<BR>[Calls]<UL><LI><a href="#[20d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxRxHalfCpltCallback
+<BR>[Calls]<UL><LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxRxHalfCpltCallback
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> stm32f4xx_hal_spi.o(.text.HAL_SPI_TransmitReceive_DMA)
 </UL>
 <P><STRONG><a name="[77]"></a>SPI_DMATransmitReceiveCplt</STRONG> (Thumb, 134 bytes, Stack size 24 bytes, stm32f4xx_hal_spi.o(.text.SPI_DMATransmitReceiveCplt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = SPI_DMATransmitReceiveCplt &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
+<BR>[Calls]<UL><LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_ErrorCallback
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SPI_EndRxTxTransaction
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 <LI><a href="#[195]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_SPI_TxRxCpltCallback
@@ -5527,67 +5522,67 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[1bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_UART_RxCpltCallback
 </UL>
 
-<P><STRONG><a name="[1fd]"></a>_DoInit</STRONG> (Thumb, 164 bytes, Stack size 16 bytes, segger_rtt.o(.text._DoInit))
+<P><STRONG><a name="[1fc]"></a>_DoInit</STRONG> (Thumb, 164 bytes, Stack size 16 bytes, segger_rtt.o(.text._DoInit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16 + Unknown Stack Size
 <LI>Call Chain = _DoInit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ce]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Init
-<LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
+<LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
 </UL>
 
-<P><STRONG><a name="[200]"></a>_GetAvailWriteSpace</STRONG> (Thumb, 62 bytes, Stack size 16 bytes, segger_rtt.o(.text._GetAvailWriteSpace))
+<P><STRONG><a name="[1ff]"></a>_GetAvailWriteSpace</STRONG> (Thumb, 62 bytes, Stack size 16 bytes, segger_rtt.o(.text._GetAvailWriteSpace))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = _GetAvailWriteSpace
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
+<BR>[Called By]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
 </UL>
 
-<P><STRONG><a name="[201]"></a>_WriteNoCheck</STRONG> (Thumb, 140 bytes, Stack size 40 bytes, segger_rtt.o(.text._WriteNoCheck))
+<P><STRONG><a name="[200]"></a>_WriteNoCheck</STRONG> (Thumb, 140 bytes, Stack size 40 bytes, segger_rtt.o(.text._WriteNoCheck))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = _WriteNoCheck
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
+<BR>[Called By]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
 </UL>
 
-<P><STRONG><a name="[202]"></a>_WriteBlocking</STRONG> (Thumb, 228 bytes, Stack size 48 bytes, segger_rtt.o(.text._WriteBlocking))
+<P><STRONG><a name="[201]"></a>_WriteBlocking</STRONG> (Thumb, 228 bytes, Stack size 48 bytes, segger_rtt.o(.text._WriteBlocking))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = _WriteBlocking
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
+<BR>[Called By]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_WriteNoLock
 </UL>
 
-<P><STRONG><a name="[204]"></a>_StoreChar</STRONG> (Thumb, 118 bytes, Stack size 24 bytes, segger_rtt_printf.o(.text._StoreChar))
+<P><STRONG><a name="[203]"></a>_StoreChar</STRONG> (Thumb, 118 bytes, Stack size 24 bytes, segger_rtt_printf.o(.text._StoreChar))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152 + Unknown Stack Size
 <LI>Call Chain = _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
+<BR>[Calls]<UL><LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_Write
 </UL>
-<BR>[Called By]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
-<LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
-<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
+<BR>[Called By]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
+<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
+<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
 </UL>
 
-<P><STRONG><a name="[205]"></a>_PrintInt</STRONG> (Thumb, 460 bytes, Stack size 56 bytes, segger_rtt_printf.o(.text._PrintInt))
+<P><STRONG><a name="[204]"></a>_PrintInt</STRONG> (Thumb, 460 bytes, Stack size 56 bytes, segger_rtt_printf.o(.text._PrintInt))
 <BR><BR>[Stack]<UL><LI>Max Depth = 264 + Unknown Stack Size
 <LI>Call Chain = _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[206]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
-<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
+<BR>[Calls]<UL><LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintUnsigned
+<LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
 </UL>
-<BR>[Called By]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
+<BR>[Called By]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
 </UL>
 
-<P><STRONG><a name="[206]"></a>_PrintUnsigned</STRONG> (Thumb, 428 bytes, Stack size 56 bytes, segger_rtt_printf.o(.text._PrintUnsigned))
+<P><STRONG><a name="[205]"></a>_PrintUnsigned</STRONG> (Thumb, 428 bytes, Stack size 56 bytes, segger_rtt_printf.o(.text._PrintUnsigned))
 <BR><BR>[Stack]<UL><LI>Max Depth = 208 + Unknown Stack Size
 <LI>Call Chain = _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
-<BR>[Calls]<UL><LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
+<BR>[Calls]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_StoreChar
 </UL>
-<BR>[Called By]<UL><LI><a href="#[203]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
-<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
+<BR>[Called By]<UL><LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_vprintf
+<LI><a href="#[204]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_PrintInt
 </UL>
 
 <P><STRONG><a name="[1f5]"></a>Pwm_SelectTclk</STRONG> (Thumb, 146 bytes, Stack size 48 bytes, bsp_pwm.o(.text.Pwm_SelectTclk))
