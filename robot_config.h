@@ -29,6 +29,7 @@
 #define TRIGGER_SPEED 80                    //拨弹盘速度
 #define POWER_MAX 100                       //最大功率限制
 
+#define WHEEL_SPEED 6666
 
 #ifdef USE_FREERTOS
 #include "FreeRTOS.h"

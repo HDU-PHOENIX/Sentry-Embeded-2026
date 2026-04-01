@@ -517,12 +517,14 @@ void Trigger_Control(DjiMotorInstance_s *motor, float speed)
 void StartChassisTask(void const * argument)
 {
   /* USER CODE BEGIN StartChassisTask */
+  Minipc_HookInit();
 	CH_Subs=Create_Subscriber("dr16_topic",sizeof(Dr16Instance_s));
   CH_Receive_s = (Dr16Instance_s*)pvPortMalloc(sizeof(Dr16Instance_s)); // 为指针分配内存
   Chassis = Chassis_Register(&Chassis_config);
     if (Chassis == NULL) {
         Log_Error("Chassis Register Failed!");
     }
+
   MiniPC = Minipc_Register(&miniPC_config);
 	MiniPC_SelfAim = Minipc_Register(&SelfAim_config);	
 	MiniPC_ExpAim = Minipc_Register(&ExpAim_config);
@@ -654,7 +656,7 @@ void StartChassisTask(void const * argument)
   }
 		
     //测试代码
-    Follow_Calculate(GimbalFollow_Instance);
+   // Follow_Calculate(GimbalFollow_Instance);
     #ifdef SHOOT_DEBUG
     control_mode=SHOOT_MODE;
     #endif 
@@ -680,17 +682,26 @@ void StartChassisTask(void const * argument)
         
         // Chassis->gimbal_yaw_angle
         //后面这里加个自动打弹逻辑
-        target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
-        target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
+       //自瞄临时逻辑
+//				if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
+//             target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
+//        target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
+//             Follow_Calculate(GimbalFollow_Instance);
+//           }
+				////临时逻辑结束
         if(MiniPC_ExpAim->message.mod_pack.content==0x31){
           //为1则小陀螺
+					Chassis->Gyroscope_Speed=SCROPE_SPEED;
+					
           Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
           
-					if(Up_yaw!=NULL&&MiniPC->message.norm_aim_pack.find_bool==0x31){
+					if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
+             target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
+        target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
              Follow_Calculate(GimbalFollow_Instance);
            }
         }else{
-
+						Chassis->Gyroscope_Speed=0.0f;
 					//否则进入自瞄控制模式，完全由自瞄决定位置。
            Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
 				  
