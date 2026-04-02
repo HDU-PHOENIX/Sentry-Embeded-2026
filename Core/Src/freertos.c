@@ -150,7 +150,7 @@ void MX_FREERTOS_Init(void) {
   IsttaskHandle = osThreadCreate(osThread(Isttask), NULL);
 
   /* definition and creation of Chassis_task */
-  osThreadDef(Chassis_task, StartChassisTask, osPriorityIdle, 0, 512);
+  osThreadDef(Chassis_task, StartChassisTask, osPriorityHigh, 0, 512);
   Chassis_taskHandle = osThreadCreate(osThread(Chassis_task), NULL);
 
   /* definition and creation of CommandTask */

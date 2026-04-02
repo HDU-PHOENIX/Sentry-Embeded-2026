@@ -43,4 +43,7 @@ frame/alg_chassis_calc.o: \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
   ..\Sentry_libs\Algorithm\Pid\alg_pid.h \
-  ..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_power_control.h
+  ..\Sentry_libs\Module\Referee\dev_referee.h \
+  ..\Sentry_libs\Module\Referee\dev_referee_protocol.h \
+  ..\Sentry_libs\Bsp\Uart\bsp_uart.h ..\Core\Inc\usart.h \
+  ..\Sentry_libs\Module\Daemon\dev_daemon.h

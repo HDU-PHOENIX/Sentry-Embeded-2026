@@ -10,10 +10,11 @@ chassis_calc是一个用于控制底盘的解算程序，提供了基础的麦�
     - 本解算程序采用右手系,x轴正方向为前侧,y轴正方向为左方,且要求轮子正转为逆时针方向
     - 轮子电调为id为1——4
     - 为了实现坐标系转换的正确和底盘跟随,需要在云台task中将yaw轴电机编码值发给底盘实例的gimbal_yaw_angle(如果仅测试底盘能动性,则可无视)
-    - 先调好使用陀螺仪下yaw轴的pid后再使用小陀螺与跟随模式
+    - 先调好使用陀螺仪下yaw轴的pid后再使用小陀螺与跟随模式(小陀螺转速请在config里传给Gyroscope_Speed;)
     - 如果发现底盘未注册成功,请检查config配置
 2. 电机id数据现已删除,会根据电机rxid自动配置
-3. 速度为云台坐标系的速度,使用时传给absolute_chassis_speed这个结构体
+3. 速度为云台坐标系的速度,使用时传给Chassis_speed这个结构体
+4. 舵轮解算初步能用,Chassis_Omni_Steering_Message_s中的gimbal_steering_zero[4]是舵向电机朝正方向的编码值,gimbal_steering_normal[4]是舵向电机朝正方向的编码值以菱形排时的编码值
 ## 使用例程(一种config的方式)
 ### 全向轮
 ```C
@@ -22,10 +23,10 @@ extern GimbalInstance_s *Gimbal;
 	static ChassisInitConfig_s Chassis_config = {
 		.type = Omni_Wheel,
 		.gimbal_yaw_zero = 1.82637596f,//-0.0312073231f,
-		.omni_message={
+		.omni_steering_message={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.230f,
-		},    //如果这里是麦轮,则填mecanum_steering_message这个结构体里面的数据
+		},    //如果这里是麦轮,则填mecanum_message这个结构体里面的数据
 		.gimbal_follow_pid_config={
 		  .kp = -3.0f,
       .ki = 0.0f,
@@ -112,7 +113,7 @@ void ChassisTask(void const * argument)
 	Chassis = Chassis_Register(&Chassis_config);
   for(;;){
     Chassis->gimbal_yaw_angle = Gimbal->yaw_motor->message.out_position;//这一步为将yaw轴云台编码值数据传给底盘    
-    Chassis_Mode_Choose(Chassis,CHASSIS_NORMAL);
+    Chassis->Chassis_Action= CHASSIS_NORMAL;
     Chassis_Control(Chassis);
      osDelay(1);
   }
@@ -123,61 +124,7 @@ void ChassisTask(void const * argument)
 
 > 舵轮程序测试及完善
 
-> 添加更多功率策略
-
-## 功率控制挂载
-
-当前目录新增了独立模块：
-
-- `alg_chassis_power_control.h`
-- `alg_chassis_power_control.c`
-
-`alg_chassis_calc` 仅做接口融合，不直接在原文件里展开功率控制公式。
-
-### 配置方法
-
-在 `ChassisInitConfig_s` 中新增了 `power_control_config`，用于描述功率控制策略：
-
-- `enabled`：是否启用功率控制
-- `power_buffer_target`：功率缓冲目标值，会配合 `Chassis_power_limit_pid_config` 修正总功率上限
-- `steering_power_ratio`：给舵向电机预留的功率比例
-- `wheel_group`：轮向电机功率控制模型与方法
-- `steering_group`：舵向电机功率控制模型与方法
-
-其中 `wheel_group.method` / `steering_group.method` 支持：
-
-- `CHASSIS_POWER_CONTROL_METHOD_DISABLED`
-- `CHASSIS_POWER_CONTROL_METHOD_POWER_ATTENUATION`
-- `CHASSIS_POWER_CONTROL_METHOD_CURRENT_ATTENUATION`
-
-### 运行时更新
-
-上层在循环中更新功率状态：
-
-```c
-Chassis_Update_Power_State(chassis, now_chassis_power, now_power_buffer);
-Chassis_Control(chassis);
-```
-
-当前融合方式会在 `Chassis_Control` 中完成：
-
-1. 底盘逆解
-2. 驱动/舵向电机 PID 输出计算
-3. 功率控制模块二次限幅
-4. 发送 CAN
-
-### 系数说明
-
-功率模型默认使用如下形式：
-
-`P = k0 + k1 * I + k2 * w + k3 * I * w + k4 * I^2 + k5 * w^2`
-
-这里的 `I` 和 `w` 单位必须与工程实际输入保持一致：
-
-- `I` 使用的是 `DjiMotorInstance_s.output` 的单位
-- `w` 使用的是 `message.rotor_velocity` 的单位
-
-因此在移植模型参数时，需要保证拟合时采用的输入单位与这里一致。
+> 添加功率限制
 
 
 

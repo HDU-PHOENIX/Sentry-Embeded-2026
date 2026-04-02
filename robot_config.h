@@ -25,7 +25,7 @@
 // #define USER_CAN3_FIFO_0                 // 使用 CAN3 FIFO0
 // #define USER_CAN3_FIFO_1                 // 使用 CAN3 FIFO1
 
-#define SCROPE_SPEED 3                      //小陀螺速度
+#define SCROPE_SPEED 9.42                      //小陀螺速度
 #define TRIGGER_SPEED 80                    //拨弹盘速度
 #define POWER_MAX 100                       //最大功率限制
 

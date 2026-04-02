@@ -21,7 +21,8 @@
 //宏定义
 #define DEBUG
 //#define SHOOT_DEBUG
-
+//#define PC_SELFAIM_DEBUG
+#define PC_SELFAIM_DEBUG
 //实例声明
 ChassisInstance_s *Chassis;
 DmMotorInstance_s *Down_yaw;
@@ -98,47 +99,26 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero = -0.767289639,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero = -0.382446289,//-0.767289639,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
 	  .chassis_radius= 0.26176f,
 		},
 		.Chassis_power_limit = 100.0f,
+		
     .Gyroscope_Speed = SCROPE_SPEED,//9.42f,  // 设置小陀螺旋转速度 (rad/s)
 		.gimbal_follow_pid_config={
 		  .kp = 4.5f,
       .ki = 0.0f,
       .kd = 0.0f,
       .angle_max = 2.0f * PI,
-			.dead_zone = 0.03f,
+			.dead_zone = 0.05f,
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
 		},
 
-    .power_control_config = {
-      .enabled = false,
-      .power_buffer_target = 30.0f,
-      .steering_power_ratio = 0.0f,
-
-      .wheel_group = {
-          .method = CHASSIS_POWER_CONTROL_METHOD_CURRENT_ATTENUATION,
-          .motor_count = 4,
-          .model = {
-              .k0 = 0.66419934f,
-              .k1 = 0.00644428f,
-              .k2 = 0.00014239f,
-              .k3 = 0.01764443f,
-              .k4 = 0.16501439f,
-              .k5 = 0.00003097f,
-          },
-      },
-
-      .steering_group = {
-          .method = CHASSIS_POWER_CONTROL_METHOD_DISABLED,
-          .motor_count = 0,
-      },
-    },
+  
 		.motor_config[0]={
     .type = M3508,
     .control_mode = DJI_VELOCITY,
@@ -219,24 +199,28 @@ static ChassisInitConfig_s Chassis_config={
     }
   },
   .motor_loss_config[0] = {
-     .K1 =  1.3755676572327828e-06,
-     .K2 = 4.1193284449977046e-07,
-     .Ka = 5.454877040789132
+     .K1 =  4.342339091332169e-07,
+        .K2 = -9.253620989674862e-08,
+        .Ka = 0.7822813854651774,
+
   },
   .motor_loss_config[1] = {
-     .K1 =  1.3755676572327828e-06,
-     .K2 = 4.1193284449977046e-07,
-     .Ka = 5.454877040789132
+     .K1 =  4.342339091332169e-07,
+        .K2 = -9.253620989674862e-08,
+        .Ka = 0.7822813854651774,
+
   },
   .motor_loss_config[2] = {
-     .K1 =  1.3755676572327828e-06,
-     .K2 = 4.1193284449977046e-07,
-     .Ka = 5.454877040789132
+.K1 =  4.342339091332169e-07,
+        .K2 = -9.253620989674862e-08,
+        .Ka = 0.7822813854651774,
+
   },
   .motor_loss_config[3] = {
-     .K1 =  1.3755676572327828e-06,
-     .K2 = 4.1193284449977046e-07,
-     .Ka = 5.454877040789132
+    .K1 =  4.342339091332169e-07,
+        .K2 = -9.253620989674862e-08,
+        .Ka = 0.7822813854651774,
+
   }
 	};
 
@@ -411,7 +395,7 @@ gimbal_follow_config_s GimbalFollow_config = {
         .kp = -5.0f,
         .ki = 0.0f,
         .kd = 0.0f,
-        .dead_zone = 0.15f,
+        .dead_zone = 0.2f,
         .i_max = 0.0f,
         .out_max = 2 * 3.141593f,
     }
@@ -635,7 +619,7 @@ void StartChassisTask(void const * argument)
     // target_up_position=MiniPC_SelfAim->message.exp_aim_pack.yaw;
     // target_up_pitch=MiniPC_SelfAim->message.exp_aim_pack.pitch;
 
-    if(CH_Receive_s->dr16_handle.wheel>400||MiniPC_SelfAim->message.norm_aim_pack.shoot_bool==0x31){
+    if(CH_Receive_s->dr16_handle.wheel>400&&MiniPC_SelfAim->message.norm_aim_pack.shoot_bool==1){
       shoot_bool=1;
       
     }else{
@@ -650,6 +634,7 @@ void StartChassisTask(void const * argument)
         send_flag=1;
       }else{
       last_usb_cnt=usb_cnt;//两个周期更新一次引入延时
+			//if(MiniPC_ExpAim->message.mod_pack.type!=1)find_bool=0;
       board_send_message(board_instance,target_up_position,Quater.yaw ,target_up_pitch, combined_state_global, find_bool);
       send_flag=0;
       }
@@ -679,55 +664,93 @@ void StartChassisTask(void const * argument)
           //设置目标值为当前值避免疯转
         }
   				target_tr=40.0f;
-        
-        // Chassis->gimbal_yaw_angle
-        //后面这里加个自动打弹逻辑
-       //自瞄临时逻辑
-//				if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
-//             target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
-//        target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
-//             Follow_Calculate(GimbalFollow_Instance);
-//           }
-				////临时逻辑结束
-        if(MiniPC_ExpAim->message.mod_pack.content==0x31){
-          //为1则小陀螺
-					Chassis->Gyroscope_Speed=SCROPE_SPEED;
-					
-          Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
-          
-					if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
-             target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
-        target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
-             Follow_Calculate(GimbalFollow_Instance);
-           }
-        }else{
-						Chassis->Gyroscope_Speed=0.0f;
-					//否则进入自瞄控制模式，完全由自瞄决定位置。
-           Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
-				  
-        }
-        Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
-        Chassis->Chassis_speed.Vx=MiniPC->message.ch_pack.x_speed;
-        Chassis->Chassis_speed.Vy=MiniPC->message.ch_pack.y_speed;
-        // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
-        if(usb_cnt-last_usb_cnt<2){
+                if(usb_cnt-last_usb_cnt<2){
 		      usb_timeout_cnt++;
       if(usb_timeout_cnt>1000){
+				MiniPC->message.ch_pack.yaw=0.0f;
+				
         //500ms没有收到数据则认为USB通信异常，进入保护逻辑
         Chassis->Chassis_speed.Vx=0.0f;
         Chassis->Chassis_speed.Vy=0.0f;
         Chassis->Chassis_speed.Vw=0.0f;
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+				Motor_Dm_Transmit(Down_yaw);
         usb_timeout_cnt=0;
       }else{
 				Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_ENABLE);
+				Motor_Dm_Transmit(Down_yaw);
 			}
 
     }
+        // Chassis->gimbal_yaw_angle
+        //后面这里加个自动打弹逻辑
+#ifdef PC_SELFAIM_DEBUG
+        // 上位机自瞄调试专用逻辑：切换此宏可快速回到旧自瞄路径
+        if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
+          Chassis->Gyroscope_Speed=SCROPE_SPEED;
+          Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+          Follow_Calculate(GimbalFollow_Instance);
+          target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
+          target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
+          target_speed=GimbalFollow_Instance->output;
+          test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+          Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
+          Motor_Dm_Transmit(Down_yaw);
+        }else{
+          Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
+          target_position+=MiniPC->message.ch_pack.yaw;
+          target_position=target_position>PI?target_position-2*PI:target_position;
+          target_position=target_position<-PI?target_position+2*PI:target_position;
+          target_position=target_position>PI+0.1f?PI:target_position;
+          target_position=target_position<-PI-0.1f?-PI:target_position;
+          MovingAvgFilter_Process(PC_target_pos_averg,target_position,&target_position);
+
+          target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+          test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+          Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
+          Motor_Dm_Transmit(Down_yaw);
+          Pid_Disable(Trigger->angle_pid);
+        }
+#else
+                ////临时逻辑结束
+        if(MiniPC_ExpAim->message.mod_pack.type==1){
+          //为1则小陀螺
+					Chassis->Gyroscope_Speed=SCROPE_SPEED;
+					
+          Chassis_Change_Mode(Chassis, CHASSIS_GYROSCOPE);
+           //buzzer_play_note(buzzer, 4, 0, 1, 300); // “滴”一声提示开始检测
+            if(Up_yaw!=NULL&&MiniPC_SelfAim->message.norm_aim_pack.find_bool==0x01){
+					      Chassis->Gyroscope_Speed=SCROPE_SPEED;
+                 Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
+        Chassis->Chassis_speed.Vx=MiniPC->message.ch_pack.x_speed;
+        Chassis->Chassis_speed.Vy=MiniPC->message.ch_pack.y_speed;
+        // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
+
         Chassis_Control(Chassis);
-        //临时逻辑
-		
-        target_position+=MiniPC->message.ch_pack.yaw;
+                Follow_Calculate(GimbalFollow_Instance);
+					      target_up_position=MiniPC_SelfAim->message.norm_aim_pack.yaw;
+                target_up_pitch=MiniPC_SelfAim->message.norm_aim_pack.pitch;
+						    target_speed=GimbalFollow_Instance->output;
+			          test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+				        Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
+				        Motor_Dm_Transmit(Down_yaw);
+              
+                  
+                if(shoot_bool){
+                Trigger_Control(Trigger, TRIGGER_SPEED);
+                }else{
+                  Trigger_Control(Trigger, 0);
+
+                 }
+                Motor_Dji_Control(Trigger,Trigger->target_velocity); // Trigger_Control handles PID and output
+                
+                  Motor_Dji_Transmit(Trigger); 
+                break;
+            }else{
+            Chassis_Change_Mode(Chassis, CHASSIS_FOLLOW_GIMBAL);
+          }
+						
+						  target_position+=MiniPC->message.ch_pack.yaw;
         target_position=target_position>PI?target_position-2*PI:target_position;
         target_position=target_position<-PI?target_position+2*PI:target_position;
         target_position=target_position>PI+0.1f?PI:target_position;
@@ -740,11 +763,49 @@ void StartChassisTask(void const * argument)
 		Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
         Pid_Disable(Trigger->angle_pid);
+					 }else{
+          target_position+=MiniPC->message.ch_pack.yaw;
+        target_position=target_position>PI?target_position-2*PI:target_position;
+        target_position=target_position<-PI?target_position+2*PI:target_position;
+        target_position=target_position>PI+0.1f?PI:target_position;
+        target_position=target_position<-PI-0.1f?-PI:target_position;
+        MovingAvgFilter_Process(PC_target_pos_averg,target_position,&target_position);
+        
+        //Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+		 target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+		test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+		Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
+				Motor_Dm_Transmit(Down_yaw);
+        
+           }
 
+#endif
+        Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;
+        Chassis->Chassis_speed.Vx=MiniPC->message.ch_pack.x_speed;
+        Chassis->Chassis_speed.Vy=MiniPC->message.ch_pack.y_speed;
+        // Down_yaw->target_position=MiniPC->message.ch_pack.yaw;
 
-        target_position=Quater.yaw;
+        Chassis_Control(Chassis);
+        //临时逻辑
 		
-        //防止疯车用的
+//        target_position+=MiniPC->message.ch_pack.yaw;
+//        target_position=target_position>PI?target_position-2*PI:target_position;
+//        target_position=target_position<-PI?target_position+2*PI:target_position;
+//        target_position=target_position>PI+0.1f?PI:target_position;
+//        target_position=target_position<-PI-0.1f?-PI:target_position;
+//        MovingAvgFilter_Process(PC_target_pos_averg,target_position,&target_position);
+//        
+//        //Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
+//		 target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+//		test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
+//		Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
+//				Motor_Dm_Transmit(Down_yaw);
+//        Pid_Disable(Trigger->angle_pid);
+
+
+       // target_position=Quater.yaw;
+		
+        
         if(shoot_bool){
         Trigger_Control(Trigger, TRIGGER_SPEED);
         }else{
@@ -776,8 +837,8 @@ void StartChassisTask(void const * argument)
         if(abs(CH_Receive_s->dr16_handle.ch2)<15){
           CH_Receive_s->dr16_handle.ch2=0;
         }
-				Chassis->Chassis_speed.Vx=CH_Receive_s->dr16_handle.ch3/132.0f;
-				Chassis->Chassis_speed.Vy=-CH_Receive_s->dr16_handle.ch2/132.0f;
+				Chassis->Chassis_speed.Vx=CH_Receive_s->dr16_handle.ch3/220.0f;
+				Chassis->Chassis_speed.Vy=-CH_Receive_s->dr16_handle.ch2/220.0f;
 				Chassis_Control(Chassis);
         //小yaw位置跟随，避免出现问题
         target_up_position=board_instance->received_up_yaw_pos;

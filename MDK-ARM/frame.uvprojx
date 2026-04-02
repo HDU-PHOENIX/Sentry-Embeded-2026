@@ -1030,6 +1030,11 @@
               <FilePath>..\Sentry_libs\Algorithm\Pid\alg_pid.h</FilePath>
             </File>
             <File>
+              <FileName>alg_kalman.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Sentry_libs\Algorithm\Kalman\alg_kalman.c</FilePath>
+            </File>
+            <File>
               <FileName>alg_chassis_calc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.c</FilePath>
@@ -1038,11 +1043,6 @@
               <FileName>alg_chassis_calc.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Sentry_libs\Algorithm\Chassis_calc\alg_chassis_calc.h</FilePath>
-            </File>
-            <File>
-              <FileName>alg_kalman.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Sentry_libs\Algorithm\Kalman\alg_kalman.c</FilePath>
             </File>
             <File>
               <FileName>alg_kalman.h</FileName>
