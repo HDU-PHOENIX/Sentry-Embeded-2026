@@ -149,9 +149,9 @@ typedef struct {
 typedef struct {
     char start;                // 0 帧头，取 's'
     char datatype;             // 1 消息类型 0xA3
-    uint16_t type;             // 2 类型  0：无  1：小陀螺  2：云台单连发控制
-    uint16_t content;          // 4 具体内容
-    uint8_t reserved[24];      // 6 - 30 预留空位（填充0）
+    uint8_t type;             // 2 类型  0：无  1：小陀螺  2：云台单连发控制
+    uint8_t content;          // 3 具体内容
+    uint8_t reserved[26];      // 4 - 30 预留空位（填充0）
     char end;                  // 31 帧尾，取 'e'
 } modules_package;
 
