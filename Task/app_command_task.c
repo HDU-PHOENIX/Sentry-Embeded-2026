@@ -1,9 +1,9 @@
 /**
  * @file app_command_task.c
  * @author CGH
- * @brief 指令处理任务
- * @version V1.0.0
- * @note 有待进一步优化
+ * @brief 指令处理任务 —— 独立解析 raw combined，驱动射击状态机
+ * @version V2.1.0
+ * @note 上板独立运行 Mode_Change，避免下板 TRANS_MODE 丢包导致切换不平滑
  */
 #include "app_command_task.h"
 
@@ -31,62 +31,54 @@ board_config_t board_config = {
 
 //变量
 uint8_t mode=0,last_mode=0;
-uint8_t combined_state_global=0;//从下位机获取的combined值
+uint8_t combined_state_global=0;//下板发来的 raw combined (s1<<4 | s2)
 uint16_t last_cnt=0,offline_time=0;
+
 /**
- * @brief 根据遥控器的拨杆位置确定控制模式
- * @param dr16 指向遥控器实例的指针
- * @return uint8_t 返回当前的控制模式
+ * @brief 根据 raw combined 独立解析上板控制模式
+ * @param combined 下板发来的 raw combined = (s1<<4) | s2
+ * @return uint8_t 当前 SentryMode_t
+ * @note 逻辑与下板 Clean_Down 完全一致，确保 TRANS_MODE 在上板本地平滑过渡
  */
-uint8_t Mode_Change(uint8_t combined_state_global){
-  last_mode=mode;
+uint8_t Mode_Change(uint8_t combined){
+    last_mode = mode;
 
-   //从下位机直接获取combined后的值
-  switch (combined_state_global)
-  {
-    case 0x11: // s1=1 (上), s2=1 (上)
-      mode = last_mode==DISABLE_MODE?TRANS_MODE:PC_MODE;
-			return mode;
-      break;
-    
-    case 0x13: // s1=1 (上), s2=3 (中)
-      
-		mode = last_mode==DISABLE_MODE?TRANS_MODE:RC_MODE;
-			
-		return mode;
-      break;
-
-    case 0x12: // s1=1 (上), s2=2 (下)
-      mode= last_mode==DISABLE_MODE?TRANS_MODE:UP_MODE;
-      return mode;
-      break;
-    case 0x32: // s1=3 (中), s2=2 (中)
-    if (last_mode == UP_MODE||last_mode == SHOOT_MODE)//之前忘记加SHOOT_MODE了，汗，导致他会自己切出到DISABLE_MODE
-    {
-      mode = SHOOT_MODE;
-    }else{
-    
-      mode = DISABLE_MODE;
+    switch (combined) {
+        case 0x12: // s1=1(上), s2=2(下)
+            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : PC_MODE;
+            break;
+        case 0x13: // s1=1(上), s2=3(中)
+            mode = (last_mode == DISABLE_MODE) ? DISABLE_MODE : TRANS_MODE;
+            break;
+        case 0x11: // s1=1(上), s2=1(上)
+            mode = DISABLE_MODE;
+            break;
+        case 0x21: // s1=2(中), s2=1(上)
+            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_FOLLOW_MODE;
+            break;
+        case 0x23: // s1=2(中), s2=3(中)
+            if (last_mode == DISABLE_MODE) {
+                mode = TRANS_MODE;
+            } else if (last_mode == UP_FOLLOW_MODE || last_mode == UP_SHOOT_MODE) {
+                mode = UP_SHOOT_MODE;
+            } else {
+                mode = DISABLE_MODE;
+            }
+            break;
+        case 0x22: // s1=2(中), s2=2(下)
+            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_LOCK_MODE;
+            break;
+        // s1=3 均为底盘模式，上板不关心，统一失能
+        case 0x31: // s1=3(下), s2=1(上) → CHASSIS_GYRO_MODE
+        case 0x33: // s1=3(下), s2=3(中) → CHASSIS_FOLLOW_MODE
+        case 0x32: // s1=3(下), s2=2(下) → CHASSIS_LOCK_MODE
+            mode = DISABLE_MODE;
+            break;
+        default:
+            mode = DISABLE_MODE;
+            break;
     }
-		
-      return mode;
-      break;
-    case 0x31:
-    case 0x33:
-			if(last_mode!=SCROP_MODE){
-			mode = last_mode==RC_MODE?SCROP_MODE:DISABLE_MODE;
-			}else{
-				mode=SCROP_MODE;
-			}
-      return mode;
-     
-
-    default: // 其他所有情况 (包括 s1=2, s2在任意位置)
-      mode = DISABLE_MODE;
-      break;
-  }
-  return mode;
-  
+    return mode;
 }
 
 void StartCommandTask(void const * argument)
@@ -118,41 +110,23 @@ void StartCommandTask(void const * argument)
     offline_time=offline_time>2000?2000:offline_time;//避免溢出回绕
     
     last_cnt=board_instance->can_instance->cnt;
-    #ifdef UP_DEBUG
-    mode=TEST_MODE;
-    #endif
     Shooter_State_last=Shooter_State;
     switch (mode)
     {
     case PC_MODE:
+    case UP_FOLLOW_MODE:
+    case UP_SHOOT_MODE:
       if(Shooter_State_last==SHOOTER_STOP){
         Shooter_State=SHOOTER_TRANS;
       }else {
         Shooter_State=SHOOTER_TEST;
       }
-      // }else if(board_instance->received_shoot_bool==1){
-      // //Shooter_State=SHOOTER_AUTO;//暂时的逻辑
-			// 	Shooter_State=SHOOTER_TEST;//暂时的逻辑
-      // }else{
-      //   Shooter_State=SHOOTER_READY;
-      // }
-      break;
-    case SHOOT_MODE:
-    
-			if(Shooter_State_last==SHOOTER_STOP){
-					Shooter_State=SHOOTER_TRANS;
-			}else if(board_instance->received_shoot_bool==1){
-//      Shooter_State=SHOOTER_AUTO;//暂时的逻辑
-						Shooter_State=SHOOTER_TEST;//暂时的逻辑
-      }else{
-        Shooter_State=SHOOTER_READY;
-      }
       break;
     case DISABLE_MODE:
+    case UP_LOCK_MODE:
+    case CHASSIS_LOCK_MODE:
       Shooter_State=SHOOTER_STOP;
       break;
-    
-    
     
     default:
       Shooter_State=SHOOTER_STOP;

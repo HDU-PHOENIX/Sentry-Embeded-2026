@@ -6,7 +6,7 @@
  */
 
 #include "app_shooter_task.h"
-
+#include "robot_config.h"
 
 #define HALF_RANGE PI
 
@@ -188,10 +188,12 @@ void StartShooterTask(void const * argument)
       case SHOOTER_STOP:
         //清空PID
         target_wheel_speed=0.0f;
-				
+				Left_Wheel->output=0.0;
+			Right_Wheel->output=0.0;
         Pid_Disable(Left_Wheel->velocity_pid);
         Pid_Disable(Right_Wheel->velocity_pid);
-        
+        Motor_Dji_Transmit(Right_Wheel);  
+    Motor_Dji_Transmit(Left_Wheel);
        break;
       case SHOOTER_STARTFIRE:
       
@@ -257,6 +259,8 @@ void StartShooterTask(void const * argument)
 				target_wheel_speed=-WHEEL_SPEED;//-6666.0f;
         break;
 			default:
+			Left_Wheel->output=0.0;
+			Right_Wheel->output=0.0;
       Pid_Disable(Left_Wheel->velocity_pid);
       Pid_Disable(Right_Wheel->velocity_pid);
 				break;
@@ -280,7 +284,7 @@ void StartShooterTask(void const * argument)
 		//Motor_Dji_Control(Left_Wheel,filtered_right_vel);
 		Motor_Dji_Control(Left_Wheel,-target_wheel_speed);
 		Motor_Dji_Transmit(Right_Wheel);  
-       
+    Motor_Dji_Transmit(Left_Wheel);
      
     osDelay(1);
 

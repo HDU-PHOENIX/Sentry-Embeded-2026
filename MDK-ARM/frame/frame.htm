@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Mon Mar 30 02:23:55 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sat Apr  4 16:28:43 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1244 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2593,20 +2593,20 @@ Global Symbols
 <LI><a href="#[1db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Control
 </UL>
 
-<P><STRONG><a name="[216]"></a>Pid_Clear</STRONG> (Thumb, 82 bytes, Stack size 12 bytes, alg_pid.o(.text.Pid_Clear))
+<P><STRONG><a name="[217]"></a>Pid_Clear</STRONG> (Thumb, 82 bytes, Stack size 12 bytes, alg_pid.o(.text.Pid_Clear))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = Pid_Clear
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
 </UL>
 
-<P><STRONG><a name="[218]"></a>Pid_Disable</STRONG> (Thumb, 76 bytes, Stack size 12 bytes, alg_pid.o(.text.Pid_Disable))
+<P><STRONG><a name="[219]"></a>Pid_Disable</STRONG> (Thumb, 76 bytes, Stack size 12 bytes, alg_pid.o(.text.Pid_Disable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = Pid_Disable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartShooterTask
 <LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask
 </UL>
 
-<P><STRONG><a name="[219]"></a>Pid_Enable</STRONG> (Thumb, 40 bytes, Stack size 8 bytes, alg_pid.o(.text.Pid_Enable))
+<P><STRONG><a name="[216]"></a>Pid_Enable</STRONG> (Thumb, 40 bytes, Stack size 8 bytes, alg_pid.o(.text.Pid_Enable))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = Pid_Enable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartShooterTask
@@ -2800,16 +2800,16 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_defaultTask)
 </UL>
-<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 3612 bytes, Stack size 192 bytes, app_gimbal_task.o(.text.StartGimbalTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 848 + Unknown Stack Size
+<P><STRONG><a name="[8c]"></a>StartGimbalTask</STRONG> (Thumb, 4500 bytes, Stack size 216 bytes, app_gimbal_task.o(.text.StartGimbalTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 872 + Unknown Stack Size
 <LI>Call Chain = StartGimbalTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
 <BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SEGGER_RTT_printf
 <LI><a href="#[114]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osKernelSysTick
-<LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
-<LI><a href="#[218]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Disable
-<LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Clear
+<LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Disable
+<LI><a href="#[217]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Clear
+<LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
 <LI><a href="#[215]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;board_send_message
 <LI><a href="#[113]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GenerateReversingRamp
 <LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;G_feed
@@ -2824,20 +2824,20 @@ Global Symbols
 <LI><a href="#[ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Dwt_GetDeltaT
 <LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[1e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dcmple
-<LI><a href="#[217]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dcmpge
+<LI><a href="#[218]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dcmpge
 <LI><a href="#[112]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.rodata..L__const.MX_FREERTOS_Init.os_thread_def_Gimbal_Task)
 </UL>
-<P><STRONG><a name="[8e]"></a>StartShooterTask</STRONG> (Thumb, 1012 bytes, Stack size 40 bytes, app_shooter_task.o(.text.StartShooterTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 696 + Unknown Stack Size
+<P><STRONG><a name="[8e]"></a>StartShooterTask</STRONG> (Thumb, 1064 bytes, Stack size 48 bytes, app_shooter_task.o(.text.StartShooterTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 704 + Unknown Stack Size
 <LI>Call Chain = StartShooterTask &rArr; Motor_Dji_Register &rArr; Can_Register &rArr; Can_Init &rArr; Can_ID_Mask_Mode_Filter_Init &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>
 <BR>[Calls]<UL><LI><a href="#[213]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowpassFilter_Process
 <LI><a href="#[1c3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowpassFilter_Register
-<LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
-<LI><a href="#[218]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Disable
+<LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Disable
+<LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pid_Enable
 <LI><a href="#[1e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Transmit
 <LI><a href="#[1db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Control
 <LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Dji_Register
@@ -4598,7 +4598,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[2b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_dcmpge
 </UL>
 
-<P><STRONG><a name="[217]"></a>__aeabi_dcmpge</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, dcmp.o(x$fpl$fcmp))
+<P><STRONG><a name="[218]"></a>__aeabi_dcmpge</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, dcmp.o(x$fpl$fcmp))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_dcmpge
 </UL>
 <BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartGimbalTask

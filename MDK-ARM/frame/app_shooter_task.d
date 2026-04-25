@@ -14,7 +14,8 @@ frame/app_shooter_task.o: ..\Task\app_shooter_task.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
-  ..\Task\app_command_task.h ..\Sentry_libs\Module\Dr16\dev_dr16.h \
+  ..\..\Sentry-Embeded-2026\robot_config.h ..\Task\app_command_task.h \
+  ..\Sentry_libs\Module\Dr16\dev_dr16.h \
   ..\Sentry_libs\Bsp\Uart\bsp_uart.h ..\Core\Inc\usart.h \
   ..\Core\Inc\main.h ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
@@ -47,7 +48,6 @@ frame/app_shooter_task.o: ..\Task\app_shooter_task.c \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
-  ..\..\Sentry-Embeded-2026\robot_config.h \
   ..\Sentry_libs\Module\Minipc\dev_minipc.h \
   ..\Sentry_libs\Module\Com_System\Com_System.h \
   ..\Sentry_libs\Module\Com_System\Queue.h \

@@ -14,8 +14,9 @@ frame/app_command_task.o: ..\Task\app_command_task.c \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
-  ..\Task\app_shooter_task.h ..\Task\app_gimbal_task.h \
-  ..\Core\Inc\main.h ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
+  ..\Task\app_shooter_task.h ..\..\Sentry-Embeded-2026\robot_config.h \
+  ..\Task\app_gimbal_task.h ..\Core\Inc\main.h \
+  ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal.h \
   ..\Core\Inc\stm32f4xx_hal_conf.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_rcc.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_def.h \
@@ -46,8 +47,7 @@ frame/app_command_task.o: ..\Task\app_command_task.c \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_usb.h \
   ..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_pcd_ex.h \
-  ..\..\Sentry-Embeded-2026\robot_config.h ..\Task\app_ins_task.h \
-  ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
+  ..\Task\app_ins_task.h ..\Sentry_libs\Module\Ist8310\dev_ist_8310.h \
   ..\Sentry_libs\Bsp\I2c\bsp_iic.h ..\Core\Inc\i2c.h \
   ..\Sentry_libs\Bsp\GPIO\bsp_gpio.h ..\Core\Inc\gpio.h \
   ..\Middlewares\ST\ARM\DSP\Inc\arm_math.h \

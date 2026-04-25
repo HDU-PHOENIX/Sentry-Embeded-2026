@@ -16,6 +16,7 @@
 #define USER_CAN1                           // 使用 CAN1
 #define USER_CAN2                           // 使用 CAN2
 // #define USER_CAN3                        // 使用 CAN3
+
             
 /* CAN FIFO 选择 */         
 #define USER_CAN1_FIFO_0                    // 使用 CAN1 FIFO0
@@ -29,7 +30,7 @@
 #define SCROPE_SPEED 3                      //小陀螺速度
 #define TRIGGER_SPEED 80                    //拨弹盘速度
 #define POWER_MAX 100                       //最大功率限制
-#define WHEEL_SPEED 6666                   //摩擦轮速度
+#define WHEEL_SPEED 6300                //摩擦轮速度
 
 #ifdef USE_FREERTOS
 #include "FreeRTOS.h"

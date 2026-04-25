@@ -30,23 +30,14 @@
 #include "Com_System.h"
 
 
-//命令
+//命令（包含 SentryMode_t 枚举与 mode 变量）
 #include "app_command_task.h"
 
 
-//宏定义
-#define PC_MODE 1
-#define RC_MODE 2
-#define TRANS_MODE 3//用于失能，使能之间的过渡
-#define UP_MODE 4//用于控制小云台
-#define SHOOT_MODE 5//用于控制发射机构
-#define SCROP_MODE 6 //用于小陀螺
-#define DISABLE_MODE 0
-#define TEST_MODE 9
-
+// 云台闭环反馈源选择
 enum {
-    IMU_MODE=0,//使用IMU值进行控制
-    ENCODER_MODE=1//使用编码器值进行控制
+    IMU_MODE     = 0,  // IMU 绝对角度控制（跟随目标）
+    ENCODER_MODE = 1   // 编码器角度锁定（保持当前位置）
 };
 
 
