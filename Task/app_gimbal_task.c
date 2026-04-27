@@ -261,7 +261,7 @@ void StartGimbalTask(void const * argument)
         // 把发送频率降低一点
         if(send_flag==0){
             send_flag=1;
-            board_send_message(board_instance,Quater.yaw, Quater.pitch, find_bool, find_bool);
+            board_send_message(board_instance,Quater.yaw, Quater.pitch, find_bool, Quater.ins_ready);
         }else{
             send_flag=0;
         }

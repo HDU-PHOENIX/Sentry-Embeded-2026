@@ -69,6 +69,7 @@ void board_send_message(board_instance_t *instance, float data1, float data2, ui
         {
             up2down_message_t *msg = ACCESS_AS_STRUCT(instance, up2down_message_t);
             msg->findbool = flag1;
+            msg->ready_bool = flag2;
             msg->up_yaw_pos = float2half(data1);
             msg->up_pitch_pos = float2half(data2);
             break;
@@ -104,11 +105,12 @@ void Board_Message_Decode(CanInstance_s *can_instance)
     // 根据消息类型，解码数据并存放到解析后的成员中
     switch (board_instance->message_type)
     {
-        case 0: // 接收到 down2up_message_t
+        case 0: // 接收到 up2down_message_t (下板接收上板发来的数据)
         {
             
             up2down_message_t *msg = ACCESS_AS_STRUCT(board_instance, up2down_message_t);
             board_instance->received_find_bool = msg->findbool;
+            board_instance->received_ready_bool = msg->ready_bool;
             board_instance->received_up_yaw_pos = half2float(msg->up_yaw_pos);
             board_instance->received_up_pitch_pos = half2float(msg->up_pitch_pos);
             break;

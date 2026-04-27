@@ -3,7 +3,7 @@
 <title>Static Call Graph - [frame\frame.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image frame\frame.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Sun Apr 26 18:23:46 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Mon Apr 27 20:45:11 2026
 <BR><P>
 <H3>Maximum Stack Usage =       1244 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -959,7 +959,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;isttask
 </UL>
 
-<P><STRONG><a name="[87]"></a>Board_Message_Decode</STRONG> (Thumb, 194 bytes, Stack size 32 bytes, dev_board_communicate.o(.text.Board_Message_Decode))
+<P><STRONG><a name="[87]"></a>Board_Message_Decode</STRONG> (Thumb, 208 bytes, Stack size 32 bytes, dev_board_communicate.o(.text.Board_Message_Decode))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = Board_Message_Decode &rArr; half2float
 </UL>
 <BR>[Calls]<UL><LI><a href="#[d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;half2float
@@ -3660,7 +3660,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StartCommandTask
 </UL>
 
-<P><STRONG><a name="[213]"></a>board_send_message</STRONG> (Thumb, 204 bytes, Stack size 40 bytes, dev_board_communicate.o(.text.board_send_message))
+<P><STRONG><a name="[213]"></a>board_send_message</STRONG> (Thumb, 226 bytes, Stack size 40 bytes, dev_board_communicate.o(.text.board_send_message))
 <BR><BR>[Stack]<UL><LI>Max Depth = 528 + Unknown Stack Size
 <LI>Call Chain = board_send_message &rArr; Can_Transmit &rArr; SEGGER_RTT_printf &rArr; SEGGER_RTT_vprintf &rArr; _PrintInt &rArr; _PrintUnsigned &rArr; _StoreChar &rArr; SEGGER_RTT_Write &rArr; SEGGER_RTT_WriteNoLock &rArr; _WriteBlocking
 </UL>

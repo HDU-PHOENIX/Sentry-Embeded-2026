@@ -38,7 +38,8 @@ typedef struct{
  */
 typedef struct{
     uint8_t findbool:1;     // 0-未找到，1-找到
-    uint16_t reserved:15;    // 保留位
+    uint8_t ready_bool:1;   // 0-未就绪，1-上板稳定就绪，下板可开始跟踪
+    uint16_t reserved:14;   // 保留位
     uint16_t up_yaw_pos:16;  // 上云台当前角度(半精度)
     uint16_t up_pitch_pos:16;   // 上云台当前俯仰角(半精度)
     uint16_t reserved3:16;   // 保留位
@@ -65,6 +66,7 @@ typedef struct
     float   received_target_up_pitch;
     float   received_current_down_yaw;
     uint8_t received_find_bool;
+    uint8_t received_ready_bool;
     float   received_up_yaw_pos;
     float   received_up_pitch_pos;
 
