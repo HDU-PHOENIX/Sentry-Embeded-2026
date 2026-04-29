@@ -103,7 +103,7 @@ static void Trigger_ResetState(void) {
 //配置
 static ChassisInitConfig_s Chassis_config={
 		.type = Omni_Wheel,
-		.gimbal_yaw_zero =-2.56936121,// -0.382446289,//-0.767289639,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
+		.gimbal_yaw_zero =-1.77551413,//-0.0877261162f,// -0.382446289,//-0.767289639,//2.58681059,//-0.027132988,//2.00935459,//-1.08712959,//0.66278553, //0.0f,////0.641885281,//-2.62492895,//(-10663.0f / 262144.0f) * 2.0f * 3.141593f
 		//.gimbal_yaw_half = 0.130077288,//(251481.0f / 262144.0f) * 2.0f * 3.141593f
 		.omni_steering_message={
 		.wheel_radius= 0.0765f,
@@ -117,7 +117,7 @@ static ChassisInitConfig_s Chassis_config={
       .ki = 0.0f,
       .kd = 0.0f,
       .angle_max = 2.0f * PI,
-			.dead_zone = 0.05f,
+			.dead_zone = 0.01f,
       .i_max = 0.0f,
       .out_max = 2 * 3.141593f,
 		},
@@ -285,9 +285,9 @@ static DjiMotorInitConfig_s Up_config = {
         .kd_int  = 0.0f,     // [调试设定] 要发送给电机的Kd值 (仅MIT模式)
     },
     .angle_pid_config = {
-        .kp = 9.0f,//1.0f,//8.0f,
+        .kp = 8.0f,//1.0f,//8.0f,
         .ki = 0.0f,
-        .dead_zone = 0.003f,
+        .dead_zone = 0.00f,
         .kd = 0.0f,
         .kf = 0.0f,
         .angle_max = 2.0f * PI,
@@ -304,9 +304,9 @@ static DjiMotorInitConfig_s Up_config = {
 //        .out_max = 2000.0,
 //    }
 		 .velocity_pid_config = {
-        .kp = 2.0f,
-        .ki = 0.04f,
-        .kd = 0.5f,
+        .kp = 5.0f,
+        .ki = 0.03f,
+        .kd = 0.7f,
         .kf = 0.0f,
         .angle_max = 0,
         .i_max = 5.0,
@@ -604,11 +604,11 @@ void StartChassisTask(void const * argument)
 		test_speed=Down_yaw->message.out_velocity;
     test_pos_tr=Trigger->message.out_position;
     uint16_t last_wheel=CH_Receive_s->dr16_handle.wheel;
-    //speed1=Chassis->chassis_motor[0]->message.out_velocity;
+    speed1=Chassis->chassis_motor[0]->message.out_velocity;
 //    speed2=Chassis->chassis_motor[1]->message.out_velocity;
     //speed3=Chassis->chassis_motor[2]->message.out_velocity;
 //    speed4=Chassis->chassis_motor[3]->message.out_velocity;
-		//target1=Chassis->chassis_motor[0]->target_velocity;
+		target1=Chassis->chassis_motor[0]->target_velocity;
 //		target2=Chassis->chassis_motor[1]->target_velocity;
 		//target3=Chassis->chassis_motor[2]->target_velocity;
 //		target4=Chassis->chassis_motor[3]->target_velocity;
@@ -799,7 +799,8 @@ void StartChassisTask(void const * argument)
        // MovingAvgFilter_Process(PC_target_pos_averg,target_position,&target_position);
         
         //Motor_Dm_Cmd(Down_yaw,DM_CMD_MOTOR_DISABLE);
-		 target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+		// target_speed=Pid_Calculate(Down_yaw->angle_pid,target_position,Quater.yaw);
+    target_speed=MiniPC->message.ch_pack.yaw;//直接就是目标速度
 		test_output=Pid_Calculate(Down_yaw->velocity_pid,target_speed,Quater.Gyro[2]);
 		Motor_Dm_Mit_Control(Down_yaw,0.0,0.0,test_output);
 				Motor_Dm_Transmit(Down_yaw);
@@ -988,11 +989,15 @@ void StartChassisTask(void const * argument)
 				// 		else target_up_position = -1.7f;
 				// }
         //重新改回原来基于IMU的限幅
-        target_up_position=target_up_position<-1.7f? -1.7f:target_up_position;
-        target_up_position=target_up_position>1.7f? 1.7f:target_up_position;
+        // target_up_position=target_up_position<-1.7f? -1.7f:target_up_position;
+        // target_up_position=target_up_position>1.7f? 1.7f:target_up_position;
 
-				target_up_pitch=target_up_pitch<-0.3?-0.3:target_up_pitch;
-				target_up_pitch=target_up_pitch>0.7?0.7:target_up_pitch;
+				// target_up_pitch=target_up_pitch<-0.3?-0.3:target_up_pitch;
+				// target_up_pitch=target_up_pitch>0.7?0.7:target_up_pitch;
+        target_up_position=target_up_position>PI?target_up_position-2*PI:target_up_position;
+        target_up_position=target_up_position<-PI?target_up_position+2*PI:target_up_position;
+        target_up_position=target_up_position>PI+0.1f?PI:target_up_position;
+        target_up_position=target_up_position<-PI-0.1f?-PI:target_up_position;
 				//底盘逻辑
         Chassis_Change_Mode(Chassis, CHASSIS_NORMAL);
 				Chassis->gimbal_yaw_angle=Down_yaw->message.out_position;

@@ -485,8 +485,8 @@ bool Chassis_Control(ChassisInstance_s *Chassis)
         break;
     }
     // 2. 坐标系转换
-    Temp_Speed.Vx = Chassis->Chassis_speed.Vx *cosf(Find_Angle(Chassis)) - Chassis->Chassis_speed.Vy * sinf(Find_Angle(Chassis));
-    Temp_Speed.Vy =  Chassis->Chassis_speed.Vx *sinf(Find_Angle(Chassis)) + Chassis->Chassis_speed.Vy * cosf(Find_Angle(Chassis));
+    Temp_Speed.Vx = -Chassis->Chassis_speed.Vx *cosf(Find_Angle(Chassis)) - Chassis->Chassis_speed.Vy * sinf(Find_Angle(Chassis));
+    Temp_Speed.Vy =  Chassis->Chassis_speed.Vx *sinf(Find_Angle(Chassis)) - Chassis->Chassis_speed.Vy * cosf(Find_Angle(Chassis));
     Temp_Speed.Vw =  Chassis->Chassis_speed.Vw;
 
     // 3. 执行运动学逆解

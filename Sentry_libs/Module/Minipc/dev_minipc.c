@@ -618,7 +618,9 @@ void Minipc_UpdateAllInstances(void) {
                 
                 continue;
             }
+
             Minipc_UpdateInstanceData(instance);
+            osDelay(1);
         }
     }
 }

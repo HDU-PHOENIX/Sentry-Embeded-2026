@@ -17,6 +17,7 @@
 #include "robot_config.h"
 
 #include "FreeRTOS.h"
+#include "cmsis_os.h"
 #include "Com_System.h" //包含消息中心的头文件
 #include "usbd_cdc_if.h"
 
