@@ -267,9 +267,10 @@ void StartGimbalTask(void const * argument)
         }
         ControlMode=mode;
         // ---- 根据 SentryMode_t 决定 gimbal_mode ---- 
-        // UP_LOCK_MODE: 编码器锁定当前位置
-        // PC_MODE / UP_FOLLOW_MODE / UP_SHOOT_MODE: IMU 跟随（目标由下板下发)
-        if (ControlMode == UP_LOCK_MODE) {
+        // UP_SCORPE_MODE: 编码器锁定当前位置
+        // PC_MODE / UP_FOLLOW_MODE / UP_SHOOT_MODE / UP_SHOOT_AUTO_MODE / UP_SHOOT_PC_MODE: IMU 跟随
+        // HANDLE_MODE: 手动模式，云台由下板直接控制，上板不参与
+        if (ControlMode == UP_SCORPE_MODE) {
             if (!encoder_lock_initialized) {
                 encoder_lock_yaw_target = Up_yaw->message.out_position;
                 encoder_lock_initialized = 1;
@@ -277,6 +278,30 @@ void StartGimbalTask(void const * argument)
             gimbal_mode = ENCODER_MODE;
             target_up_position = encoder_lock_yaw_target;
             target_position = Quater.pitch; // pitch 也锁定当前位置
+        } else if (ControlMode == HANDLE_MODE) {
+            // 手动模式：上板使用下板发来的摇杆目标值（由下板累加计算）
+            encoder_lock_initialized = 0;
+            gimbal_mode = IMU_MODE;
+            target_up_position = board_instance->received_target_up_yaw;
+            target_position = board_instance->received_target_up_pitch;
+        } else if (ControlMode == CHASSIS_COMPETATION_MODE) {
+            // 竞赛模式：根据下板发来的 shoot_bool 标志切换编码器/IMU
+            if (find_bool == 1) {
+                // 编码器模式：锁定当前位置，yaw轴定死
+                if (!encoder_lock_initialized) {
+                    encoder_lock_yaw_target = Up_yaw->message.out_position;
+                    encoder_lock_initialized = 1;
+                }
+                gimbal_mode = ENCODER_MODE;
+                target_up_position = encoder_lock_yaw_target;
+                target_position = Quater.pitch;
+            } else {
+                // IMU 模式：听从上位机指令
+                encoder_lock_initialized = 0;
+                gimbal_mode = IMU_MODE;
+                target_up_position = board_instance->received_target_up_yaw;
+                target_position = board_instance->received_target_up_pitch;
+            }
         } else {
             encoder_lock_initialized = 0;
             gimbal_mode = IMU_MODE;
@@ -285,10 +310,20 @@ void StartGimbalTask(void const * argument)
         }
 
         switch (ControlMode) {
+        /* ---- 云台使能模式：所有非失能模式均使能云台 ---- */
         case PC_MODE:
         case UP_FOLLOW_MODE:
         case UP_SHOOT_MODE:
-        case UP_LOCK_MODE:
+        case UP_SHOOT_AUTO_MODE:
+        case UP_SHOOT_PC_MODE:
+        case UP_SCORPE_MODE:
+        case HANDLE_MODE:
+        case CHASSIS_GYRO_MODE:
+        case CHASSIS_FOLLOW_MODE:
+        case CHASSIS_LOCK_MODE:
+        case CHASSIS_FOLLOW_PC_MODE:
+        case CHASSIS_AUTOAIM_PC_MODE:
+        case CHASSIS_COMPETATION_MODE:
             if(pitch->motor_state==DM_DISABLE||Up_yaw->velocity_pid->is_enabled==0){
                 ControlMode=TRANS_MODE;
             }
@@ -338,10 +373,8 @@ void StartGimbalTask(void const * argument)
             }
             Motor_Dji_Transmit(Up_yaw);
             break;
+        /* ---- 仅 DISABLE_MODE 失能云台 ---- */
         case DISABLE_MODE:
-        case CHASSIS_GYRO_MODE:
-        case CHASSIS_FOLLOW_MODE:
-        case CHASSIS_LOCK_MODE:
             Pid_Disable(Up_yaw->velocity_pid);
             Pid_Disable(Up_yaw->angle_pid);
             Pid_Disable(pitch->velocity_pid);

@@ -39,41 +39,79 @@ uint16_t last_cnt=0,offline_time=0;
  * @param combined 下板发来的 raw combined = (s1<<4) | s2
  * @return uint8_t 当前 SentryMode_t
  * @note 逻辑与下板 Clean_Down 完全一致，确保 TRANS_MODE 在上板本地平滑过渡
+ *       上板只关心云台相关模式，底盘模式统一 DISABLE_MODE
  */
 uint8_t Mode_Change(uint8_t combined){
+    static uint8_t general_mode = DISABLE_MODE;
     last_mode = mode;
 
     switch (combined) {
-        case 0x12: // s1=1(上), s2=2(下)
+        case 0x12: // s1=1(上), s2=2(下) → 导航模式
             mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : PC_MODE;
+            general_mode = PC_MODE;
             break;
-        case 0x13: // s1=1(上), s2=3(中)
-            mode = (last_mode == DISABLE_MODE) ? DISABLE_MODE : TRANS_MODE;
+        case 0x13: // s1=1(上), s2=3(中) → 手动模式
+            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : HANDLE_MODE;
+            general_mode = HANDLE_MODE;
             break;
-        case 0x11: // s1=1(上), s2=1(上)
+        case 0x11: // s1=1(上), s2=1(上) → 失能
             mode = DISABLE_MODE;
+            general_mode = DISABLE_MODE;
             break;
-        case 0x21: // s1=2(中), s2=1(上)
-            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_FOLLOW_MODE;
+
+        /* ---- s1=2(下)：发射域 ---- */
+        case 0x21: // s1=2(下), s2=1(上) → 自瞄
+            if(general_mode == HANDLE_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_SHOOT_AUTO_MODE;
+            }else if(general_mode == PC_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_SHOOT_PC_MODE;
+            }
             break;
-        case 0x23: // s1=2(中), s2=3(中)
-            if (last_mode == DISABLE_MODE) {
-                mode = TRANS_MODE;
-            } else if (last_mode == UP_FOLLOW_MODE || last_mode == UP_SHOOT_MODE) {
-                mode = UP_SHOOT_MODE;
-            } else {
+        case 0x23: // s1=2(下), s2=3(中) → 连发
+            if(general_mode == HANDLE_MODE){
+                if(last_mode == DISABLE_MODE) {
+                    mode = TRANS_MODE;
+                }else if(last_mode == UP_FOLLOW_MODE || last_mode == UP_SHOOT_MODE){
+                    mode = UP_SHOOT_MODE;
+                }else{
+                    mode = DISABLE_MODE;
+                }
+            }else if(general_mode == PC_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_SHOOT_PC_MODE;
+            }
+            break;
+        case 0x22: // s1=2(下), s2=2(下) → 单发/比赛
+            if(general_mode == PC_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : CHASSIS_COMPETATION_MODE;
+            }else{
+                //手动域：单发模式，当前硬件暂不支持，一律失能
                 mode = DISABLE_MODE;
             }
             break;
-        case 0x22: // s1=2(中), s2=2(下)
-            mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_LOCK_MODE;
+
+        /* ---- s1=3(中)：底盘域，上板不关心云台，统一失能 ---- */
+        case 0x31: // s1=3(中), s2=1(上)
+            if(general_mode == HANDLE_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : UP_FOLLOW_MODE;
+            }else if(general_mode == PC_MODE){
+                mode = DISABLE_MODE; // CHASSIS_AUTOAIM_PC_MODE，上板不关心
+            }
             break;
-        // s1=3 均为底盘模式，上板不关心，统一失能
-        case 0x31: // s1=3(下), s2=1(上) → CHASSIS_GYRO_MODE
-        case 0x33: // s1=3(下), s2=3(中) → CHASSIS_FOLLOW_MODE
-        case 0x32: // s1=3(下), s2=2(下) → CHASSIS_LOCK_MODE
-            mode = DISABLE_MODE;
+        case 0x33: // s1=3(中), s2=3(中)
+            if(general_mode == HANDLE_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : CHASSIS_FOLLOW_MODE;
+            }else if(general_mode == PC_MODE){
+                mode = DISABLE_MODE; // CHASSIS_FOLLOW_PC_MODE，上板不关心
+            }
             break;
+        case 0x32: // s1=3(中), s2=2(下)
+            if(general_mode == HANDLE_MODE){
+                mode = (last_mode == DISABLE_MODE) ? TRANS_MODE : CHASSIS_GYRO_MODE;
+            }else if(general_mode == PC_MODE){
+                mode = DISABLE_MODE; // CHASSIS_COMPETATION_MODE，上板不关心
+            }
+            break;
+
         default:
             mode = DISABLE_MODE;
             break;
@@ -113,18 +151,31 @@ void StartCommandTask(void const * argument)
     Shooter_State_last=Shooter_State;
     switch (mode)
     {
+    /* ---- 需要射击的模式：摩擦轮使能 ---- */
     case PC_MODE:
-    case UP_FOLLOW_MODE:
     case UP_SHOOT_MODE:
+    case UP_SHOOT_AUTO_MODE:
+    case UP_SHOOT_PC_MODE:
       if(Shooter_State_last==SHOOTER_STOP){
         Shooter_State=SHOOTER_TRANS;
       }else {
         Shooter_State=SHOOTER_TEST;
       }
       break;
-    case DISABLE_MODE:
-    case UP_LOCK_MODE:
+    /* ---- 不需要射击的模式：摩擦轮失能（云台仍使能） ---- */
+    case HANDLE_MODE:
+    case UP_FOLLOW_MODE:
+    case UP_SCORPE_MODE:
     case CHASSIS_LOCK_MODE:
+    case CHASSIS_GYRO_MODE:
+    case CHASSIS_FOLLOW_MODE:
+    case CHASSIS_FOLLOW_PC_MODE:
+    case CHASSIS_AUTOAIM_PC_MODE:
+    case CHASSIS_COMPETATION_MODE:
+      Shooter_State=SHOOTER_STOP;
+      break;
+    /* ---- 全车失能 ---- */
+    case DISABLE_MODE:
       Shooter_State=SHOOTER_STOP;
       break;
     

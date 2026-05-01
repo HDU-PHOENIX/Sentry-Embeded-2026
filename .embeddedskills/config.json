@@ -1,0 +1,7 @@
+{
+  "keil": {
+    "project": "MDK-ARM/frame.uvprojx",
+    "target": "frame",
+    "log_dir": ".embeddedskills/build"
+  }
+}
