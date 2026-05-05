@@ -10,7 +10,9 @@
 #define IMU
 //#define G_FEED_TEST
 
-#define YAW_ORIGIN 0.0f
+#define YAW_ORIGIN 3.14f//0.0f
+#define COMPETITION_ENCODER_DEBOUNCE_TICKS 300U
+#define COMPETITION_ENCODER_MIN_HOLD_MS 3000U
 
 //实例声明
 DmMotorInstance_s *pitch;
@@ -170,6 +172,63 @@ float G_feed(float position){
    return torque; 
 }
 
+static uint8_t competition_encoder_mode_initialized = 0;
+static uint8_t competition_encoder_mode_last_raw = IMU_MODE;
+static uint8_t competition_encoder_mode_filtered = IMU_MODE;
+static uint16_t competition_encoder_mode_same_cnt = 0;
+static uint32_t competition_encoder_mode_last_switch_tick = 0;
+
+static void ResetCompetitionEncoderModeFilter(void)
+{
+    competition_encoder_mode_initialized = 0;
+    competition_encoder_mode_last_raw = IMU_MODE;
+    competition_encoder_mode_filtered = IMU_MODE;
+    competition_encoder_mode_same_cnt = 0;
+    competition_encoder_mode_last_switch_tick = 0;
+}
+
+static uint8_t UpdateCompetitionEncoderMode(uint8_t shoot_bool)
+{
+    uint32_t now_tick = osKernelSysTick();
+    uint8_t requested_mode = (shoot_bool == 0U) ? ENCODER_MODE : IMU_MODE;
+
+    if (!competition_encoder_mode_initialized) {
+        competition_encoder_mode_initialized = 1;
+        competition_encoder_mode_last_raw = IMU_MODE;
+        competition_encoder_mode_filtered = IMU_MODE;
+        competition_encoder_mode_same_cnt = 0;
+        competition_encoder_mode_last_switch_tick = now_tick;
+    }
+
+    if (requested_mode == IMU_MODE) {
+        if (competition_encoder_mode_filtered != IMU_MODE) {
+            competition_encoder_mode_filtered = IMU_MODE;
+            competition_encoder_mode_last_switch_tick = now_tick;
+        }
+        competition_encoder_mode_last_raw = IMU_MODE;
+        competition_encoder_mode_same_cnt = 0;
+    } else {
+        if (competition_encoder_mode_last_raw == ENCODER_MODE) {
+            if (competition_encoder_mode_same_cnt < COMPETITION_ENCODER_DEBOUNCE_TICKS) {
+                competition_encoder_mode_same_cnt++;
+            }
+        } else {
+            competition_encoder_mode_same_cnt = 1;
+        }
+
+        if (competition_encoder_mode_filtered != ENCODER_MODE
+            && competition_encoder_mode_same_cnt >= COMPETITION_ENCODER_DEBOUNCE_TICKS
+            && (now_tick - competition_encoder_mode_last_switch_tick) >= COMPETITION_ENCODER_MIN_HOLD_MS) {
+            competition_encoder_mode_filtered = ENCODER_MODE;
+            competition_encoder_mode_last_switch_tick = now_tick;
+        }
+
+        competition_encoder_mode_last_raw = ENCODER_MODE;
+    }
+
+    return competition_encoder_mode_filtered;
+}
+
 
 void StartGimbalTask(void const * argument)
 {
@@ -243,15 +302,13 @@ void StartGimbalTask(void const * argument)
 
     Log("Gimbal ready\r\n");
 
-    static uint8_t last_gimbal_mode = IMU_MODE;
-    static float encoder_lock_yaw_target = 0.0f;
-    static uint8_t encoder_lock_initialized = 0;
+        static uint8_t last_gimbal_mode = IMU_MODE;
+    	static uint8_t send_flag = 0;
   for(;;)
   {
         #ifdef DEBUG
         can_count=board_instance->can_instance->cnt;
         test_speed=Up_yaw->message.out_velocity;
-        static uint8_t send_flag=0;
          dt3 = Dwt_GetDeltaT(&dwt_cnt_last3);
         if (dt3 > 0.01f || dt3 <= 0.0f) { dt3 = 0.001f; }
         #endif
@@ -266,44 +323,33 @@ void StartGimbalTask(void const * argument)
             send_flag=0;
         }
         ControlMode=mode;
+        if (ControlMode != CHASSIS_COMPETATION_MODE) {
+            ResetCompetitionEncoderModeFilter();
+        }
         // ---- 根据 SentryMode_t 决定 gimbal_mode ---- 
-        // UP_SCORPE_MODE: 编码器锁定当前位置
+        // UP_SCORPE_MODE: 编码器固定锁定到原点
         // PC_MODE / UP_FOLLOW_MODE / UP_SHOOT_MODE / UP_SHOOT_AUTO_MODE / UP_SHOOT_PC_MODE: IMU 跟随
         // HANDLE_MODE: 手动模式，云台由下板直接控制，上板不参与
         if (ControlMode == UP_SCORPE_MODE) {
-            if (!encoder_lock_initialized) {
-                encoder_lock_yaw_target = Up_yaw->message.out_position;
-                encoder_lock_initialized = 1;
-            }
             gimbal_mode = ENCODER_MODE;
-            target_up_position = encoder_lock_yaw_target;
+            target_up_position = YAW_ORIGIN;
             target_position = Quater.pitch; // pitch 也锁定当前位置
         } else if (ControlMode == HANDLE_MODE) {
             // 手动模式：上板使用下板发来的摇杆目标值（由下板累加计算）
-            encoder_lock_initialized = 0;
             gimbal_mode = IMU_MODE;
             target_up_position = board_instance->received_target_up_yaw;
             target_position = board_instance->received_target_up_pitch;
         } else if (ControlMode == CHASSIS_COMPETATION_MODE) {
-            // 竞赛模式：根据下板发来的 shoot_bool 标志切换编码器/IMU
-            if (find_bool == 1) {
-                // 编码器模式：锁定当前位置，yaw轴定死
-                if (!encoder_lock_initialized) {
-                    encoder_lock_yaw_target = Up_yaw->message.out_position;
-                    encoder_lock_initialized = 1;
-                }
-                gimbal_mode = ENCODER_MODE;
-                target_up_position = encoder_lock_yaw_target;
+            // 竞赛模式：shoot_bool 经过防抖后再切换编码器/IMU
+            gimbal_mode = UpdateCompetitionEncoderMode(find_bool);
+            if (gimbal_mode == ENCODER_MODE) {
+                target_up_position = YAW_ORIGIN;
                 target_position = Quater.pitch;
             } else {
-                // IMU 模式：听从上位机指令
-                encoder_lock_initialized = 0;
-                gimbal_mode = IMU_MODE;
                 target_up_position = board_instance->received_target_up_yaw;
                 target_position = board_instance->received_target_up_pitch;
             }
         } else {
-            encoder_lock_initialized = 0;
             gimbal_mode = IMU_MODE;
             target_up_position = board_instance->received_target_up_yaw;
             target_position = board_instance->received_target_up_pitch;
