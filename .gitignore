@@ -2,3 +2,10 @@
 *.o
 *.txt
 MDK-ARM/JLinkLog.txt
+# Clangd
+.cache/
+.clangd
+
+# Clangd
+.cache/
+.clangd

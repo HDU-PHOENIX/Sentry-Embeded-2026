@@ -1,31 +1,9 @@
-/**
- * @file app_command_task.c
- * @author CGH
- * @brief 指令处理任务 —— 独立解析 raw combined，驱动射击状态机
- * @version V2.1.0
- */
-#include "app_command_task.h"
+import re
 
-Dr16Instance_s *dr16_instance;
-MiniPC_Instance *minipc_instance;
-board_instance_t *board_instance;
-Publisher *Command_publisher;
-ShooterState_t Shooter_State;
-ShooterState_t Shooter_State_last;
+with open('Task/app_command_task.c', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
 
-board_config_t board_config = {
-.board_id=1,
-.can_config={
-  .can_number =2,
-  .topic_name = "Board_Comm"
-},
-.message_type = UP2DOWN_MESSAGE_TYPE
-};
-
-uint8_t mode=0,last_mode=0;
-uint8_t combined_state_global=0;
-uint16_t last_cnt=0,offline_time=0;
-
+replacement = \"\"\"
 uint8_t Mode_Change(uint8_t combined){
     return DISABLE_MODE;
 }
@@ -33,17 +11,18 @@ uint8_t Mode_Change(uint8_t combined){
 void StartCommandTask(void const * argument)
 {
   /* USER CODE BEGIN StartCommandTask */
-  Command_publisher=Create_Publisher("board_topic",sizeof(board_instance_t));
+
+        Command_publisher=Create_Publisher("board_topic",sizeof(board_instance_t));
   board_instance = board_init(&board_config);
   
   /* Infinite loop */
   for(;;)
   {
-    Publish_Message(Command_publisher, board_instance);
+                Publish_Message(Command_publisher, board_instance);
     
     // 只根据 flag 判断使能/失能
     if (board_instance->received_enable_flag == 1) {
-        mode = UP_FOLLOW_MODE; // 使能时，默认进入 UP_SHOOT_MODE 开启摩擦轮
+        mode = UP_SHOOT_MODE; // 使能时，进入 UP_SHOOT_MODE (云台使能，且摩擦轮持续旋转)
     } else {
         mode = DISABLE_MODE;
     }
@@ -53,8 +32,8 @@ void StartCommandTask(void const * argument)
     if(board_instance->can_instance->cnt-last_cnt<1){
       offline_time++;
       if(offline_time>500){
-        mode=DISABLE_MODE;
-        Shooter_State=SHOOTER_STOP;
+      mode=DISABLE_MODE;
+      Shooter_State=SHOOTER_STOP;
       }
     }else{
       offline_time=0;
@@ -83,3 +62,14 @@ void StartCommandTask(void const * argument)
   }
   /* USER CODE END StartCommandTask */
 }
+\"\"\"
+
+# Regex replace from "uint8_t Mode_Change" down to the end of the file.
+pattern = re.compile(r'uint8_t Mode_Change\(uint8_t combined\).*', re.DOTALL)
+if pattern.search(content):
+    new_content = pattern.sub(replacement.strip(), content)
+    with open('Task/app_command_task.c', 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    print("Success")
+else:
+    print("Failed to find block")

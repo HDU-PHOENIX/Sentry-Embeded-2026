@@ -1,0 +1,27 @@
+
+
+GraphedExpression="(Quater).yaw", Color=#e56a6f
+GraphedExpression="(board_instance)->received_target_up_yaw", Color=#35792b
+OpenDocument="main.c", FilePath="D:/CODES/Robomaster/Sentry-Embeded-2026/Sentry-Embeded-2026 - Gimbal/Core/Src/main.c", Line=48
+OpenDocument="app_command_task.h", FilePath="D:/CODES/Robomaster/Sentry-Embeded-2026/Sentry-Embeded-2026 - Gimbal/Task/app_command_task.h", Line=0
+OpenDocument="app_gimbal_task.c", FilePath="D:/CODES/Robomaster/Sentry-Embeded-2026/Sentry-Embeded-2026 - Gimbal/Task/app_gimbal_task.c", Line=322
+OpenDocument="app_command_task.c", FilePath="D:/CODES/Robomaster/Sentry-Embeded-2026/Sentry-Embeded-2026 - Gimbal/Task/app_command_task.c", Line=0
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=693, h=507, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=1315, h=339, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=693, h=585, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=BOTTOM, x=0, y=0, w=2560, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=RIGHT, x=0, y=1, w=1315, h=753, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="2 s", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="865;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1061;-69", CodeGraphLegendShown=0, CodeGraphLegendPosition="1012;0"
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Source Files", SortCol="File", SortOrder="DESCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[263;100;100;100;1158]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" (Quater).yaw";" (board_instance)->received_target_up_yaw"], ColWidths=[100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[118;100;134;124;114;134;110;126;1600]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[265;100;134;194;0]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;340]
+WatchedExpression="board_instance", RefreshRate=2, Window=Watched Data 1
+WatchedExpression="Quater", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="Up_yaw", Window=Watched Data 1
+WatchedExpression="ControlMode", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="offline_time", RefreshRate=1, Window=Watched Data 1

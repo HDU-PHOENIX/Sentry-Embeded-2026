@@ -10,7 +10,7 @@
 #define IMU
 //#define G_FEED_TEST
 
-#define YAW_ORIGIN 3.14f//0.0f
+#define YAW_ORIGIN 0.0f//0.0f
 #define COMPETITION_ENCODER_DEBOUNCE_TICKS 300U
 #define COMPETITION_ENCODER_MIN_HOLD_MS 3000U
 
@@ -46,6 +46,16 @@ extern quaternions_struct_t Quater;
 
 #endif
 uint8_t gimbal_mode=IMU_MODE;//云台控制模式
+
+////////////////////////////编码器扫描模式相关///////////////////////////////////
+#define SCAN_SPEED         1.5f    // 扫描角速度 (rad/s)
+#define SCAN_RANGE_HALF    PI      // 扫描范围半宽 (±PI)
+
+static float   scan_start_encoder  = 0.0f;  // 进入扫描模式时的编码器位置
+static float   scan_target_yaw     = 0.0f;  // 当前扫描目标值
+static int8_t  scan_direction      = 1;     // 扫描方向: 1=正向, -1=反向
+static uint8_t scan_initialized    = 0;     // 扫描状态是否已初始化
+////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////电机配置/////////////////////////////////////////
 
@@ -312,7 +322,6 @@ void StartGimbalTask(void const * argument)
          dt3 = Dwt_GetDeltaT(&dwt_cnt_last3);
         if (dt3 > 0.01f || dt3 <= 0.0f) { dt3 = 0.001f; }
         #endif
-        ControlMode=board_instance->received_control_mode;
         find_bool = board_instance->received_shoot_bool;
 
         // 把发送频率降低一点
@@ -322,54 +331,47 @@ void StartGimbalTask(void const * argument)
         }else{
             send_flag=0;
         }
-        ControlMode=mode;
-        if (ControlMode != CHASSIS_COMPETATION_MODE) {
-            ResetCompetitionEncoderModeFilter();
-        }
-        // ---- 根据 SentryMode_t 决定 gimbal_mode ---- 
-        // UP_SCORPE_MODE: 编码器固定锁定到原点
-        // PC_MODE / UP_FOLLOW_MODE / UP_SHOOT_MODE / UP_SHOOT_AUTO_MODE / UP_SHOOT_PC_MODE: IMU 跟随
-        // HANDLE_MODE: 手动模式，云台由下板直接控制，上板不参与
-        if (ControlMode == UP_SCORPE_MODE) {
-            gimbal_mode = ENCODER_MODE;
-            target_up_position = YAW_ORIGIN;
-            target_position = Quater.pitch; // pitch 也锁定当前位置
-        } else if (ControlMode == HANDLE_MODE) {
-            // 手动模式：上板使用下板发来的摇杆目标值（由下板累加计算）
-            gimbal_mode = IMU_MODE;
-            target_up_position = board_instance->received_target_up_yaw;
-            target_position = board_instance->received_target_up_pitch;
-        } else if (ControlMode == CHASSIS_COMPETATION_MODE) {
-            // 竞赛模式：shoot_bool 经过防抖后再切换编码器/IMU
-            gimbal_mode = UpdateCompetitionEncoderMode(find_bool);
-            if (gimbal_mode == ENCODER_MODE) {
-                target_up_position = YAW_ORIGIN;
-                target_position = Quater.pitch;
-            } else {
-                target_up_position = board_instance->received_target_up_yaw;
-                target_position = board_instance->received_target_up_pitch;
+        
+        ControlMode = mode;
+        
+        // 根据 shoot_bool 切换云台控制模式
+        //   shoot_bool == 0 → IMU 模式（下板目标跟随）
+        //   shoot_bool == 1 → 编码器扫描模式（yaw 在 ±PI 范围往复，pitch 归零）
+        gimbal_mode = (find_bool == 0U) ? IMU_MODE : ENCODER_SCAN_MODE;
+
+        if (gimbal_mode == ENCODER_SCAN_MODE) {
+            /* ---- 编码器扫描模式 ---- */
+            // 首次进入或从其他模式切换来时，记录初始编码器位置
+            if (!scan_initialized || last_gimbal_mode != ENCODER_SCAN_MODE) {
+                scan_start_encoder = Up_yaw->message.out_position;
+                scan_target_yaw = scan_start_encoder;
+                scan_direction = 1;
+                scan_initialized = 1;
             }
+
+            // 三角波扫描：在 [start-PI, start+PI] 之间往复
+            scan_target_yaw += scan_direction * SCAN_SPEED * dt3;
+            if (scan_target_yaw > scan_start_encoder + SCAN_RANGE_HALF) {
+                scan_target_yaw = scan_start_encoder + SCAN_RANGE_HALF;
+                scan_direction = -1;
+            } else if (scan_target_yaw < scan_start_encoder - SCAN_RANGE_HALF) {
+                scan_target_yaw = scan_start_encoder - SCAN_RANGE_HALF;
+                scan_direction = 1;
+            }
+
+            // 扫描模式下忽略下板目标角度，pitch 归零
+            target_up_position = scan_target_yaw;
+            target_position = 0.0f;
         } else {
-            gimbal_mode = IMU_MODE;
+            /* ---- IMU 模式（下板目标跟随） ---- */
             target_up_position = board_instance->received_target_up_yaw;
             target_position = board_instance->received_target_up_pitch;
         }
 
         switch (ControlMode) {
         /* ---- 云台使能模式：所有非失能模式均使能云台 ---- */
-        case PC_MODE:
         case UP_FOLLOW_MODE:
         case UP_SHOOT_MODE:
-        case UP_SHOOT_AUTO_MODE:
-        case UP_SHOOT_PC_MODE:
-        case UP_SCORPE_MODE:
-        case HANDLE_MODE:
-        case CHASSIS_GYRO_MODE:
-        case CHASSIS_FOLLOW_MODE:
-        case CHASSIS_LOCK_MODE:
-        case CHASSIS_FOLLOW_PC_MODE:
-        case CHASSIS_AUTOAIM_PC_MODE:
-        case CHASSIS_COMPETATION_MODE:
             if(pitch->motor_state==DM_DISABLE||Up_yaw->velocity_pid->is_enabled==0){
                 ControlMode=TRANS_MODE;
             }
@@ -407,6 +409,7 @@ void StartGimbalTask(void const * argument)
             Motor_Dm_Transmit(pitch);
 
             // Yaw轴
+            //复合语句块，又一个冷门语法，用来局部定义变量，避免在其他模式下占用资源
             {
                 float yaw_angle_feedback;
                 if(gimbal_mode==IMU_MODE){

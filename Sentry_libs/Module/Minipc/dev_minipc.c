@@ -50,7 +50,9 @@ MiniPC_Instance* Minipc_Register(MiniPC_Config* config) {
     uint8_t current_count = (USB_Instance_Count == 255) ? 0 : USB_Instance_Count;
     if (current_count >= USB_MAX_INSTANCE) {
 #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Error: Maximum USB instances reached");
+#endif
 #endif
         return NULL;
     }
@@ -59,7 +61,9 @@ MiniPC_Instance* Minipc_Register(MiniPC_Config* config) {
     MiniPC_Instance* instance = (MiniPC_Instance*)pvPortMalloc(sizeof(MiniPC_Instance));
     if(instance == NULL) {
 #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Failed to allocate memory for MiniPC_Instance");
+#endif
 #endif
         return NULL;
     }
@@ -201,14 +205,20 @@ void Data_Processing(void) {
 
                     if(packet_index >= 32) {
                         // 接收完整个数据包，验证包尾
+#ifdef USE_LOG
                         Log_Debug("Packet received: end byte = 0x%02X (should be 'e'=0x65)", packet.raw_data[31]);
+#endif
                         packet_pointer=&packet;//把指针暴露出去喵
                         if(packet.raw_data[31] == 'e') {
                             // 处理接收到的有效数据包
+#ifdef USE_LOG
                             Log_Passing("Valid packet received, type = 0x%02X", packet.raw_data[1]);
+#endif
                             USB_SetDataReadyFlags(packet.raw_data[1]);
                         } else {
+#ifdef USE_LOG
                             Log_Warning("Invalid packet: wrong end byte 0x%02X", packet.raw_data[31]);
+#endif
                         }
                         // 重置状态，准备接收下一个数据包
                         packet_state = 0;
@@ -216,7 +226,9 @@ void Data_Processing(void) {
                     }
                 } else {
                     // 数据包长度异常，重置状态
+#ifdef USE_LOG
                     Log_Warning("Packet length error, resetting state");
+#endif
                     packet_state = 0;
                     packet_index = 0;
                 }
@@ -269,7 +281,9 @@ void Computer_Tx(float yaw, float pitch, uint8_t color, uint8_t mode, uint8_t ru
 void Minipc_ConfigAimTx(MiniPC_Instance* instance, float* high_yaw, float* pitch, uint8_t* enemy_color, uint8_t* mode, uint8_t* rune_flag, float* low_yaw) {
     if (instance == NULL || instance->Send_Message_Type != USB_MSG_AIM_TX) {
 #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Error: Invalid instance for AIM_TX");
+#endif
 #endif
         return;
     }
@@ -300,7 +314,9 @@ void Minipc_ConfigExpAimTx(MiniPC_Instance* instance,uint8_t* mode,
     uint16_t* bullet_count) {
     if (instance == NULL || instance->Send_Message_Type != USB_MSG_EXP_AIM_TX) {
 #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Error: Invalid instance for EXP_AIM_TX");
+#endif
 #endif
         return;
     }

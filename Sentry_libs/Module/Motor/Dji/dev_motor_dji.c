@@ -130,7 +130,9 @@ DjiMotorInstance_s *Motor_Dji_Register(DjiMotorInitConfig_s *config) {
     motor_instance->reduction_ratio = config->reduction_ratio;
     if(config->reduction_ratio == 0){
         #ifdef USER_LOG
+#ifdef USE_LOG
         Log_Error("where`s your fucking reduction ratio config?");
+#endif
         #endif
         return NULL;
     }

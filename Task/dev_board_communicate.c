@@ -16,7 +16,9 @@ board_instance_t* board_init(board_config_t *config)
     if(config == NULL)
     {
         #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Board config is NULL\r\n");
+#endif
         #endif
         return NULL;
     }
@@ -25,7 +27,9 @@ board_instance_t* board_init(board_config_t *config)
     if (instance == NULL)
     {
         #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Failed to allocate memory for board instance\r\n");
+#endif
         #endif
         return NULL;
     }
@@ -48,7 +52,9 @@ void board_send_message(board_instance_t *instance, float data1, float data2, ui
     if(instance == NULL || instance->can_instance == NULL)
     {
         #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Board instance or CAN instance is NULL\r\n");
+#endif
         #endif
         return;
     }
@@ -59,7 +65,7 @@ void board_send_message(board_instance_t *instance, float data1, float data2, ui
         case 0: // 发送 down2up_message_t
         {
             down2up_message_t *msg = ACCESS_AS_STRUCT(instance, down2up_message_t);
-            msg->control_mode = flag1;
+            msg->enable_flag = flag1;
             msg->shoot_bool = flag2;
             msg->up_target = float2half(data1);
             msg->down_yaw_pos = float2half(data2);
@@ -76,7 +82,9 @@ void board_send_message(board_instance_t *instance, float data1, float data2, ui
         }
         default:
             #ifdef DEBUG
+#ifdef USE_LOG
             Log_Error("Unknown message type for board ID %d\r\n", instance->board_id);
+#endif
             #endif
             return;
     }
@@ -86,7 +94,9 @@ void board_send_message(board_instance_t *instance, float data1, float data2, ui
     if(!Can_Transmit(instance->can_instance))
     {
         #ifdef DEBUG
+#ifdef USE_LOG
         Log_Error("Board ID %d message send failed\r\n", instance->board_id);
+#endif
         #endif
     }
 }
@@ -115,10 +125,10 @@ void Board_Message_Decode(CanInstance_s *can_instance)
             board_instance->received_up_pitch_pos = half2float(msg->up_pitch_pos);
             break;
         }
-        case 1: // 接收到 up2down_message_t
+        case 1: // 接收到 down2up_message_t
         {
             down2up_message_t *msg = ACCESS_AS_STRUCT(board_instance, down2up_message_t);
-            board_instance->received_control_mode = msg->control_mode;
+            board_instance->received_enable_flag = msg->enable_flag;
             board_instance->received_shoot_bool = msg->shoot_bool;
             board_instance->received_target_up_yaw = half2float(msg->up_target);
             board_instance->received_target_up_pitch = half2float(msg->up_pitch_target);
@@ -127,7 +137,9 @@ void Board_Message_Decode(CanInstance_s *can_instance)
         }
         default:
             #ifdef DEBUG
+#ifdef USE_LOG
             Log_Error("Unknown message type for board ID %d\r\n", board_instance->board_id);
+#endif
             #endif
             return;
     }

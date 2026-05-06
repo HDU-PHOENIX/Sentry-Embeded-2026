@@ -25,7 +25,7 @@
  * @brief 下发上数据包结构体
  */
 typedef struct{
-    uint8_t control_mode:8; //
+    uint8_t enable_flag:8; // 1: 使能, 2: 失能
     uint8_t shoot_bool:1;     //0-不射击，1-射击
     uint16_t reserved:7;    // 保留位
     uint16_t up_target:16;   // 上云台目标角度(半精度)
@@ -60,7 +60,7 @@ typedef struct
     uint8_t data_buffer[8];                     /**< 用于打包和解包的8字节数据缓冲区 */
 
     // --- 解码后的数据 (从其他板接收) ---
-    uint8_t received_control_mode;
+    uint8_t received_enable_flag;
     uint8_t received_shoot_bool;
     float   received_target_up_yaw;
     float   received_target_up_pitch;

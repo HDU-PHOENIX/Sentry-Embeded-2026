@@ -36,8 +36,9 @@
 
 // 云台闭环反馈源选择
 enum {
-    IMU_MODE     = 0,  // IMU 绝对角度控制（跟随目标）
-    ENCODER_MODE = 1   // 编码器角度锁定（保持当前位置）
+    IMU_MODE           = 0,  // IMU 绝对角度控制（跟随目标）
+    ENCODER_MODE       = 1,  // 编码器角度锁定（保持当前位置）
+    ENCODER_SCAN_MODE  = 2   // 编码器扫描模式（yaw在±PI范围往复扫描，pitch归零）
 };
 
 

@@ -111,7 +111,9 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 	DWT_Init(168);
+#ifdef USE_LOG
   Log_Init();
+#endif
 //  Can_Init();
   /* USER CODE END 2 */
 

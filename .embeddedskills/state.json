@@ -1,7 +1,7 @@
 {
   "last_build": {
     "provider": "keil",
-    "action": "rebuild",
+    "action": "build",
     "project": "MDK-ARM/frame.uvprojx",
     "target": "frame",
     "log_dir": ".embeddedskills/build",
@@ -11,14 +11,14 @@
       "flash_file": "MDK-ARM/frame/frame.hex",
       "debug_file": "MDK-ARM/frame/frame.axf",
       "output_dir": "MDK-ARM/frame",
-      "log_file": ".embeddedskills/build/frame-frame-rebuild.log"
+      "log_file": ".embeddedskills/build/frame-frame-build.log"
     },
     "axf_file": "MDK-ARM/frame/frame.axf",
     "hex_file": "MDK-ARM/frame/frame.hex",
     "flash_file": "MDK-ARM/frame/frame.hex",
     "debug_file": "MDK-ARM/frame/frame.axf",
     "output_dir": "MDK-ARM/frame",
-    "log_file": ".embeddedskills/build/frame-frame-rebuild.log",
-    "timestamp": "2026-04-30T16:26:40+08:00"
+    "log_file": ".embeddedskills/build/frame-frame-build.log",
+    "timestamp": "2026-05-05T13:19:51+08:00"
   }
 }
