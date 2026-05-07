@@ -49,7 +49,7 @@ uint8_t gimbal_mode=IMU_MODE;//云台控制模式
 
 ////////////////////////////编码器扫描模式相关///////////////////////////////////
 #define SCAN_SPEED         1.5f    // 扫描角速度 (rad/s)
-#define SCAN_RANGE_HALF    PI      // 扫描范围半宽 (±PI)
+#define SCAN_RANGE_HALF    (PI/3.0f)  // 扫描范围半宽 (±60°)
 
 static float   scan_start_encoder  = 0.0f;  // 进入扫描模式时的编码器位置
 static float   scan_target_yaw     = 0.0f;  // 当前扫描目标值
