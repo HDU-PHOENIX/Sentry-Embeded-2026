@@ -143,7 +143,7 @@ static  DjiMotorInitConfig_s Up_config = {
 
     .angle_pid_config = {
         //.kp = 0.0f,
-.kp = 22.0f,                        // 位置环比例系数
+.kp = 19.0f,                        // 位置环比例系数
         .ki = 0.0f,  
         //.ki = 0.05f,                      // 位置环积分系数
         .kd = 0.0f,                        // 位置环微分系数

@@ -1,7 +1,7 @@
 /**
  * @file app_command_task.c
  * @author CGH
- * @brief Ö¸Áî´¦ÀíÈÎÎñ ¡ª¡ª ¶ÀÁ¢½âÎö raw combined£¬Çý¶¯Éä»÷×´Ì¬»ú
+ * @brief Ö¸ï¿½î´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ raw combinedï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
  * @version V2.1.0
  */
 #include "app_command_task.h"
@@ -41,15 +41,15 @@ void StartCommandTask(void const * argument)
   {
     Publish_Message(Command_publisher, board_instance);
     
-    // Ö»¸ù¾Ý flag ÅÐ¶ÏÊ¹ÄÜ/Ê§ÄÜ
+    // Ö»ï¿½ï¿½ï¿½ï¿½ flag ï¿½Ð¶ï¿½Ê¹ï¿½ï¿½/Ê§ï¿½ï¿½
     if (board_instance->received_enable_flag == 1) {
-        mode = UP_FOLLOW_MODE; // Ê¹ÄÜÊ±£¬Ä¬ÈÏ½øÈë UP_SHOOT_MODE ¿ªÆôÄ¦²ÁÂÖ
+        mode = UP_FOLLOW_MODE; // Ê¹ï¿½ï¿½Ê±ï¿½ï¿½Ä¬ï¿½Ï½ï¿½ï¿½ï¿½ UP_SHOOT_MODE ï¿½ï¿½ï¿½ï¿½Ä¦ï¿½ï¿½ï¿½ï¿½
     } else {
         mode = DISABLE_MODE;
     }
 
     Shooter_State_last=Shooter_State;
-    //Í¨ÐÅ¶ªÊ§Âß¼­
+    //Í¨ï¿½Å¶ï¿½Ê§ï¿½ß¼ï¿½
     if(board_instance->can_instance->cnt-last_cnt<1){
       offline_time++;
       if(offline_time>500){
@@ -66,7 +66,7 @@ void StartCommandTask(void const * argument)
     
     switch (mode)
     {
-    case UP_SHOOT_MODE:
+    case UP_FOLLOW_MODE:
       if(Shooter_State_last==SHOOTER_STOP){
         Shooter_State=SHOOTER_TRANS;
       }else {
