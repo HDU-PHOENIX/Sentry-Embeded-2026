@@ -6,6 +6,7 @@
  * @note 移除复杂抬头/IMU切换，模式由 command_task 通过 raw combined 独立解析
  */
 #include "app_gimbal_task.h"
+#include "alg_ramp.h"
 #define DEBUG
 #define IMU
 //#define G_FEED_TEST
@@ -271,7 +272,7 @@ void StartGimbalTask(void const * argument)
     while(Quater.ins_ready==0){
         //视情况要不要启用编码器控制
         // Motor_Dm_Control(pitch,target_position);
-        // output=pitch->output+G_feed(pitch->message.out_position);
+        // output=pitch->output+G_feed_calculate(pitch->message.out_position);
 				
         // Motor_Dm_Mit_Control(pitch,0,0,output);
         // Motor_Dm_Transmit(pitch);
