@@ -1,0 +1,4 @@
+Level,Expression,Type,Value,Min,Max,Average,# Changes,Min. Change,Max. Change
+0,"((Up_yaw)->message).out_position","float",-0.00690290984,-0.0130388299,-0.00460194005,-0.0104793878,"2 518",-0.00230097026,0.000766990706
+0,"((Up_yaw)->message).torque_current","short",-108,-240,194,-4.77885056,"22 322",-169,252
+0,"target_position","float",0.0749999881,0,1,0.531537533,420,-0.0125000477,0.0125000477

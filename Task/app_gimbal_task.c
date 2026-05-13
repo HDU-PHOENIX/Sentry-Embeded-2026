@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file app_gimbal_task.c
  * @author CGH
  * @brief 云台任务 —— 简化版：IMU 跟随 / 编码器锁定
@@ -7,6 +7,8 @@
  */
 #include "app_gimbal_task.h"
 #include "alg_ramp.h"
+#include "dev_motor_dji.h"
+#include "dev_motor_dm.h"
 #define DEBUG
 #define IMU
 //#define G_FEED_TEST
@@ -44,6 +46,12 @@ float target_pitch_position=0.0;
 float temp_position=0.0;
 float output=0;
 extern quaternions_struct_t Quater;
+
+#ifdef GRAVITY_COMP_RECORD
+#include "alg_ramp.h"
+#define G_FEED_TEST
+static GravityCompTargetGenerator_s g_gravity_gen;
+#endif
 
 #endif
 uint8_t gimbal_mode=IMU_MODE;//云台控制模式
@@ -89,18 +97,18 @@ static DmMotorInitConfig_s pitch_config = {
 		#ifdef IMU
 		.angle_pid_config = {
 			
-        .kp = 20.0f,
-        .ki = 0.0015f,
-        .kd = 0.5f,
+        .kp = 20.5f,
+        .ki = 0.001f,
+        .kd = 3.0f,
         .kf = 0.0f,
         .angle_max = 2.0f * PI,
         .i_max = 100.0,
         .out_max = 400.0,
     },
     .velocity_pid_config = {
-        .kp = 0.75f,
-        .ki = 0.00f,
-        .kd = 0.06f,
+        .kp = 0.8f,
+        .ki = 0.008f,
+        .kd = 0.0f,
         .kf = 0.0f,
         .angle_max = 0,
         .i_max = 5.0,
@@ -178,8 +186,9 @@ float G_feed(float position){
 	//[2.319374, -3.015623, 0.755581, -0.311670]
 	//[1.549729, -2.003787, 0.406681, -0.285731]
 //[0.386597, -0.374320, -0.419100, 0.075079]（装了枪管的）
+//[1.686418, -1.499381, -0.216508, 0.298176]（最新的）
    // float torque = 0.386597*position*position*position +  (-0.374320*position*position) + -0.419100*position + ( 0.075079);
-   float torque = (1.016980 * position * position * position) + (-1.500239 * position * position) + (-0.062756 * position) + (0.195295); 
+   float torque = (1.686418 * position * position * position) + (-1.499381 * position * position) + (-0.216508 * position) + (0.298176);
    return torque; 
 }
 
@@ -272,7 +281,7 @@ void StartGimbalTask(void const * argument)
     while(Quater.ins_ready==0){
         //视情况要不要启用编码器控制
         // Motor_Dm_Control(pitch,target_position);
-        // output=pitch->output+G_feed_calculate(pitch->message.out_position);
+        // output=pitch->output+G_feed(pitch->message.out_position);
 				
         // Motor_Dm_Mit_Control(pitch,0,0,output);
         // Motor_Dm_Transmit(pitch);
@@ -310,6 +319,20 @@ void StartGimbalTask(void const * argument)
     Up_yaw->angle_pid->p_out=0.0f;
     Up_yaw->velocity_pid->p_out=0.0f;
     gimbal_ready_flag=1;
+
+#ifdef GRAVITY_COMP_RECORD
+    /* 初始化重力补偿标定用斜坡生成器：
+     *   范围 [-0.7, 0.3] rad（对应 pitch 限幅边界）
+     *   单程 60 步 × 800ms = 48s 单向，端点暂停 3s
+     *   完整一轮 ~102s
+     */
+    GravityCompTargetGenerator_Init(&g_gravity_gen,
+                             0.0f, 1.0f,
+                             80,      // 步数，范围1.0rad分80步，每步约不到1°
+                             800,     // 800ms/步
+                             3000);   // 端点暂停 3s
+    
+#endif
 
     Log("Gimbal ready\r\n");
 
@@ -362,11 +385,15 @@ void StartGimbalTask(void const * argument)
 
             // 扫描模式下忽略下板目标角度，pitch 归零
             target_up_position = scan_target_yaw;
+#ifndef GRAVITY_COMP_RECORD
             target_position = 0.0f;
+#endif
         } else {
             /* ---- IMU 模式（下板目标跟随） ---- */
             target_up_position = board_instance->received_target_up_yaw;
+#ifndef GRAVITY_COMP_RECORD
             target_position = board_instance->received_target_up_pitch;
+#endif
         }
 
         switch (ControlMode) {
@@ -389,11 +416,27 @@ void StartGimbalTask(void const * argument)
                 last_gimbal_mode = gimbal_mode;
             }
 
+#ifndef GRAVITY_COMP_RECORD
             // Pitch轴限幅
             if(pitch->control_mode==DM_POSITION){
                 target_position=target_position>0.3?0.3:target_position;
                 target_position=target_position<-0.7?-0.7:target_position;
             }
+#endif
+#ifdef GRAVITY_COMP_RECORD
+            if(Quater.ins_ready==1){
+                /* 重力补偿标定模式：用极慢的斜坡驱动 pitch */
+                target_position = GravityCompTargetGenerator_Update(&g_gravity_gen);
+                if (g_gravity_gen.done) {
+                    Log("Gravity comp sweep DONE\r\n");
+                }
+                Motor_Dm_Pos_Vel_Control(pitch, target_position,10);
+                // 注意：由于下面已经有统一的 Motor_Dm_Transmit(pitch); 这里不要再额外发送，
+                // 更不要误写成 Motor_Dji_Transmit(pitch); 这会触发指针转型HardFault！
+                // target_speed = Pid_Calculate(pitch->angle_pid, target_position, Quater.pitch);
+                // ...
+            }
+#else
             if(Quater.ins_ready==1){
                 target_speed=Pid_Calculate(pitch->angle_pid,target_position,Quater.pitch);
                 pitch->output = Pid_Calculate(pitch->velocity_pid,Quater.Gyro[1],target_speed);
@@ -404,6 +447,7 @@ void StartGimbalTask(void const * argument)
             }
             output=pitch->output+G_feed(pitch->message.out_position);
             Motor_Dm_Mit_Control(pitch,0,0,output);
+#endif
             #ifdef DEBUG
             test_output=pitch->message.torque;
             #endif

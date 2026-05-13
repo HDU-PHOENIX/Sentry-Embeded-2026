@@ -201,6 +201,7 @@ bool Motor_Dji_Transmit(DjiMotorInstance_s *motor) {
     if(motor == NULL || motor->can_instance == NULL) {
         return false;
     }
+
     Motor_Dji_Grouping(motor->can_instance->tx_id, motor->can_instance->can_handle, motor->can_instance->tx_buff);
     if(Can_Transmit(motor->can_instance) == true){
         return true;

@@ -121,3 +121,42 @@ float GenerateReversingRamp(float min_pos, float max_pos, int steps, uint32_t in
     // 4. 返回当前计算出的目标值
     return state->target_setpoint;
 }
+
+#ifdef GRAVITY_COMP_RECORD
+#include <string.h>
+
+void GravityCompTargetGenerator_Init(GravityCompTargetGenerator_s *gen,
+                                     float min, float max,
+                                     int steps,
+                                     uint32_t interval_ms,
+                                     uint32_t pause_ms)
+{
+    gen->min_pos     = min;
+    gen->max_pos     = max;
+    gen->steps       = steps;
+    gen->interval_ms = interval_ms;
+    gen->pause_ms    = pause_ms;
+    gen->done        = 0;
+    gen->last_pos    = min;
+    memset(&gen->ramp, 0, sizeof(gen->ramp));
+}
+
+float GravityCompTargetGenerator_Update(GravityCompTargetGenerator_s *gen)
+{
+    // 生成极慢的往复斜坡
+    float pos = GenerateReversingRamp(
+        gen->min_pos, gen->max_pos,
+        gen->steps,
+        gen->interval_ms,
+        gen->pause_ms,
+        &gen->ramp
+    );
+
+    // 更新当前的稳态暂存
+    gen->last_pos = pos;
+
+    // 不再主动将 done 设为 1，使得整个扫描过程永远往复循环
+    return pos;
+}
+
+#endif /* GRAVITY_COMP_RECORD */

@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+//#define GRAVITY_COMP_RECORD
 typedef struct {
     float target_setpoint;
     int current_step;
@@ -30,6 +30,44 @@ typedef struct {
     uint32_t last_pause_ms;
     uint8_t initialized;
 } ReversingRampState_s;
+
+#ifdef GRAVITY_COMP_RECORD
+#define G_FEED_TEST
+typedef struct {
+    ReversingRampState_s ramp;              /**< 内部往复斜坡状态机 */
+    uint8_t  done;                          /**< 1 = 扫描完成停机 */
+    float    min_pos;                       /**< 扫描范围下限 */
+    float    max_pos;                       /**< 扫描范围上限 */
+    int      steps;                         /**< 单程步数 */
+    uint32_t interval_ms;                   /**< 步进间隔(ms) */
+    uint32_t pause_ms;                      /**< 端点暂停(ms) */
+    float    last_pos;                      /**< 当前区间的暂存位置 */
+} GravityCompTargetGenerator_s;
+
+/**
+ * @brief 初始化重力补偿标定用斜坡生成器
+ * @param gen    实例指针
+ * @param min    扫描下限 (rad)
+ * @param max    扫描上限 (rad)
+ * @param steps  单程步数（建议 50~200，越多越慢越精细）
+ * @param interval_ms  步进间隔（建议 ≥100ms）
+ * @param pause_ms     端点暂停（建议 ≥1000ms）
+ */
+void GravityCompTargetGenerator_Init(GravityCompTargetGenerator_s *gen,
+                                     float min, float max,
+                                     int steps,
+                                     uint32_t interval_ms,
+                                     uint32_t pause_ms);
+
+/**
+ * @brief 在控制循环中周期性调用
+ * @param gen    实例指针
+ * @return 斜坡生成的目标位置
+ * @note 当 gen->done == 1 后返回终点位置维持，不会继续扫描
+ */
+float GravityCompTargetGenerator_Update(GravityCompTargetGenerator_s *gen);
+
+#endif /* GRAVITY_COMP_RECORD */
 
 /**
  * @brief 生成一个简单的斜坡轨迹，在start和end之间切分出若干个点，每隔固定的时间间隔切换到下一个点。

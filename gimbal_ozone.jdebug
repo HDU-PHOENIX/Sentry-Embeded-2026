@@ -33,7 +33,6 @@ void OnProjectLoad (void) {
   // User settings
   //
   File.Open ("$(ProjectDir)/MDK-ARM/frame/frame.axf");
-  Edit.SysVar (VAR_HSS_SPEED, FREQ_200_HZ);
   Edit.SysVar (VAR_POWER_SAMPLING_SPEED, FREQ_1_KHZ);
 }
 

@@ -77,6 +77,7 @@
 "frame\app_shooter_task.o"
 "frame\app_command_task.o"
 "frame\dev_board_communicate.o"
+"frame\alg_ramp.o"
 "frame\alg_pid.o"
 "frame\alg_fliter.o"
 "frame\alg_kalman.o"
