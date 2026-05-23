@@ -52,7 +52,7 @@ float32_t Gyro_Offset[3] = {0};        // 陀螺仪零偏
     },
     
     // 校准配置
-    .enable_calibration = 1,                     // 启用零偏校准（1: 启用, 0: 禁用）
+    .enable_calibration = 0,                     // 启用零偏校准（1: 启用, 0: 禁用）
   };
 
 // 温度控制PID配置
@@ -324,7 +324,7 @@ void isttask(void const * argument)
     // 等待云台对齐，同时让IMU升温并进入稳定温区，减少后续零漂学习漂移
     const float target_temp = 40.0f;
     const float warmup_enter_temp = 39.5f;
-    const uint16_t warmup_stable_cycles = 200; // 5ms循环下约1s稳定时间
+    const uint16_t warmup_stable_cycles = 100; // 5ms循环下约0.5s稳定时间
     uint16_t warmup_stable_count = 0;
 
     while ((gimbal_ready_flag != 1) || (warmup_stable_count < warmup_stable_cycles))

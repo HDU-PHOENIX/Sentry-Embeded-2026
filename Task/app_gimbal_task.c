@@ -59,10 +59,14 @@ uint8_t gimbal_mode=IMU_MODE;//云台控制模式
 ////////////////////////////编码器扫描模式相关///////////////////////////////////
 #define SCAN_SPEED         1.5f    // 扫描角速度 (rad/s)
 #define SCAN_RANGE_HALF    (PI/3.0f)  // 扫描范围半宽 (±60°)
+#define PITCH_SCAN_SPEED       0.5f    // Pitch 扫描角速度 (rad/s)
+#define PITCH_SCAN_LOWER_LIMIT -0.7f   // Pitch 限幅下界
+#define PITCH_SCAN_UPPER_LIMIT 0.3f    // Pitch 限幅上界
 
-static float   scan_start_encoder  = 0.0f;  // 进入扫描模式时的编码器位置
 static float   scan_target_yaw     = 0.0f;  // 当前扫描目标值
 static int8_t  scan_direction      = 1;     // 扫描方向: 1=正向, -1=反向
+static float   scan_target_pitch   = 0.0f;  // Pitch 当前扫描目标值
+static int8_t  scan_pitch_dir      = 1;     // Pitch 扫描方向: 1=正向, -1=反向
 static uint8_t scan_initialized    = 0;     // 扫描状态是否已初始化
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -152,8 +156,8 @@ static  DjiMotorInitConfig_s Up_config = {
 
     .angle_pid_config = {
         //.kp = 0.0f,
-.kp = 19.0f,                        // 位置环比例系数
-        .ki = 0.0f,  
+.kp = 1.0f,                        // 位置环比例系数
+        .ki = 0.001f,  
         //.ki = 0.05f,                      // 位置环积分系数
         .kd = 0.0f,                        // 位置环微分系数
         .kf = 0.0f,                        // 前馈系数
@@ -162,8 +166,8 @@ static  DjiMotorInitConfig_s Up_config = {
         .out_max = 500.0,                 // 输出限幅(速度环输入)
     },
     .velocity_pid_config = {
-.kp = 4500.0f,//100.0f,                       // 速度环比例系数
-        .ki = 0.0f,                        // 速度环积分系数
+.kp = 3500.0f,//100.0f,                       // 速度环比例系数
+        .ki = 20.0f,                        // 速度环积分系数
         .kd = 0.0f,                        // 速度环微分系数
         .kf = 0.0f,                        // 前馈系数
         .angle_max = 0,                 // 角度最大值(限幅用，为0则不限幅)
@@ -312,7 +316,8 @@ void StartGimbalTask(void const * argument)
 			osDelay(1);
 		}
     
-    Up_yaw->velocity_pid->kp=2300.0f;
+    Up_yaw->velocity_pid->kp=Up_config.velocity_pid_config.kp;
+		Up_yaw->velocity_pid->ki=Up_config.velocity_pid_config.ki;
 		Up_yaw->control_mode=DJI_VELOCITY;
     Up_yaw->angle_pid->i_out=0.0f;
     Up_yaw->velocity_pid->i_out=0.0f;
@@ -364,29 +369,56 @@ void StartGimbalTask(void const * argument)
         gimbal_mode = (find_bool == 0U) ? IMU_MODE : ENCODER_SCAN_MODE;
 
         if (gimbal_mode == ENCODER_SCAN_MODE) {
-            /* ---- 编码器扫描模式 ---- */
-            // 首次进入或从其他模式切换来时，记录初始编码器位置
+            /* ---- 编码器扫描模式（固定 ±60° 绝对值范围） ---- */
+            // 首次进入或从其他模式切换来时，从当前位置出发，无跳变
             if (!scan_initialized || last_gimbal_mode != ENCODER_SCAN_MODE) {
-                scan_start_encoder = Up_yaw->message.out_position;
-                scan_target_yaw = scan_start_encoder;
-                scan_direction = 1;
+                scan_target_yaw = Up_yaw->message.out_position;
+                // 决定初始方向：若在范围外则指向最近边界，否则默认正向
+                if (scan_target_yaw > SCAN_RANGE_HALF) {
+                    scan_direction = -1;   // 高于上界，向下进入范围
+                } else if (scan_target_yaw < -SCAN_RANGE_HALF) {
+                    scan_direction = 1;    // 低于下界，向上进入范围
+                } else {
+                    scan_direction = 1;    // 在范围内，默认正向开始
+                }
+                
+                scan_target_pitch = Quater.pitch;
+                // Pitch 决定初始方向
+                if (scan_target_pitch > PITCH_SCAN_UPPER_LIMIT) {
+                    scan_pitch_dir = -1;
+                } else if (scan_target_pitch < PITCH_SCAN_LOWER_LIMIT) {
+                    scan_pitch_dir = 1;
+                } else {
+                    scan_pitch_dir = 1;
+                }
+                
                 scan_initialized = 1;
             }
 
-            // 三角波扫描：在 [start-PI, start+PI] 之间往复
+            // 三角波扫描：边界固定在 ±SCAN_RANGE_HALF（绝对值 ±60°）
             scan_target_yaw += scan_direction * SCAN_SPEED * dt3;
-            if (scan_target_yaw > scan_start_encoder + SCAN_RANGE_HALF) {
-                scan_target_yaw = scan_start_encoder + SCAN_RANGE_HALF;
+            if (scan_target_yaw >= SCAN_RANGE_HALF) {
+                scan_target_yaw = SCAN_RANGE_HALF;
                 scan_direction = -1;
-            } else if (scan_target_yaw < scan_start_encoder - SCAN_RANGE_HALF) {
-                scan_target_yaw = scan_start_encoder - SCAN_RANGE_HALF;
+            } else if (scan_target_yaw <= -SCAN_RANGE_HALF) {
+                scan_target_yaw = -SCAN_RANGE_HALF;
                 scan_direction = 1;
             }
+            
+            // Pitch 三角波扫描：边界在 -0.7 到 0.3
+            scan_target_pitch += scan_pitch_dir * PITCH_SCAN_SPEED * dt3;
+            if (scan_target_pitch >= PITCH_SCAN_UPPER_LIMIT) {
+                scan_target_pitch = PITCH_SCAN_UPPER_LIMIT;
+                scan_pitch_dir = -1;
+            } else if (scan_target_pitch <= PITCH_SCAN_LOWER_LIMIT) {
+                scan_target_pitch = PITCH_SCAN_LOWER_LIMIT;
+                scan_pitch_dir = 1;
+            }
 
-            // 扫描模式下忽略下板目标角度，pitch 归零
+            // 扫描模式下忽略下板目标角度，pitch 和 yaw 同样进入扫描
             target_up_position = scan_target_yaw;
 #ifndef GRAVITY_COMP_RECORD
-            target_position = 0.0f;
+            target_position = scan_target_pitch;
 #endif
         } else {
             /* ---- IMU 模式（下板目标跟随） ---- */

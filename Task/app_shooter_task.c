@@ -188,10 +188,12 @@ void StartShooterTask(void const * argument)
       case SHOOTER_STOP:
         //清空PID
         target_wheel_speed=0.0f;
-				Left_Wheel->output=0.0;
-			Right_Wheel->output=0.0;
-        Pid_Disable(Left_Wheel->velocity_pid);
-        Pid_Disable(Right_Wheel->velocity_pid);
+//				Left_Wheel->output=0.0;
+//			Right_Wheel->output=0.0;
+//        Pid_Disable(Left_Wheel->velocity_pid);
+//        Pid_Disable(Right_Wheel->velocity_pid);
+				Motor_Dji_Control(Right_Wheel,target_wheel_speed);
+		    Motor_Dji_Control(Left_Wheel,-target_wheel_speed);
         Motor_Dji_Transmit(Right_Wheel);  
     Motor_Dji_Transmit(Left_Wheel);
        break;
